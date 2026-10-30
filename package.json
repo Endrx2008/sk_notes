@@ -1,0 +1,31 @@
+{
+  "name": "sk_notes-web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Web front-end of sk_notes (bundled into sk_notes/web/dist)",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "build": "node tools/build_web.mjs",
+    "test": "node --test web/tests/"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "6.18.6",
+    "@codemirror/commands": "6.8.1",
+    "@codemirror/lang-markdown": "6.3.2",
+    "@codemirror/language": "6.11.0",
+    "@codemirror/language-data": "6.5.1",
+    "@codemirror/search": "6.5.10",
+    "@codemirror/state": "6.5.2",
+    "@codemirror/view": "6.36.8",
+    "@lezer/common": "1.2.3",
+    "@lezer/highlight": "1.2.1",
+    "@lezer/markdown": "1.4.3",
+    "katex": "0.16.22",
+    "markdown-it": "14.1.0",
+    "moment": "2.30.1",
+    "yaml": "2.8.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.4"
+  }
+}
