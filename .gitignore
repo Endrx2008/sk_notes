@@ -1,0 +1,8 @@
+# Research material (third-party plugin sources, UI references): never committed
+research/
+node_modules/
+__pycache__/
+*.pyc
+/build/
+/dist/
+/qa/tmp/
