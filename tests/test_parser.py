@@ -131,6 +131,15 @@ class StructureTests(unittest.TestCase):
         m = parse("Text[^1]\n\n[^1]: note")
         self.assertEqual(m["footnotes"][0]["id"], "1")
 
+    def test_long_line_is_fast(self):
+        # regression: a 300 KB single-word note made the URL masking regex quadratic
+        import time
+        text = "".join(chr(97 + i % 26) for i in range(300_000)) + " https://x.org/#frag #real"
+        t0 = time.perf_counter()
+        m = parse(text)
+        self.assertLess(time.perf_counter() - t0, 3)
+        self.assertEqual(tags(m), ["#real"])
+
     def test_empty(self):
         self.assertEqual(parse(""), {})
 

@@ -182,6 +182,8 @@ TAG_RE = re.compile(r"(?<![\w#/&])#([^\s!\"#$%&'()*+,.:;<=>?@\[\\\]^`{|}~　-〿
 INLINE_CODE_RE = re.compile(r"(`+)(?:.|\n)*?(?<!`)\1(?!`)")
 INLINE_MATH_RE = re.compile(r"(?<![\\$])\$(?!\s)([^$\n]+?)(?<![\s\\])\$(?!\d)")
 URL_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+# scheme start anchored and bounded: an unbounded scheme is quadratic on long words
+URL_RE = re.compile(r"(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}://\S+")
 
 
 def _mask(text: str, spans: list[tuple[int, int]]) -> str:
@@ -455,7 +457,7 @@ def parse(text: str) -> dict:
 
     tag_scan = _mask(scan_no_math, [m.span() for m in MDLINK_RE.finditer(scan_no_math)] + wiki_spans)
     # URLs like http://x.y/#frag must not produce tags
-    tag_scan = _mask(tag_scan, [m.span() for m in re.finditer(r"[A-Za-z][A-Za-z0-9+.-]*://\S+", tag_scan)])
+    tag_scan = _mask(tag_scan, [m.span() for m in URL_RE.finditer(tag_scan)])
     tags = []
     for m in TAG_RE.finditer(tag_scan):
         body = m.group(1)
