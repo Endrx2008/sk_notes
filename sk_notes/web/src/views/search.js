@@ -114,7 +114,7 @@ export class SearchView extends ItemView {
       head.createDiv({ cls: 'tree-item-inner', text: file.extension === 'md' ? file.basename : file.name });
       if (r.matches.length) head.createDiv({ cls: 'tree-item-flair-outer' }).createSpan({ cls: 'tree-item-flair', text: String(r.matches.length) });
       col.addEventListener('click', (e) => { e.stopPropagation(); item.toggleClass('is-collapsed', !item.hasClass('is-collapsed')); });
-      head.addEventListener('click', (e) => this.open(file, null, e));
+      head.addEventListener('click', (e) => this.openResult(file, null, e));
       head.addEventListener('mouseover', (e) => this.app.pagePreview?.onHover(e, head, file.path, '', true, true));
       const kids = item.createDiv('search-result-file-matches');
       for (const m of r.matches) {
@@ -123,12 +123,12 @@ export class SearchView extends ItemView {
           if (hit) row.createSpan({ cls: 'search-result-file-matched-text', text });
           else row.appendText(text);
         }
-        row.addEventListener('click', (e) => this.open(file, m.line, e));
+        row.addEventListener('click', (e) => this.openResult(file, m.line, e));
       }
     }
   }
 
-  async open(file, line, e) {
+  async openResult(file, line, e) {
     const leaf = this.app.workspace.getLeaf(Keymap.isModEvent(e));
     await leaf.openFile(file, { eState: line !== null ? { line } : {} });
   }
