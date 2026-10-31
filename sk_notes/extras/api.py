@@ -8,7 +8,6 @@ import os
 import re
 import shutil
 import subprocess
-import urllib.request
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -18,7 +17,6 @@ from PyQt6.QtWebEngineCore import QWebEnginePage
 from PyQt6.QtWidgets import QFileDialog
 
 from ..app.bridge import ApiError
-from . import importers, migrate
 
 log = logging.getLogger(__name__)
 
@@ -44,6 +42,7 @@ def register(app) -> None:
 
     @r("import.run", slow=True)
     def import_run(p, ctx):
+        from . import importers
         if ctx.plugin:
             raise ApiError("permission-denied")
         fmt = p["format"]
@@ -83,6 +82,7 @@ def register(app) -> None:
     # ------------------------------------------------------------- migration
     @r("migration.scan")
     def migration_scan(p, ctx):
+        from . import migrate
         res = migrate.scan(svc().vault.root)
         for item in res.get("items", []):
             if item["id"] in ("settings", "hotkeys", "bookmarks", "graph"):
@@ -91,6 +91,7 @@ def register(app) -> None:
 
     @r("migration.apply")
     def migration_apply(p, ctx):
+        from . import migrate
         if ctx.plugin:
             raise ApiError("permission-denied")
         return migrate.apply(svc(), list(p.get("items") or []))
@@ -168,6 +169,7 @@ def register(app) -> None:
     # ------------------------------------------------------------- syncthing
     @r("syncthing.status", slow=True)
     def syncthing_status(p, ctx):
+        import urllib.request
         cfg = None
         for c in (Path.home() / ".local/state/syncthing/config.xml", Path.home() / ".config/syncthing/config.xml"):
             if c.exists():

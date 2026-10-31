@@ -11,8 +11,6 @@ import os
 import re
 import shutil
 import subprocess
-import urllib.error
-import urllib.request
 from pathlib import Path
 
 from ..app.bridge import ApiError, Ctx
@@ -116,6 +114,8 @@ def register(app) -> None:
 
     @r("plugins.installGithub", slow=True)
     def plugins_install_github(p, ctx):
+        import urllib.error  # lazy: costs ~0.3 s at start-up
+        import urllib.request
         if ctx.plugin:
             raise ApiError("permission-denied")
         repo = p.get("repo", "").strip().removeprefix("https://github.com/").strip("/")
@@ -261,6 +261,8 @@ def register(app) -> None:
 
     @r("shim.request", slow=True)
     def shim_request(p, ctx):
+        import urllib.error  # lazy: costs ~0.3 s at start-up
+        import urllib.request
         url = p["url"]
         m = re.match(r"^(https?)://([^/:]+|\[[^\]]+\])", url)
         if not m:
@@ -305,6 +307,8 @@ def _safe_id(pid: str) -> str:
 
 
 def _download(url: str) -> bytes:
+    import urllib.error  # lazy: costs ~0.3 s at start-up
+    import urllib.request
     req = urllib.request.Request(url, headers={"User-Agent": "sk_notes"})
     with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310 - fixed GitHub URL chosen by the user
         data = resp.read(MAX_DOWNLOAD + 1)

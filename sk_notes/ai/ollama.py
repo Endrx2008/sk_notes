@@ -8,8 +8,6 @@ import json
 import re
 import threading
 import time
-import urllib.error
-import urllib.request
 from typing import Iterator
 
 from ..app.config import read_suite_ollama
@@ -50,6 +48,8 @@ class Ollama:
         return self.config()[0].rstrip("/") + path
 
     def _request(self, path: str, payload: dict | None = None, timeout: float = LIST_TIMEOUT):
+        import urllib.error  # imported here: urllib.request costs ~0.3 s at start-up
+        import urllib.request
         data = json.dumps(payload).encode() if payload is not None else None
         req = urllib.request.Request(self._url(path), data=data,
                                      headers={"Content-Type": "application/json"} if data else {})

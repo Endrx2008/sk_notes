@@ -13,10 +13,19 @@ import threading
 import time
 from array import array
 
-try:
-    import numpy as np
-except ImportError:  # pragma: no cover - numpy is a declared dependency
-    np = None
+np = None  # numpy is imported on first search (it costs ~0.4 s at start-up)
+
+
+def _numpy():
+    """numpy, imported on first use; None if it is not installed."""
+    global np
+    if np is None:
+        try:
+            import numpy
+        except ImportError:  # pragma: no cover - numpy is a declared dependency
+            return None
+        np = numpy
+    return np
 
 CHUNK = 800
 BATCH = 16
@@ -105,7 +114,7 @@ class EmbeddingIndex:
         rows = self.db.execute("SELECT path, text, vec FROM chunks WHERE model=?", (model,)).fetchall()
         paths = [r[0] for r in rows]
         texts = [r[1] for r in rows]
-        if np is not None and rows:
+        if rows and _numpy() is not None:
             mat = np.frombuffer(b"".join(r[2] for r in rows), dtype=np.float32).reshape(len(rows), -1)
             norms = np.linalg.norm(mat, axis=1, keepdims=True)
             mat = mat / np.where(norms == 0, 1, norms)
@@ -118,7 +127,7 @@ class EmbeddingIndex:
         paths, texts, mat, _ = self._load(model)
         if not paths:
             return []
-        if np is not None:
+        if _numpy() is not None:
             q = np.asarray(query_vec, dtype=np.float32)
             q = q / (np.linalg.norm(q) or 1)
             scores = mat @ q
