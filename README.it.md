@@ -51,7 +51,29 @@ python3 main.py                 # oppure: python3 main.py --vault ~/Note
 
 ### Arch / Skorpion OS Mantis
 
-`packaging/arch/PKGBUILD` (`makepkg -si`).
+```sh
+sh tools/build_tarball.sh       # dist/sk_notes-0.1.0.tar.gz + dist/PKGBUILD (con checksum)
+cd dist && makepkg -si
+```
+
+### Creare i pacchetti
+
+`sh tools/build_deb.sh` crea `dist/sk-notes_<versione>_all.deb`; `sh tools/build_tarball.sh`
+crea il tarball sorgente e il PKGBUILD per Arch. Entrambi includono il front-end web già
+compilato: chi installa non ha bisogno di Node.js.
+
+## Link (`sknotes://`)
+
+I pacchetti registrano sk_notes per i link `sknotes://`, per esempio da un launcher o da uno script:
+
+| Link | Cosa fa |
+|---|---|
+| `sknotes://open?vault=Note&file=Progetti/Piano` | apre una nota (funziona anche `path=/percorso/file.md`; `newpane=true` apre una scheda) |
+| `sknotes://new?vault=Note&name=Idea&content=…` | crea una nota; con `file=…&append=true` (o `prepend`, `overwrite`) aggiunge a una esistente; `silent=true` non la apre |
+| `sknotes://search?vault=Note&query=tag:%23todo` | apre il pannello di ricerca |
+
+Se il vault è già aperto, il link va alla finestra in esecuzione. Le altre azioni vengono
+passate ai plugin della community che le gestiscono.
 
 ## SKAI (IA locale)
 
@@ -82,6 +104,8 @@ entrano mai in conflitto con i3 o Hyprland su Skorpion OS.
 ## Sviluppo
 
 - `python3 -m unittest discover tests` — test del nucleo (parser, indice, ricerca, rinomina, cronologia, importatori, traduzioni, permessi)
-- `npm test` — test JavaScript
-- `qa/` — test dell'interfaccia pilotati tramite Chrome DevTools Protocol sotto Xvfb; `qa/plugin_compat.py` misura la compatibilità con i plugin della community
+- `npm test` — test JavaScript (shim Node.js per i plugin)
+- `python3 qa/smoke.py` — smoke test dell'interfaccia sotto Xvfb (da tastiera, Chrome DevTools Protocol)
+- `python3 qa/plugin_compat.py <cartella> [id]` — compatibilità con i plugin della community ([risultati](docs/compatibility.md))
+- `python3 qa/startup_time.py` — tempo di avvio; `SK_NOTES_DEBUG=1` aggiunge righe di debug al log
 - Architettura: [docs/architecture.md](docs/architecture.md); API nativa dei plugin: [docs/api.md](docs/api.md); contribuire e tradurre: [CONTRIBUTING.md](CONTRIBUTING.md)

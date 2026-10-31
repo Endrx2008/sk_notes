@@ -51,7 +51,29 @@ python3 main.py                 # or: python3 main.py --vault ~/Notes
 
 ### Arch / Skorpion OS Mantis
 
-`packaging/arch/PKGBUILD` (`makepkg -si`).
+```sh
+sh tools/build_tarball.sh       # dist/sk_notes-0.1.0.tar.gz + dist/PKGBUILD (with checksum)
+cd dist && makepkg -si
+```
+
+### Building the packages
+
+`sh tools/build_deb.sh` builds `dist/sk-notes_<version>_all.deb`; `sh tools/build_tarball.sh`
+builds the Arch source tarball and PKGBUILD. Both include the built web front-end, so end users
+never need Node.js.
+
+## Links (`sknotes://`)
+
+The packages register sk_notes for `sknotes://` links, e.g. from a launcher or a script:
+
+| Link | Does |
+|---|---|
+| `sknotes://open?vault=Notes&file=Projects/Plan` | opens a note (`path=/abs/file.md` also works; `newpane=true` opens a tab) |
+| `sknotes://new?vault=Notes&name=Idea&content=…` | creates a note; with `file=…&append=true` (or `prepend`, `overwrite`) adds to an existing one; `silent=true` does not open it |
+| `sknotes://search?vault=Notes&query=tag:%23todo` | opens the search pane |
+
+If the vault is already open, the running window takes the link. Other actions are passed to
+community plugins that register a handler for them.
 
 ## SKAI (local AI)
 
@@ -80,6 +102,8 @@ uses the Super key or Alt+F1/Alt+F9, so they never clash with i3 or Hyprland on 
 ## Development
 
 - `python3 -m unittest discover tests` — core tests (parser, index, search, rename, history, importers, i18n, permissions)
-- `npm test` — JavaScript unit tests
-- `qa/` — UI tests driven through the Chrome DevTools Protocol under Xvfb; `qa/plugin_compat.py` measures community plugin compatibility
+- `npm test` — JavaScript unit tests (Node.js shims for plugins)
+- `python3 qa/smoke.py` — UI smoke test under Xvfb (keyboard-driven, Chrome DevTools Protocol)
+- `python3 qa/plugin_compat.py <dir> [ids]` — community plugin compatibility ([results](docs/compatibility.md))
+- `python3 qa/startup_time.py` — start-up time; `SK_NOTES_DEBUG=1` adds debug lines to the log
 - Architecture: [docs/architecture.md](docs/architecture.md); native plugin API: [docs/api.md](docs/api.md); contributing and translations: [CONTRIBUTING.md](CONTRIBUTING.md)

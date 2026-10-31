@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Current phase | 3 – Development |
+| Current phase | 4 – Tests (cycle 1) |
 | Cycle | 1 |
 | Last update | 2026-10-31 |
 
@@ -11,7 +11,7 @@
 - [x] Phase 1 – analysis of Skorpion apps → `docs/research/skorpion-apps.md`
 - [x] Phase 2 – public material → `docs/research/ui-map.md`, `docs/research/plugins.md`,
       `docs/architecture.md`; research data in `research/` (not committed)
-- [ ] Phase 3 – development
+- [x] Phase 3 – development
 - [ ] Phase 4 – tests (agent A Obsidian user, agent B destructive tester)
 - [ ] Phase 5 – similarity check
 - [ ] Phase 6 – originality check
@@ -48,18 +48,41 @@
    regression tests in `sk_notes/web/tests/node-shim.test.mjs` (`npm test`).
 3. The 10k-note search speed test was flaky under load: it now takes the best of 3 runs.
 
-## Still to do in Phase 3
+## Start-up time (requirement: under 2 s) — not met on this VM
 
-- UI smoke tests in `qa/`.
-- Packaging: tools/build_deb.sh, packaging/arch/PKGBUILD, .desktop file.
-- Startup time measurement (target 2 s).
-- Then Phases 4–6 (test agents, similarity, originality) and FINAL_REPORT.md.
+Measured with `qa/startup_time.py` (process start → window ready, 200-note vault) on this VM
+(1 CPU i3-5005U from 2015, 1.7 GB RAM, no GPU, Xvfb): **6.1–6.8 s** warm, from 7.5–7.8 s before
+the fixes below. Breakdown of a warm start:
+
+| Phase | Time |
+|---|---|
+| Python, PyQt6, QApplication | 1.4 s |
+| Qt WebEngine profile + vault (vault itself: 0.01 s) | 1.4 s |
+| Window shown → first page script (Chromium renderer start) | ~1.0 s |
+| Page: modules 0.6 s, snapshot 0.3 s, layout 0.55 s, plugins/first render 0.4 s | ~2.0 s |
+
+Done: lazy imports of numpy/urllib/importers (−0.8 s), one bundled CodeMirror (−215 KB JS).
+About 3.5 s is the fixed cost of Qt WebEngine (Chromium) on this hardware. Further steps
+if needed: deferred sidebar views (load a pane only when its tab is first shown), lighter
+markdown/YAML parsers in the first chunk.
+
+## Still to do
+
+- Phases 4–6 (test agents, similarity, originality) and FINAL_REPORT.md.
 
 ## Done in Phase 3 (latest)
 
 - Translations: 9 languages (en + it, es, fr, de, pt, ru, zh-CN, ja, all 779 keys,
   marked "needs review"); `tests/test_i18n.py`.
-- Tests: importers, migration (source never modified), permissions (`tests/test_extras.py`).
+- Tests: importers, migration (source never modified), permissions (`tests/test_extras.py`),
+  `sknotes://` links, embeddings, front-end static checks; UI smoke test `qa/smoke.py` (15 checks).
+- Bugs found by the smoke test and fixed: empty search pane (SearchView.open shadowed
+  View.open), light editor gutter on the dark theme, autosave during a note switch could
+  write the previous note's text into the new file.
+- `sknotes://` links (open/new/search, plugin actions; hand-over to the running window).
+- Packaging: `tools/build_deb.sh` (installed and run on this VM, then removed),
+  `tools/build_tarball.sh` + `packaging/arch/PKGBUILD` (package() run in a scratch dir;
+  makepkg itself not available on Debian).
 
 ## Check results
 
