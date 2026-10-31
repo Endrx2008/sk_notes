@@ -167,6 +167,102 @@ export function iterateCacheRefs(cache, cb) {
 export function iterateRefs(refs, cb) { for (const r of refs || []) if (cb(r)) return true; return false; }
 
 export const ViewState = {};
+
+// ------------------------------------------------------------------- newer public classes
+export class ConfirmationButton extends ButtonComponent {
+  setInitialFocus() { setTimeout(() => this.buttonEl.focus(), 0); return this; }
+  setSecondary() { this.buttonEl.removeClass('mod-cta'); return this; }
+  setCancel() { this.buttonEl.addClass('mod-cancel'); return this; }
+}
+
+export class ConfirmationModal extends Modal {
+  constructor(app) {
+    super(app);
+    this.buttonContainerEl = this.modalEl.createDiv('modal-button-container');
+  }
+  addClass(cls) { this.modalEl.addClass(cls); return this; }
+  addCheckbox(label, cb) {
+    const row = this.contentEl.createEl('label', { cls: 'mod-checkbox' });
+    const box = row.createEl('input', { type: 'checkbox' });
+    row.appendText(' ' + label);
+    box.addEventListener('change', () => cb(box.checked));
+    return this;
+  }
+  addButton(cb) {
+    const b = new ConfirmationButton(this.buttonContainerEl);
+    b.buttonEl.addEventListener('click', () => this.close());
+    cb(b);
+    return this;
+  }
+  addCancelButton(text) {
+    return this.addButton((b) => b.setButtonText(text || 'Cancel').setCancel().onClick(() => {}));
+  }
+}
+
+export class SettingPage {
+  constructor() {
+    this.rootEl = createDiv('setting-page');
+    this.titlebarEl = this.rootEl.createDiv('setting-page-titlebar');
+    this.containerEl = this.rootEl.createDiv('setting-page-content');
+    this.title = '';
+  }
+  display() {}
+  hide() {}
+}
+
+export class AbstractTextComponent extends TextComponent {}
+export class DisplayValueComponent extends BaseComponent {}
+export class SecretComponent extends BaseComponent {
+  constructor(app, containerEl) {
+    super();
+    this.inputEl = containerEl.createEl('input', { type: 'password' });
+    this.inputEl.addEventListener('change', () => this._cb?.(this.inputEl.value || null));
+  }
+  setValue(v) { this.inputEl.value = v ?? ''; return this; }
+  onChange(cb) { this._cb = cb; return this; }
+}
+export class MenuSeparator {}
+export class Tasks {
+  constructor() { this.list = []; }
+  add(cb) { this.list.push(Promise.resolve().then(cb)); }
+  addPromise(p) { this.list.push(p); }
+  isEmpty() { return !this.list.length; }
+  promise() { return Promise.all(this.list); }
+}
+export function displayTooltip(el, content) { setTooltip(el, typeof content === 'string' ? content : content?.textContent || ''); }
+export const livePreviewState = editorLivePreviewField;
+export function parsePropertyId(id) {
+  const m = /^(note|file|formula)\.(.*)$/.exec(id);
+  return m ? { type: m[1], name: m[2] } : { type: 'note', name: id };
+}
+export class BasesView extends Component {}
+export class QueryController extends Component {}
+export class WorkspaceContainer extends WorkspaceSplit {}
+export class WorkspaceWindow extends WorkspaceContainer {}
+export class WorkspaceFloating extends WorkspaceParent {}
+export class WorkspaceMobileDrawer extends WorkspaceParent {}
+export class TExternalFile {}
+export class SecretStorage {}
+export class Value {}
+export class NullValue extends Value {}
+export class NotNullValue extends Value {}
+export class PrimitiveValue extends NotNullValue {}
+export class StringValue extends PrimitiveValue {}
+export class NumberValue extends PrimitiveValue {}
+export class BooleanValue extends PrimitiveValue {}
+export class DateValue extends NotNullValue {}
+export class ListValue extends NotNullValue {}
+export class ObjectValue extends NotNullValue {}
+export class LinkValue extends NotNullValue {}
+export class FileValue extends NotNullValue {}
+export class TagValue extends StringValue {}
+export class UrlValue extends StringValue {}
+export class HTMLValue extends NotNullValue {}
+export class IconValue extends NotNullValue {}
+export class ImageValue extends NotNullValue {}
+export class RegExpValue extends NotNullValue {}
+export class DurationValue extends NotNullValue {}
+export class RelativeDateValue extends DateValue {}
 export const PopoverState = { Showing: 0, Shown: 1, Hiding: 2, Hidden: 3 };
 
 export {

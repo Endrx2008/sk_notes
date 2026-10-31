@@ -10,20 +10,23 @@ import * as cmView from '@codemirror/view';
 import * as lezerCommon from '@lezer/common';
 import * as lezerHighlight from '@lezer/highlight';
 import * as lezerMarkdown from '@lezer/markdown';
+import * as lezerLr from '@lezer/lr';
+import * as cmLint from '@codemirror/lint';
 import * as cmLangMarkdown from '@codemirror/lang-markdown';
 import moment from 'moment';
 import { call } from '../core/api.js';
 import { setIcon } from '../core/icons.js';
-import { t } from '../core/i18n.js';
+import { getLanguage, t } from '../core/i18n.js';
 import { Buffer, nodeModules, process as nodeProcess } from '../compat/node.js';
 import { notifyPluginError } from '../compat/plugin.js';
 import { installInternals } from '../compat/internals.js';
+import { installNativeApi, makeNativeApi } from './native.js';
 import { ButtonComponent, Modal, Setting, confirmDialog, promptDialog } from '../ui/kit.js';
 
 const SHARED = {
   '@codemirror/state': cmState, '@codemirror/view': cmView, '@codemirror/language': cmLanguage, '@codemirror/commands': cmCommands,
   '@codemirror/search': cmSearch, '@codemirror/autocomplete': cmAutocomplete, '@codemirror/lang-markdown': cmLangMarkdown,
-  '@lezer/common': lezerCommon, '@lezer/highlight': lezerHighlight, '@lezer/markdown': lezerMarkdown, moment,
+  '@codemirror/lint': cmLint, '@lezer/lr': lezerLr, '@lezer/common': lezerCommon, '@lezer/highlight': lezerHighlight, '@lezer/markdown': lezerMarkdown, moment,
 };
 
 const PERMS = ['fs-outside-vault', 'exec', 'network', 'open-external', 'clipboard'];
@@ -34,8 +37,27 @@ export function installPluginManager(app) {
   window.global = window;
   window.Buffer ||= Buffer;
   window.process ||= nodeProcess;
+  // legacy editor globals some plugins touch even when they do not need them
+  // (any unknown member is a harmless function, so mode definitions written for it load)
+  const noop = function noop() { return undefined; };
+  const cm5 = { getMode: () => ({}), modes: {}, mimeModes: {}, commands: {}, keyMap: {}, Pass: {}, helpers: {},
+    StringStream: class StringStream { constructor(s) { this.string = s || ''; this.pos = 0; } } };
+  window.CodeMirror ||= new Proxy(cm5, { get: (tg, k) => (k in tg ? tg[k] : typeof k === 'string' ? noop : undefined) });
+  // translation helper some plugins use for the host app's strings
+  const i18nShim = { language: getLanguage(), t: (k) => String(k).split('.').pop(), on() {}, off() {}, exists: () => false, init() { return i18nShim; },
+    getFixedT: () => (k) => String(k).split('.').pop(), addResourceBundle() {}, changeLanguage: async () => {}, createInstance: () => ({ ...i18nShim }) };
+  window.i18next ||= i18nShim;
+  window.CodeMirrorAdapter ||= { commands: {}, Vim: null };
+  // window.require for plugins that resolve modules at run time (not attributed: asks as "unknown plugin")
+  let sharedRequire = null;
+  window.require ||= (name) => {
+    if (!sharedRequire) throw new Error('modules are not ready yet');
+    return sharedRequire(name);
+  };
+  mgr.makeRequire(null)().then((r) => { sharedRequire = r; });
   app.commands.addCommand({ id: 'plugins:reload', name: t('plugins.reload'), callback: () => mgr.reloadAll() });
   installInternals(app);
+  installNativeApi(app);
 }
 
 class PluginManager {
@@ -77,8 +99,10 @@ class PluginManager {
     return async () => {
       const O = await this.obsidianModule();
       const obs = Object.assign({}, O, { requestUrl: O.makeRequestUrl(id), request: O.makeRequest(id) });
+      let native = null;
       const req = (name) => {
         if (name === 'obsidian') return obs;
+        if (name === 'sknotes') return (native ||= makeNativeApi(this.app, id));
         if (SHARED[name]) return SHARED[name];
         const clean = name.replace(/^node:/, '');
         if (node[clean] !== undefined) return node[clean];
@@ -101,9 +125,10 @@ class PluginManager {
     let PluginClass;
     try {
       // the plugin bundle is CommonJS: function(module, exports, require, ...)
-      const fn = new Function('module', 'exports', 'require', 'app', 'global', 'process', 'Buffer', '__dirname', '__filename',
-        `${src.main}\n//# sourceURL=plugin:${id}/main.js`);
-      fn(module, module.exports, req, this.app, window, nodeProcess, Buffer, `${this.app.vault.adapter.getBasePath()}/.sk_notes/plugins/${id}`, 'main.js');
+      // only CommonJS names as parameters: bundles may declare their own top-level
+      // `app`, `process`... (those are available as globals instead)
+      const fn = new Function('module', 'exports', 'require', `${src.main}\n//# sourceURL=plugin:${id}/main.js`);
+      fn(module, module.exports, req);
       PluginClass = module.exports.default || module.exports;
       if (typeof PluginClass !== 'function') throw new Error(t('plugins.no-class'));
     } catch (e) {

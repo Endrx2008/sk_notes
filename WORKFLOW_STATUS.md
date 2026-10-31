@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | 3 – Development |
 | Cycle | 1 |
-| Last update | 2026-10-31 |
+| Last update | 2026-10-31 (work paused: usage limit) |
 
 ## Phases
 
@@ -36,9 +36,25 @@
    does not apply to sk_notes); non-English files are machine translations marked
    "needs review".
 
-## Open bugs
+## Open bugs (cycle 1, development still in progress)
 
-None yet.
+1. API request bodies: Qt WebEngine 6.8 repeats the first 64 KB block of a request body.
+   Fixed for bodies up to ~61 KB (exact length in the URL, parts of 60 KB). A 300 KB
+   write still times out (multi-part upload path): to investigate next (sk_notes/app/bridge.py,
+   sk_notes/web/src/core/api.js).
+2. Plugin compatibility (qa/plugin_compat.py, last full run before several fixes): about 32/50
+   load cleanly now; editing-toolbar crashed because of bug 1 (re-test after the fix);
+   kanban, hover-editor, advanced-canvas, mind-map (ES5 classes), excalidraw, copilot,
+   textgenerator, annotator, pdf-plus, realclaudian need internal APIs or Node servers.
+
+## Still to do in Phase 3
+
+- Fix bug 1, re-run qa/plugin_compat.py and write docs/compatibility.md.
+- Translations: it, es, fr, de, pt, ru, zh-CN, ja (only en.json exists) + tests/test_i18n.py.
+- Tests: importers, migration, permissions, JS unit tests (npm test), UI smoke tests.
+- Packaging: tools/build_deb.sh, packaging/arch/PKGBUILD, .desktop file.
+- Startup time measurement (target 2 s; ~3 s measured on this 1-CPU VM).
+- Then Phases 4–6 (test agents, similarity, originality) and FINAL_REPORT.md.
 
 ## Check results
 

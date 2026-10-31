@@ -1,0 +1,79 @@
+# sk_notes plugin API
+
+sk_notes runs two kinds of plugins from `<vault>/.sk_notes/plugins/<folder>/`:
+
+1. **Native plugins** use the small, stable API below (`require('sknotes')`).
+2. **Community plugins** written for the plugin API of other Markdown note apps run through a
+   compatibility layer (`require('obsidian')`); see [compatibility.md](compatibility.md).
+
+Both are CommonJS files (`main.js`) with a `manifest.json` and an optional `styles.css`.
+No community plugin runs while *restricted mode* is on (Settings → Community plugins).
+
+## Manifest
+
+```json
+{
+  "id": "my-plugin",
+  "name": "My plugin",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0",
+  "description": "What it does.",
+  "author": "You",
+  "isDesktopOnly": false,
+  "skPermissions": ["network"]
+}
+```
+
+`skPermissions` lists the permissions the plugin needs; they are shown to the user when the
+plugin is enabled and granted only if the user accepts.
+
+## Permissions
+
+| Permission | Allows |
+|---|---|
+| *(always)* | read and write notes inside the vault; read/write its own folder `.sk_notes/plugins/<id>/` |
+| `fs-outside-vault` | files outside the vault (Node `fs` with absolute paths) |
+| `exec` | running programs (`child_process`) |
+| `network` | `requestUrl()` to remote hosts, and remote `fetch()` from the page |
+| `open-external` | opening URLs in the browser |
+| `clipboard` | reserved |
+
+A permission that was not declared (or a community plugin that declares none) is asked for
+the first time it is needed: *Allow once*, *Always allow*, *Deny*. Answers are stored in
+`.sk_notes/permissions.json` and can be changed in Settings → Community plugins → 🛡.
+Plugins can never write into `.sk_notes` outside their own folder.
+
+## Native API (`require('sknotes')`)
+
+```js
+const sk = require('sknotes');
+
+module.exports = class MyPlugin extends sk.Plugin {
+  async onload() {
+    this.addCommand({ id: 'hello', name: 'Say hello', callback: () => sk.notice('Hello!') });
+  }
+};
+```
+
+| Member | Description |
+|---|---|
+| `version` | API version (`1.0.0`) |
+| `Plugin` | base class: `onload()`, `onunload()`, `loadData()`, `saveData(data)`, `addCommand()`, `addRibbonIcon()`, `addStatusBarItem()`, `addSettingTab()`, `registerView()`, `registerMarkdownPostProcessor()`, `registerMarkdownCodeBlockProcessor()`, `registerEditorExtension()`, `registerEvent()`, `registerDomEvent()`, `registerInterval()`, `register(cleanup)` |
+| `PluginSettingTab`, `Setting`, `Modal`, `Menu`, `Notice`, `setIcon` | UI building blocks |
+| `notice(text, ms)` | show a notice |
+| `language()` | current UI language code |
+| `vault.name()` / `list(ext='md')` / `exists(path)` / `read(path)` / `write(path, text)` / `append(path, text)` / `rename(path, newPath)` / `trash(path)` | files (vault-relative paths) |
+| `vault.onChange(cb)` | `cb({type, path, oldPath})` for create/modify/delete/rename; returns an unsubscribe function |
+| `metadata.get(path)` | parsed metadata (frontmatter, links, tags, headings, sections, list items, blocks with positions) |
+| `metadata.tags()` / `backlinks(path)` / `resolveLink(linktext, sourcePath)` / `setProperty(path, key, value)` | links, tags, properties |
+| `workspace.activeFile()` / `open(path, newTab)` / `selection()` / `insert(text)` / `onFileOpen(cb)` | editor and tabs |
+| `search(query)` | full search language; resolves to `{total, results: [{path, matches}]}` |
+| `skai.available()` / `skai.ask(prompt, {system, onChunk})` | SKAI (local AI), if enabled and online |
+
+A complete example is in [`examples/sample-plugin`](../examples/sample-plugin).
+
+## Metadata format
+
+Positions are `{start: {line, col, offset}, end: {…}}`, 0-based, with offsets and columns
+in UTF-16 code units (JavaScript string indices). `listItems[].parent` is the line of the
+parent item, or a negative number for top-level items of the same list.

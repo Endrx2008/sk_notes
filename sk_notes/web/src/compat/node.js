@@ -110,7 +110,9 @@ export function makeFs(pluginId) {
     renameSync: (a, b) => { sync('rename', a, { dest: String(b) }); },
     copyFileSync: (a, b) => { sync('copyFile', a, { dest: String(b) }); },
     accessSync: (p) => { if (!sync('exists', p)) throw errno({ code: 'ENOENT' }, p); },
-    readFile: cbify(promises.readFile), writeFile: cbify(promises.writeFile), stat: cbify(promises.stat),
+    readFile: cbify(promises.readFile), writeFile: cbify(promises.writeFile), stat: cbify(promises.stat), lstat: cbify(promises.lstat),
+    access: cbify(promises.access), appendFile: cbify(promises.appendFile), copyFile: cbify(promises.copyFile), rm: cbify(promises.rm),
+    rmdir: cbify(promises.rmdir),
     readdir: cbify(promises.readdir), mkdir: cbify(promises.mkdir), unlink: cbify(promises.unlink),
     rename: cbify(promises.rename), exists: (p, cb) => promises.access(p).then(() => cb(true), () => cb(false)),
     watch: () => ({ close() {}, on() {} }),
@@ -246,6 +248,7 @@ export const os = {
   platform: () => 'linux', type: () => 'Linux', arch: () => 'x64', release: () => '', EOL: '\n',
   homedir: () => env().home, tmpdir: () => env().tmp, hostname: () => env().hostname,
   userInfo: () => ({ username: env().user, homedir: env().home }), cpus: () => [{}], totalmem: () => 0, freemem: () => 0,
+  constants: { signals: { SIGINT: 2, SIGTERM: 15, SIGKILL: 9 }, errno: {} }, networkInterfaces: () => ({}), loadavg: () => [0, 0, 0],
 };
 
 export const url = {
@@ -310,7 +313,7 @@ export function nodeModules(pluginId) {
     assert: Object.assign((c, m) => { if (!c) throw new Error(m || 'assertion failed'); }, { ok: (c, m) => { if (!c) throw new Error(m || 'assertion failed'); }, strictEqual: (a, b, m) => { if (a !== b) throw new Error(m || 'not equal'); } }),
     'assert/strict': (c, m) => { if (!c) throw new Error(m || 'assertion failed'); },
     querystring: { parse: (s) => Object.fromEntries(new URLSearchParams(s)), stringify: (o) => new URLSearchParams(o).toString() },
-    stream: denied('stream'), http: denied('http'), https: denied('https'), net: denied('net'), tls: denied('tls'),
+    stream: denied('stream'), http: Object.assign(denied('http'), {}), https: denied('https'), net: denied('net'), tls: denied('tls'),
     zlib: denied('zlib'), worker_threads: denied('worker_threads'), readline: denied('readline'), async_hooks: { AsyncLocalStorage: class { run(s, f) { return f(); } getStore() { return undefined; } } },
     constants: {}, module: { createRequire: () => () => ({}) }, timers: { setTimeout, clearTimeout, setInterval, clearInterval },
   };

@@ -125,6 +125,7 @@ class SchemeHandler(QWebEngineUrlSchemeHandler):
         self.pool = QThreadPool(self)
         self.pool.setMaxThreadCount(4)
         self._jobs: dict[int, QWebEngineUrlRequestJob] = {}
+        self._uploads: dict[str, dict] = {}
         self._next = 0
         self._lock = threading.Lock()
         self._done.connect(self._finish)
@@ -183,13 +184,40 @@ class SchemeHandler(QWebEngineUrlSchemeHandler):
             return
         job.reply(mime, f)
 
+    # large bodies arrive in parts (see core/api.js)
+    def _store_part(self, upload_id: str, index: str, data: bytes) -> None:
+        import time
+        now = time.time()
+        for k in [k for k, v in self._uploads.items() if now - v["ts"] > 120]:
+            del self._uploads[k]
+        entry = self._uploads.setdefault(upload_id, {"ts": now, "parts": {}, "size": 0})
+        if entry["size"] + len(data) > MAX_BODY:
+            return
+        entry["parts"][int(index)] = data
+        entry["size"] += len(data)
+
+    def _take_upload(self, upload_id: str, count: int) -> bytes | None:
+        entry = self._uploads.pop(upload_id, None)
+        if not entry or len(entry["parts"]) != count:
+            return None
+        return b"".join(entry["parts"][i] for i in range(count))
+
     def _api(self, job, method: str, query: str) -> None:
         q = parse_qs(query)
-        dev = job.requestBody()
-        raw = b""
-        if dev is not None:
-            dev.open(QIODevice.OpenModeFlag.ReadOnly)
-            raw = bytes(dev.readAll())
+        try:
+            length = int((q.get("len") or ["0"])[0])
+        except ValueError:
+            length = 0
+        raw = _read_body(job, length)
+        if method == "_upload":
+            self._store_part((q.get("id") or [""])[0], (q.get("i") or ["0"])[0], raw)
+            self._reply(job, b"application/json", _json({"ok": True, "result": True}))
+            return
+        if q.get("upload"):
+            raw = self._take_upload(q["upload"][0], int((q.get("parts") or ["0"])[0]))
+            if raw is None:
+                self._reply(job, b"application/json", _json({"ok": False, "error": "upload-incomplete"}))
+                return
         try:
             params = json.loads(raw) if raw else {}
             if not isinstance(params, dict):
@@ -209,6 +237,30 @@ class SchemeHandler(QWebEngineUrlSchemeHandler):
                                                            self.api.call(method, params, ctx))))
             return
         self._reply(job, b"application/json", self.api.call(method, params, ctx))
+
+
+MAX_BODY = 64 * 1024 * 1024
+
+
+def _read_body(job, length: int) -> bytes:
+    """Read exactly `length` bytes of the POST body (sent by core/api.js, at most 64 KB).
+    Qt WebEngine 6.8's body device is sequential, reports size 0 and repeats its first
+    64 KB block when read past the end, so the length must come from the client."""
+    if length <= 0:
+        return b""
+    dev = job.requestBody()
+    if dev is None:
+        return b""
+    if not dev.isOpen():
+        dev.open(QIODevice.OpenModeFlag.ReadOnly)
+    chunks, total = [], 0
+    while total < length:
+        data = dev.read(min(65536, length - total))  # None at the end / on error
+        if not data:
+            break
+        chunks.append(bytes(data))
+        total += len(chunks[-1])
+    return b"".join(chunks)[:length]
 
 
 def QUrlFormattingOptions():  # noqa: N802 - small helper to keep the call above readable

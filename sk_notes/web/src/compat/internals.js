@@ -6,6 +6,7 @@ import { applyTheme } from '../core/theme.js';
 import { FileView } from '../views/base.js';
 import { openSettings } from '../ui/settings.js';
 import { nodeModules } from './node.js';
+import { DEFAULTS } from '../model/settings.js';
 
 const CONFIG_MAP = {
   attachmentFolderPath: 'attachmentFolderPath', newFileLocation: 'newFileLocation', newFileFolderPath: 'newFileFolderPath',
@@ -94,7 +95,14 @@ export function installInternals(app) {
 
   // ---------------------------------------------------------------- internal plugins
   const s = app.settings;
-  const opt = (map) => new Proxy({}, { get: (tg, k) => (k in map ? s.get(map[k]) : undefined), set: (tg, k, v) => { if (k in map) s.set(map[k], v); return true; } });
+  // like the built-in plugin options elsewhere: only values the user actually set
+  const opt = (map) => new Proxy({}, {
+    get: (tg, k) => { if (!(k in map)) return undefined; const v = s.get(map[k]); return v === DEFAULTS[map[k]] || v === '' ? undefined : v; },
+    set: (tg, k, v) => { if (k in map) s.set(map[k], v); return true; },
+    has: (tg, k) => k in map && s.get(map[k]) !== DEFAULTS[map[k]] && s.get(map[k]) !== '',
+    ownKeys: () => Object.keys(map).filter((k) => s.get(map[k]) !== DEFAULTS[map[k]] && s.get(map[k]) !== ''),
+    getOwnPropertyDescriptor: (tg, k) => ({ enumerable: true, configurable: true, value: s.get(map[k]) }),
+  });
   // (no object spread here: it would call the getters of `instance` too early)
   const internal = (id, instance, extra = {}) => {
     if (!('options' in instance)) instance.options = {};
@@ -188,8 +196,8 @@ export function installInternals(app) {
   ws.handleExternalLinkContextMenu = () => false;
   ws.onLayoutChange = () => ws.trigger('layout-change');
   ws.iterateCodeMirrors = (cb) => ws.iterateAllLeaves((l) => { if (l.view?.cm) cb(l.view.cm); });
-  ws.protocolHandlers = app.protocolHandlers ||= {};
-  ws.registerObsidianProtocolHandler = (action, fn) => { app.protocolHandlers[action] = fn; };
+  ws.protocolHandlers = new Map();
+  ws.registerObsidianProtocolHandler = (action, fn) => { ws.protocolHandlers.set(action, fn); (app.protocolHandlers ||= {})[action] = fn; };
   app.fileManager.promptForFileDeletion = (f) => app.fileManager.promptForDeletion(f);
 
   // ---------------------------------------------------------------- plugins manager internals

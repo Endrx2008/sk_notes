@@ -47,6 +47,16 @@ export class FileExplorerView extends ItemView {
     this.render = debounce(() => this._render(), 50, true);
   }
 
+  /** path → item elements (plugins decorate explorer items through this). */
+  get fileItems() {
+    const out = {};
+    for (const [path, it] of this.items) {
+      out[path] = { el: it.el, selfEl: it.self, titleEl: it.self, innerEl: it.inner, titleInnerEl: it.inner, coverEl: it.el, file: it.file,
+        childrenEl: it.childrenEl, collapsed: it.el.hasClass('is-collapsed'), setCollapsed: (c) => { if (c) this.expanded.delete(path); else this.expanded.add(path); this.render(); } };
+    }
+    return out;
+  }
+
   getViewType() { return 'file-explorer'; }
   getDisplayText() { return t('explorer.title'); }
   getIcon() { return 'folder'; }

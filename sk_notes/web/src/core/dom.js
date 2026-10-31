@@ -173,17 +173,21 @@ export function installDomHelpers(win = window) {
     this.addEventListener('auxclick', listener, options);
   });
   define(H.prototype, 'trigger', function trigger(type) { this.dispatchEvent(new Event(type, { bubbles: true })); });
+  // Fires when the element goes from "not in the document" to "in the document" – not on
+  // every DOM change (a listener that adds nodes must not trigger itself again).
   define(H.prototype, 'onNodeInserted', function onNodeInserted(listener, once) {
-    let done = false;
+    let connected = this.isConnected;
     const check = () => {
-      if (this.isConnected && !done) {
-        if (once) done = true;
+      const now = this.isConnected;
+      if (now && !connected) {
+        connected = true;
+        if (once) obs.disconnect();
         listener();
-      }
+      } else if (!now) connected = false;
     };
     const obs = new MutationObserver(check);
     obs.observe(this.ownerDocument, { childList: true, subtree: true });
-    queueMicrotask(check);
+    if (connected) queueMicrotask(() => { if (this.isConnected) { if (once) obs.disconnect(); listener(); } });
     return () => obs.disconnect();
   });
   define(H.prototype, 'onWindowMigrated', function onWindowMigrated() { return () => {}; });
