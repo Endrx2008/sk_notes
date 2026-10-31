@@ -1,0 +1,40 @@
+# Maintainer: Enrico Miot (EndrX)
+# PKGBUILD for Skorpion OS Mantis (Arch). The source tarball comes from
+# tools/build_tarball.sh and already contains the built web front-end, so no Node.js
+# is needed here.
+pkgname=sk-notes
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Markdown notes and knowledge base for Skorpion OS, with local AI (SKAI)"
+arch=('any')
+url="https://sourceforge.net/projects/skos/"
+license=('GPL-3.0-or-later')
+depends=('python' 'python-pyqt6' 'python-pyqt6-webengine' 'python-yaml' 'python-numpy')
+optdepends=('git: Git sync of the vault'
+            'syncthing: Syncthing status in the sync panel'
+            'pandoc: needed by some community plugins'
+            'ollama: SKAI, the local AI')
+source=("sk_notes-$pkgver.tar.gz")
+sha256sums=('SKIP')  # tools/build_tarball.sh writes the real checksum into dist/PKGBUILD
+
+package() {
+    cd "$srcdir/sk_notes-$pkgver"
+    local app="$pkgdir/usr/share/sk-notes"
+    install -d "$app"
+    cp -r main.py sk_notes "$app/"
+    rm -rf "$app/sk_notes/web/src" "$app/sk_notes/web/styles" "$app/sk_notes/web/tests"
+    find "$app" -name __pycache__ -type d -prune -exec rm -rf {} +
+    python -m compileall -q -d /usr/share/sk-notes "$app"
+
+    install -d "$pkgdir/usr/bin"
+    printf '#!/bin/sh\nexec /usr/bin/python3 /usr/share/sk-notes/main.py "$@"\n' > "$pkgdir/usr/bin/sk-notes"
+    chmod 755 "$pkgdir/usr/bin/sk-notes"
+
+    install -Dm644 packaging/skorpion-sk-notes.desktop "$pkgdir/usr/share/applications/skorpion-sk-notes.desktop"
+    sed -e "s/@VERSION@/$pkgver/" -e "s/@DATE@/$(date -u +%Y-%m-%d)/" packaging/skorpion-sk-notes.metainfo.xml \
+        | install -Dm644 /dev/stdin "$pkgdir/usr/share/metainfo/skorpion-sk-notes.metainfo.xml"
+    install -Dm644 sk_notes/web/logo.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/skorpion-sk-notes.svg"
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm644 THIRD_PARTY_LICENSES.md "$pkgdir/usr/share/licenses/$pkgname/THIRD_PARTY_LICENSES.md"
+    install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}

@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=sk_notes
+GenericName=Notes and knowledge base
+GenericName[it]=Appunti e knowledge base
+Comment=Markdown notes in a local folder, with links, graph and local AI (SKAI)
+Comment[it]=Appunti Markdown in una cartella locale, con collegamenti, grafo e IA locale (SKAI)
+Exec=sk-notes %u
+Icon=skorpion-sk-notes
+Terminal=false
+Categories=Office;TextEditor;
+Keywords=notes;markdown;wiki;knowledge;zettelkasten;journal;appunti;note;
+MimeType=x-scheme-handler/sknotes;
+StartupNotify=true
+StartupWMClass=skorpion-sk-notes

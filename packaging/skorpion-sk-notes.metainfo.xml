@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>skorpion-sk-notes</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>sk_notes</name>
+  <summary>Markdown notes and knowledge base for Skorpion OS</summary>
+  <description>
+    <p>sk_notes keeps your notes as plain Markdown files in a folder on your computer.
+    Link notes together, browse them as a graph, organise them with tags, properties,
+    canvases and bases, and ask the local SKAI model about them. No account, no cloud,
+    no telemetry.</p>
+  </description>
+  <url type="homepage">https://sourceforge.net/projects/skos/</url>
+  <content_rating type="oars-1.1"/>
+  <launchable type="desktop-id">skorpion-sk-notes.desktop</launchable>
+  <developer id="org.skorpion-os"><name>Enrico Miot (EndrX)</name></developer>
+  <categories><category>Office</category><category>Utility</category></categories>
+  <provides><binary>sk-notes</binary></provides>
+  <releases><release version="@VERSION@" date="@DATE@"/></releases>
+</component>
