@@ -8,7 +8,7 @@ import os
 import re
 from pathlib import Path
 
-from PyQt6.QtCore import QUrl
+from PyQt6.QtCore import QTimer, QUrl
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import QApplication, QFileDialog
 
@@ -95,6 +95,8 @@ def register(app) -> None:
     @r("app.ready")
     def ready(p, ctx):
         """The page finished starting: log the time since the process was created."""
+        if hasattr(app, "set_page_ready"):
+            QTimer.singleShot(0, app.set_page_ready)  # after this reply: links waiting at start-up
         secs = process_age()
         if secs is not None and not getattr(app, "_ready_logged", False):
             app._ready_logged = True

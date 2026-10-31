@@ -16,6 +16,7 @@ import { Workspace } from '../ui/workspace.js';
 import { MarkdownView } from '../views/markdown.js';
 import { StatusBar } from '../ui/statusbar.js';
 import { registerCoreFeatures } from '../features/core.js';
+import { installLinkHandler } from '../features/links.js';
 import { getAllTags, resolveSubpath } from '../model/metadata.js';
 
 class ViewRegistry extends Events {
@@ -180,6 +181,7 @@ export class App extends Events {
       }
     };
     for (const n of ['create', 'modify', 'delete', 'rename']) onBackend(n, handle(n));
+    installLinkHandler(this);
     onBackend('refresh', (snap) => {
       this.vault._load(snap.files);
       this.metadataCache._load(snap.metadata, snap.resolvedLinks, snap.unresolvedLinks);

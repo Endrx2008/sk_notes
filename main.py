@@ -21,6 +21,12 @@ def main() -> int:
     from sk_notes.app.logging_conf import setup_logging
     setup_logging()
 
+    if args.uri:
+        vault = _vault_for_link(args.uri, args.vault)
+        if vault and _forward_link(vault, args.uri):
+            return 0  # the process that has this vault open takes it
+        args.vault = args.vault or vault
+
     from sk_notes.app.bridge import register_scheme
     register_scheme()  # before QApplication
 
@@ -47,9 +53,38 @@ def main() -> int:
     win.load("" if app.service else "vaults")
     win.show()
     log.debug("startup: window shown at %.2fs", process_age() or 0)
+    if args.uri:
+        app.handle_uri(args.uri)  # delivered once the page is ready
     code = qapp.exec()
     app.quit()
     return code
+
+
+def _vault_for_link(link: str, explicit: str | None) -> str | None:
+    """Vault a sknotes:// link points to (known vaults only), else the last one used."""
+    from sk_notes.app import config, uri
+    settings = config.GlobalSettings.load()
+    try:
+        _action, params = uri.parse(link)
+    except uri.UriError:
+        return explicit or settings.last_vault
+    known = list(settings.vaults)
+    return explicit or uri.find_vault(params, known) or settings.last_vault
+
+
+def _forward_link(vault: str, link: str) -> bool:
+    """Give the link to a running sk_notes that has `vault` open; True if one took it."""
+    from PyQt6.QtNetwork import QLocalSocket
+    from sk_notes.app import uri
+    sock = QLocalSocket()
+    sock.connectToServer(uri.server_name(str(os.path.realpath(vault))))
+    if not sock.waitForConnected(500):
+        return False
+    sock.write(link.encode())
+    sock.flush()
+    sock.waitForBytesWritten(1000)
+    sock.disconnectFromServer()
+    return True
 
 
 if __name__ == "__main__":

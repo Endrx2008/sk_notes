@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import subprocess
 import sys
 import tempfile
 import time
@@ -176,6 +178,32 @@ class Smoke:
         assert (self.vault / "Home.md").read_text(encoding="utf-8") == home_before, "Home.md was changed"
         assert self.page.js("app.workspace.activeLeaf.view.getViewData()") == ideas_before
 
+    def _link(self, link: str) -> float:
+        """Run a second `main.py <link>` like a desktop launcher would; it must hand over and exit."""
+        h = self.app.home
+        env = dict(os.environ, XDG_CONFIG_HOME=f"{h}/config", XDG_CACHE_HOME=f"{h}/cache", XDG_DATA_HOME=f"{h}/data")
+        t0 = time.time()
+        r = subprocess.run([sys.executable, str(Path(__file__).resolve().parent.parent / "main.py"), link], env=env,
+                           capture_output=True, timeout=30)
+        assert r.returncode == 0, r.stderr.decode()[-500:]
+        return time.time() - t0
+
+    def sknotes_links(self):
+        secs = self._link("sknotes://open?vault=smoke-vault&file=Ideas")
+        self.page.wait("app.workspace.activeLeaf?.view?.file?.path === 'Ideas.md'", timeout=10)
+        self._link(f"sknotes://open?path={self.vault / 'Home.md'}")
+        self.page.wait("app.workspace.activeLeaf?.view?.file?.path === 'Home.md'", timeout=10)
+        self._link("sknotes://new?vault=smoke-vault&name=From%20link&content=hello%20link")
+        self.page.wait("app.workspace.activeLeaf?.view?.file?.path === 'From link.md'", timeout=10)
+        self._link("sknotes://new?vault=smoke-vault&file=From%20link&content=more&append=true&silent=true")
+        end = time.time() + 10
+        while time.time() < end and "more" not in (self.vault / "From link.md").read_text(encoding="utf-8"):
+            time.sleep(0.2)
+        assert (self.vault / "From link.md").read_text(encoding="utf-8") == "hello link\nmore"
+        self._link("sknotes://search?vault=smoke-vault&query=quiet")
+        self.page.wait("app.workspace.getLeavesOfType('search')[0]?.view?.input?.getValue() === 'quiet'", timeout=10)
+        return f"hand-over {secs:.1f}s"
+
     def no_uncaught_errors(self):
         bad = [c for c in self.page.console if c.startswith("exception")]
         assert not bad, bad[:3]
@@ -194,7 +222,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "no_uncaught_errors"):
+                         "typing_during_file_switch", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:

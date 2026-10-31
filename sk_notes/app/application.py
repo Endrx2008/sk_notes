@@ -14,6 +14,7 @@ from pathlib import Path
 
 from PyQt6.QtCore import QFileSystemWatcher, QObject, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices, QIcon, QKeySequence, QShortcut
+from PyQt6.QtNetwork import QLocalServer
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox
 from PyQt6.QtWebEngineCore import (QWebEnginePage, QWebEngineProfile, QWebEngineSettings,
                                    QWebEngineUrlRequestInterceptor)
@@ -23,7 +24,7 @@ from ..core import i18n
 from ..core.search import QueryError, search
 from ..core.service import VaultService
 from ..core.vault import VaultError, normalize_path
-from . import config
+from . import config, uri as sknotes_uri
 from .bridge import Api, ApiError, Ctx, SchemeHandler
 from .watcher import VaultWatcher
 
@@ -151,6 +152,9 @@ class SkNotesApp(QObject):
         self.big_events: dict[int, str] = {}
         self._big_id = 0
         self.network_plugins: set[str] = set()
+        self.page_ready = False
+        self.pending_uris: list[str] = []
+        self.uri_server: QLocalServer | None = None
         self.api = Api()
         self.event_ready.connect(self._deliver)
 
@@ -223,7 +227,58 @@ class SkNotesApp(QObject):
         self.settings.save()
         for w in self.windows:
             w.setWindowTitle(f"{self.service.vault.name} – sk_notes")
+        self._listen_for_links(path)
         return {"path": path, **stats}
+
+    # ------------------------------------------------------------------ sknotes:// links
+    def _listen_for_links(self, vault: str) -> None:
+        """Other `sk-notes sknotes://...` processes hand their link to us (we own this vault)."""
+        name = sknotes_uri.server_name(vault)
+        server = QLocalServer(self)
+        server.setSocketOptions(QLocalServer.SocketOption.UserAccessOption)
+        if not server.listen(name):
+            QLocalServer.removeServer(name)  # stale socket left by a crash
+            if not server.listen(name):
+                log.warning("cannot listen for sknotes:// links: %s", server.errorString())
+                return
+        server.newConnection.connect(lambda: self._read_link(server))
+        self.uri_server = server
+
+    def _read_link(self, server: QLocalServer) -> None:
+        sock = server.nextPendingConnection()
+        if sock is None:
+            return
+
+        def done():
+            data = bytes(sock.readAll()).decode("utf-8", "replace").strip()
+            sock.disconnectFromServer()
+            if data:
+                self.handle_uri(data)
+        sock.readyRead.connect(done)
+
+    def handle_uri(self, link: str) -> None:
+        try:
+            action, params = sknotes_uri.parse(link)
+        except sknotes_uri.UriError as exc:
+            log.warning("ignored link %r: %s", link, exc)
+            return
+        if not self.page_ready:
+            self.pending_uris.append(link)
+            return
+        if self.service:
+            params = sknotes_uri.vault_relative(params, str(self.service.vault.root))
+        self.emit("open-uri", {"action": action, "params": params})
+        for w in self.windows[:1]:
+            if w.isMinimized():
+                w.showNormal()
+            w.raise_()
+            w.activateWindow()
+
+    def set_page_ready(self) -> None:
+        self.page_ready = True
+        pending, self.pending_uris = self.pending_uris, []
+        for link in pending:
+            self.handle_uri(link)
 
     def remote_network_allowed(self) -> bool:
         return bool(self.network_plugins)
@@ -274,6 +329,8 @@ class SkNotesApp(QObject):
             self.emit("skai-theme", {"theme": theme})
 
     def quit(self) -> None:
+        if self.uri_server:
+            self.uri_server.close()
         if self.watcher:
             self.watcher.close()
         if self.service:
