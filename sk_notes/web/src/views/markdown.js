@@ -164,7 +164,7 @@ export class MarkdownView extends TextFileView {
   clear() {}
 
   _onDocChange(u) {
-    if (this._settingData) return;
+    if (this._settingData || this._loadingFile) return; // typing during a file switch is replaced by the new text
     this.dirty = true;
     this.requestSave();
     this.app.workspace.trigger('editor-change', this.editor, this);

@@ -169,12 +169,23 @@ export class TextFileView extends EditableFileView {
   }
 
   async onLoadFile(file) {
-    const text = await this.app.vault.read(file);
-    this._mtime = file.stat.mtime;
-    this.data = text;
-    this.lastSavedData = text;
-    this.setViewData(text, true);
+    // Until the new text is in, the editor still shows the previous file: saving now
+    // would write that text into `file`.
+    this._loadingFile = file;
+    try {
+      const text = await this.app.vault.read(file);
+      if (this.file !== file) return; // another file was opened meanwhile
+      this._mtime = file.stat.mtime;
+      this.data = text;
+      this.lastSavedData = text;
+      this.setViewData(text, true);
+    } finally {
+      if (this._loadingFile === file) this._loadingFile = null;
+    }
   }
+
+  /** True while a file is being read into the view. */
+  get isLoading() { return !!this._loadingFile; }
 
   async onUnloadFile(file) {
     await this.save();
@@ -182,7 +193,7 @@ export class TextFileView extends EditableFileView {
   }
 
   async save(clear) {
-    if (!this.file) return;
+    if (!this.file || this._loadingFile) return;
     const data = this.getViewData();
     if (data === this.lastSavedData) return;
     this.data = data;
