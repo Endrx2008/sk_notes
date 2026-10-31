@@ -11,7 +11,7 @@ rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist, { recursive: true });
 
 const dev = process.argv.includes('--dev');
-await build({
+const result = await build({
   entryPoints: [join(web, 'src', 'main.js')],
   bundle: true,
   splitting: true,
@@ -23,7 +23,16 @@ await build({
   legalComments: 'none',
   chunkNames: 'chunks/[name]-[hash]',
   logLevel: 'warning',
+  metafile: true,
 });
+
+// Plugins and the app must share one CodeMirror/Lezer: a nested copy (an npm version
+// mismatch) breaks extensions with "multiple instances of @codemirror/state".
+const dupes = Object.keys(result.metafile.inputs).filter((p) => /node_modules\/.+\/node_modules\/@(codemirror|lezer)\//.test(p));
+if (dupes.length) {
+  console.error('duplicate CodeMirror/Lezer packages bundled (align versions in package.json):\n  ' + [...new Set(dupes.map((p) => p.split('/dist/')[0]))].join('\n  '));
+  process.exit(1);
+}
 
 // CSS: concatenate style files in name order
 const styles = readdirSync(join(web, 'styles')).filter((f) => f.endsWith('.css')).sort();
