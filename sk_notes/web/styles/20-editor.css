@@ -14,8 +14,9 @@
 .cm-line { padding: 0 2px; }
 .cm-cursor, .cm-dropCursor { border-left: 2px solid var(--sk-accent) !important; }
 .cm-selectionBackground, .cm-focused .cm-selectionBackground, .cm-content ::selection { background: var(--text-selection) !important; }
-.cm-activeLine { background: transparent; }
-.cm-gutters { background: transparent; border: none; color: var(--text-faint); }
+/* doubled class: CodeMirror's own base theme uses two classes and is injected later */
+.cm-editor.cm-editor .cm-activeLine, .cm-editor.cm-editor .cm-activeLineGutter { background: transparent; }
+.cm-editor.cm-editor .cm-gutters { background: transparent; border: none; color: var(--text-faint); }
 .cm-foldGutter .cm-gutterElement { cursor: pointer; padding: 0 2px; }
 .cm-fold-marker { color: var(--text-faint); opacity: 0; transition: opacity var(--transition); }
 .cm-gutters:hover .cm-fold-marker, .cm-fold-marker:not(.is-open) { opacity: 1; }
