@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from logging.handlers import RotatingFileHandler
 
 from .config import log_file
@@ -14,7 +15,7 @@ def setup_logging(level: int = logging.INFO) -> None:
     root = logging.getLogger()
     if root.handlers:
         return
-    root.setLevel(level)
+    root.setLevel(logging.DEBUG if os.environ.get("SK_NOTES_DEBUG") else level)
     console = logging.StreamHandler()
     console.setFormatter(logging.Formatter(FORMAT))
     root.addHandler(console)

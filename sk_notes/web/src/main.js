@@ -6,11 +6,13 @@ import { setStrings, t } from './core/i18n.js';
 import { applyTheme } from './core/theme.js';
 import { installTooltips } from './ui/kit.js';
 
+performance.mark('skn:script');
 window.moment = moment;
 installDomHelpers(window);
 
 async function boot() {
   const info = await call('app.info');
+  performance.mark('skn:info');
   setStrings(info.language, info.strings);
   moment.locale(info.language.toLowerCase());
   document.body.addClass('sk-notes', 'mod-linux', 'is-frameless');
@@ -31,6 +33,7 @@ async function boot() {
     import('./skai/skai.js'),
     import('./features/extras.js'),
   ]);
+  performance.mark('skn:modules');
   const app = new App(info);
   plugins.installPluginManager(app);
   skai.installSkai(app);
@@ -38,6 +41,10 @@ async function boot() {
   await app.start(root);
   document.body.addClass('is-ready');
   window.__sknReady = true;
+  // start-up phases, logged by Python with the total time (see qa/startup_time.py)
+  const marks = Object.fromEntries(performance.getEntriesByType('mark').filter((m) => m.name.startsWith('skn:'))
+    .map((m) => [m.name.slice(4), Math.round(m.startTime)]));
+  call('app.ready', { pageMs: performance.now(), marks }).catch(() => {});
 }
 
 boot().catch((e) => {

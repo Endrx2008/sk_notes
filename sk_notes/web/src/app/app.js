@@ -101,6 +101,7 @@ export class App extends Events {
     registerCoreFeatures(this);
 
     const snap = await call('vault.snapshot');
+    performance.mark('skn:snapshot');
     this.vault._load(snap.files);
     this.metadataCache._load(snap.metadata, snap.resolvedLinks, snap.unresolvedLinks);
     this._wireBackend();
@@ -117,8 +118,10 @@ export class App extends Events {
     await this.workspace.changeLayout(layout || this._defaultLayout());
     this._ensureSidebars();
     this.workspace._setLayoutReady();
+    performance.mark('skn:layout');
     this.metadataCache.trigger('resolved');
     if (this.plugins) await this.plugins.loadAll();
+    performance.mark('skn:plugins');
     this.trigger('ready');
     window.__skn.flush = () => this.flush();
   }

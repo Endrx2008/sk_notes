@@ -35,12 +35,18 @@ def main() -> int:
     qapp.setApplicationVersion(config.VERSION)
     qapp.setDesktopFileName(config.APP_ID)
 
+    import logging
+    from sk_notes.app.api_core import process_age
+    log = logging.getLogger("sk_notes.startup")
+    log.debug("startup: QApplication at %.2fs", process_age() or 0)
     from sk_notes.app.application import SkNotesApp
     app = SkNotesApp(qapp, vault_path=args.vault)
+    log.debug("startup: app and vault at %.2fs", process_age() or 0)
     win = app.new_window()
     win.view.setZoomFactor(app.settings.zoom)
     win.load("" if app.service else "vaults")
     win.show()
+    log.debug("startup: window shown at %.2fs", process_age() or 0)
     code = qapp.exec()
     app.quit()
     return code

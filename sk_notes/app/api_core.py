@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import logging
 import os
 import re
 from pathlib import Path
@@ -16,6 +17,19 @@ from ..core.search import QueryError, search
 from ..core.vault import CONFIG_DIR, normalize_path
 from . import config
 from .bridge import ApiError, Ctx
+
+log = logging.getLogger(__name__)
+
+
+def process_age() -> float | None:
+    """Seconds since this process was created (Linux /proc), or None."""
+    try:
+        start_ticks = int(Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()[19])
+        uptime = float(Path("/proc/uptime").read_text().split()[0])
+        return uptime - start_ticks / os.sysconf("SC_CLK_TCK")
+    except (OSError, ValueError, IndexError):
+        return None
+
 
 CONFIG_NAME_RE = re.compile(r"^(?:[A-Za-z0-9_.-]+\.json|plugins/[A-Za-z0-9_.-]+/data\.json|"
                             r"snippets/[^/]+\.css|themes/[^/]+/theme\.css)$")
@@ -76,6 +90,15 @@ def register(app) -> None:
         args = ["--vault", str(app.vault_root())] if app.vault_root() else []
         app.spawn_process(args)
         QApplication.instance().quit()
+        return True
+
+    @r("app.ready")
+    def ready(p, ctx):
+        """The page finished starting: log the time since the process was created."""
+        secs = process_age()
+        if secs is not None and not getattr(app, "_ready_logged", False):
+            app._ready_logged = True
+            log.info("window ready %.2fs after process start (page %.0f ms) %s", secs, float(p.get("pageMs", 0)), p.get("marks") or "")
         return True
 
     @r("app.quit")
