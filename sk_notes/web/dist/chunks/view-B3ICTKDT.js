@@ -1,0 +1,1 @@
+import{a as e}from"./chunk-QJQJ6TGM.js";import"./chunk-LTKBP4P3.js";import"./chunk-F34ATTAJ.js";import"./chunk-6FBBXLKI.js";import"./chunk-237CNJAN.js";import"./chunk-2FRXNASO.js";import"./chunk-NM6J3ND7.js";var t=class extends e{getViewType(){return"skai"}getDisplayText(){return"SKAI"}};export{t as SkaiView};
