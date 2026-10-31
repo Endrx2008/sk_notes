@@ -152,6 +152,13 @@ class App:
         self.log_path = Path(self.home) / "app.log"
 
     def __enter__(self) -> "App":
+        try:
+            return self._start()
+        except BaseException:
+            self.__exit__(None, None, None)
+            raise
+
+    def _start(self) -> "App":
         env = dict(os.environ)
         env.update({"QTWEBENGINE_REMOTE_DEBUGGING": str(self.port), "XDG_CONFIG_HOME": f"{self.home}/config",
                     "XDG_CACHE_HOME": f"{self.home}/cache", "XDG_DATA_HOME": f"{self.home}/data",
@@ -183,7 +190,7 @@ class App:
     def __exit__(self, *exc):
         if self.page:
             self.page.close()
-        if self.proc and self.proc.poll() is None:
+        if self.proc and self.proc.poll() is None:  # whole group: xvfb-run, Xvfb, python, QtWebEngine
             os.killpg(self.proc.pid, signal.SIGTERM)
             try:
                 self.proc.wait(10)

@@ -1197,4 +1197,8 @@ export class Workspace extends Events {
   }
 
   updateOptions() { this.trigger('options-change'); }
+
+  // page preview sources registered by plugins (display info only)
+  registerHoverLinkSource(id, info) { (this.hoverLinkSources ||= {})[id] = info; }
+  unregisterHoverLinkSource(id) { if (this.hoverLinkSources) delete this.hoverLinkSources[id]; }
 }

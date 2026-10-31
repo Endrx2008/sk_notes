@@ -16,7 +16,7 @@ import { Workspace } from '../ui/workspace.js';
 import { MarkdownView } from '../views/markdown.js';
 import { StatusBar } from '../ui/statusbar.js';
 import { registerCoreFeatures } from '../features/core.js';
-import { resolveSubpath } from '../model/metadata.js';
+import { getAllTags, resolveSubpath } from '../model/metadata.js';
 
 class ViewRegistry extends Events {
   constructor() {
@@ -388,6 +388,7 @@ export class App extends Events {
 
   // shared helper for the subpath resolution exported to plugins
   resolveSubpath(cache, subpath) { return resolveSubpath(cache, subpath); }
+  allTagsOf(cache) { return getAllTags(cache) || []; }
 
   isVaultPath(p) { return !!this.vault.getAbstractFileByPath(p); }
   fileTypeIcon(file) {

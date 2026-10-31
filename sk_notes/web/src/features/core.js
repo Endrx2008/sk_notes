@@ -56,6 +56,11 @@ export function registerCoreFeatures(app) {
   lazy('skai', () => import('../skai/view.js').then((m) => m.SkaiView));
   lazy('file-recovery', () => import('./recovery.js').then((m) => m.RecoveryView));
 
+  // bases code blocks and embeds: load the bases module on first use
+  const loadBases = async () => { (await import('../views/bases.js')).installBaseEmbeds(app); };
+  app.markdownProcessors.codeBlocks.set('base', async (src, el, ctx) => { await loadBases(); return app.markdownProcessors.codeBlocks.get('base')(src, el, ctx); });
+  app.renderBaseEmbed = async (...a) => { await loadBases(); return app.renderBaseEmbed(...a); };
+
   app.bookmarks = new Bookmarks(app);
   app.bookmarks.load();
   installPropertiesEditor(app);

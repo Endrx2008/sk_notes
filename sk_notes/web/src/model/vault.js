@@ -50,7 +50,7 @@ function parentPath(path) {
   return i === -1 ? '/' : path.slice(0, i);
 }
 
-class DataAdapter {
+export class DataAdapter {
   constructor(vault) {
     this.vault = vault;
   }
