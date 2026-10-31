@@ -1,0 +1,46 @@
+// sk_notes web entry point.
+import moment from 'moment';
+import { installDomHelpers } from './core/dom.js';
+import { call, onBackend } from './core/api.js';
+import { setStrings, t } from './core/i18n.js';
+import { applyTheme } from './core/theme.js';
+import { installTooltips } from './ui/kit.js';
+
+window.moment = moment;
+installDomHelpers(window);
+
+async function boot() {
+  const info = await call('app.info');
+  setStrings(info.language, info.strings);
+  moment.locale(info.language.toLowerCase());
+  document.body.addClass('sk-notes', 'mod-linux', 'is-frameless');
+  applyTheme(info.theme, 'skai');
+  installTooltips();
+  const root = document.getElementById('sk-root');
+  if (!info.vault || location.hash === '#vaults') {
+    document.body.addClass('is-vault-manager');
+    onBackend('skai-theme', (d) => applyTheme(d.theme, 'skai'));
+    const { renderVaultManager } = await import('./ui/vaults.js');
+    renderVaultManager(root.createDiv('vault-manager-page'));
+    document.title = t('vaults.title') + ' – sk_notes';
+    return;
+  }
+  const [{ App }, plugins, skai, extras] = await Promise.all([
+    import('./app/app.js'),
+    import('./plugins/manager.js'),
+    import('./skai/skai.js'),
+    import('./features/extras.js'),
+  ]);
+  const app = new App(info);
+  plugins.installPluginManager(app);
+  skai.installSkai(app);
+  extras.installExtras(app);
+  await app.start(root);
+  document.body.addClass('is-ready');
+  window.__sknReady = true;
+}
+
+boot().catch((e) => {
+  console.error(e);
+  document.body.textContent = 'sk_notes failed to start: ' + (e && (e.code || e.message) || e);
+});
