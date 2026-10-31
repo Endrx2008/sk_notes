@@ -4,7 +4,7 @@
 |---|---|
 | Current phase | 3 – Development |
 | Cycle | 1 |
-| Last update | 2026-10-31 (work paused: usage limit) |
+| Last update | 2026-10-31 |
 
 ## Phases
 
@@ -36,25 +36,30 @@
    does not apply to sk_notes); non-English files are machine translations marked
    "needs review".
 
-## Open bugs (cycle 1, development still in progress)
+## Bugs fixed in cycle 1 (development)
 
-1. API request bodies: Qt WebEngine 6.8 repeats the first 64 KB block of a request body.
-   Fixed for bodies up to ~61 KB (exact length in the URL, parts of 60 KB). A 300 KB
-   write still times out (multi-part upload path): to investigate next (sk_notes/app/bridge.py,
-   sk_notes/web/src/core/api.js).
-2. Plugin compatibility (qa/plugin_compat.py, last full run before several fixes): about 32/50
-   load cleanly now; editing-toolbar crashed because of bug 1 (re-test after the fix);
-   kanban, hover-editor, advanced-canvas, mind-map (ES5 classes), excalidraw, copilot,
-   textgenerator, annotator, pdf-plus, realclaudian need internal APIs or Node servers.
+1. Large saves hung: the parser's bare-URL regex was quadratic on long lines (300 KB took
+   minutes). Fixed with a bounded scheme and a look-behind; regression test
+   `test_long_line_is_fast`. The chunked request protocol for Qt WebEngine 6.8 bodies
+   (first 64 KB block repeated) stays in place.
+2. Plugin compatibility: 43 of 50 top plugins load (`docs/compatibility.md`). Added Node
+   shims (stream, vm, string_decoder, punycode, http constants, tty, http2, console),
+   ES5-callable EventEmitter, `hotkeyManager.addDefaultHotkeys`, `keymap.getRootScope`;
+   regression tests in `sk_notes/web/tests/node-shim.test.mjs` (`npm test`).
+3. The 10k-note search speed test was flaky under load: it now takes the best of 3 runs.
 
 ## Still to do in Phase 3
 
-- Fix bug 1, re-run qa/plugin_compat.py and write docs/compatibility.md.
-- Translations: it, es, fr, de, pt, ru, zh-CN, ja (only en.json exists) + tests/test_i18n.py.
-- Tests: importers, migration, permissions, JS unit tests (npm test), UI smoke tests.
+- UI smoke tests in `qa/`.
 - Packaging: tools/build_deb.sh, packaging/arch/PKGBUILD, .desktop file.
-- Startup time measurement (target 2 s; ~3 s measured on this 1-CPU VM).
+- Startup time measurement (target 2 s).
 - Then Phases 4–6 (test agents, similarity, originality) and FINAL_REPORT.md.
+
+## Done in Phase 3 (latest)
+
+- Translations: 9 languages (en + it, es, fr, de, pt, ru, zh-CN, ja, all 779 keys,
+  marked "needs review"); `tests/test_i18n.py`.
+- Tests: importers, migration (source never modified), permissions (`tests/test_extras.py`).
 
 ## Check results
 
