@@ -6,7 +6,7 @@
   "license": "GPL-3.0-or-later",
   "scripts": {
     "build": "node tools/build_web.mjs",
-    "test": "node --test web/tests/"
+    "test": "node --test sk_notes/web/tests/"
   },
   "dependencies": {
     "@codemirror/autocomplete": "6.18.6",

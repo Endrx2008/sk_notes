@@ -88,7 +88,11 @@ export function makeFs(pluginId) {
     unlink: async (p) => { await asy('unlink', p); },
     rename: async (a, b) => { await asy('rename', a, { dest: String(b) }); },
     copyFile: async (a, b) => { await asy('copyFile', a, { dest: String(b) }); },
+    realpath: async (p) => path.resolve(String(p)),
+    chmod: async () => {}, chown: async () => {}, utimes: async () => {}, lutimes: async () => {},
   };
+  const notSupported = (what) => () => { throw errno({ code: 'ENOTSUP', message: `${what} is not available` }); };
+  const realpathSync = Object.assign((p) => path.resolve(String(p)), { native: (p) => path.resolve(String(p)) });
   const cbify = (fn) => (...args) => {
     const cb = typeof args[args.length - 1] === 'function' ? args.pop() : null;
     fn(...args).then((r) => cb?.(null, r), (e) => cb?.(e));
@@ -116,6 +120,12 @@ export function makeFs(pluginId) {
     readdir: cbify(promises.readdir), mkdir: cbify(promises.mkdir), unlink: cbify(promises.unlink),
     rename: cbify(promises.rename), exists: (p, cb) => promises.access(p).then(() => cb(true), () => cb(false)),
     watch: () => ({ close() {}, on() {} }),
+    watchFile() {}, unwatchFile() {},
+    realpathSync, realpath: Object.assign(cbify(promises.realpath), { native: cbify(promises.realpath) }),
+    chmod: cbify(promises.chmod), chown: cbify(promises.chown), utimes: cbify(promises.utimes), lutimes: cbify(promises.lutimes),
+    chmodSync() {}, chownSync() {}, utimesSync() {}, lutimesSync() {},
+    open: notSupported('fs.open'), openSync: notSupported('fs.open'), close: (fd, cb) => cb?.(null), closeSync() {},
+    read: notSupported('fs.read'), write: notSupported('fs.write'), fstat: notSupported('fs.fstat'), fsync: (fd, cb) => cb?.(null),
     createReadStream: () => { throw errno({ code: 'ENOTSUP', message: 'streams are not available' }); },
     createWriteStream: () => { throw errno({ code: 'ENOTSUP', message: 'streams are not available' }); },
   };
@@ -152,18 +162,61 @@ export const path = {
 path.posix = path;
 
 // ------------------------------------------------------------------- events
-export class EventEmitter {
-  constructor() { this._l = new Map(); }
-  on(n, fn) { if (!this._l.has(n)) this._l.set(n, []); this._l.get(n).push(fn); return this; }
-  addListener(n, fn) { return this.on(n, fn); }
-  once(n, fn) { const w = (...a) => { this.off(n, w); fn(...a); }; return this.on(n, w); }
-  off(n, fn) { const l = this._l.get(n); if (l) this._l.set(n, l.filter((x) => x !== fn)); return this; }
-  removeListener(n, fn) { return this.off(n, fn); }
-  removeAllListeners(n) { if (n) this._l.delete(n); else this._l.clear(); return this; }
-  emit(n, ...a) { const l = this._l.get(n); if (!l) return false; for (const fn of l.slice()) fn(...a); return true; }
-  listenerCount(n) { return this._l.get(n)?.length || 0; }
-  setMaxListeners() { return this; }
+// Listener map created on first use, so ES5-style subclasses (Parent.call(this)) work too.
+const lis = (o) => o._l || (o._l = new Map());
+// A plain function, not a class: Node allows EventEmitter.call(this) in ES5-style subclasses.
+export function EventEmitter() { lis(this); }
+Object.assign(EventEmitter.prototype, {
+  on(n, fn) { const m = lis(this); if (!m.has(n)) m.set(n, []); m.get(n).push(fn); return this; },
+  addListener(n, fn) { return this.on(n, fn); },
+  prependListener(n, fn) { const m = lis(this); m.set(n, [fn, ...(m.get(n) || [])]); return this; },
+  once(n, fn) { const w = (...a) => { this.off(n, w); fn(...a); }; return this.on(n, w); },
+  off(n, fn) { const m = lis(this); const l = m.get(n); if (l) m.set(n, l.filter((x) => x !== fn)); return this; },
+  removeListener(n, fn) { return this.off(n, fn); },
+  removeAllListeners(n) { if (n) lis(this).delete(n); else lis(this).clear(); return this; },
+  emit(n, ...a) { const l = lis(this).get(n); if (!l || !l.length) return false; for (const fn of l.slice()) fn.apply(this, a); return true; },
+  listenerCount(n) { return lis(this).get(n)?.length || 0; },
+  listeners(n) { return (lis(this).get(n) || []).slice(); },
+  eventNames() { return [...lis(this).keys()]; },
+  setMaxListeners() { return this; },
+  getMaxListeners() { return EventEmitter.defaultMaxListeners; },
+});
+EventEmitter.defaultMaxListeners = 10;
+EventEmitter.setMaxListeners = () => {};
+EventEmitter.once = (em, n) => new Promise((res) => em.once(n, (...a) => res(a)));
+EventEmitter.EventEmitter = EventEmitter;
+
+// ------------------------------------------------------------------- stream (in-memory only)
+// Plain constructor functions: old libraries call Stream.call(this) without `new`.
+function streamCtor(name, parent) {
+  const F = function (opts) {
+    if (!(this instanceof F)) return new F(opts);
+    lis(this);
+    this.readable = name !== 'Writable';
+    this.writable = name !== 'Readable';
+  };
+  F.prototype = Object.create(parent.prototype, { constructor: { value: F, writable: true, configurable: true } });
+  Object.setPrototypeOf(F, parent);
+  Object.defineProperty(F, 'name', { value: name });
+  return F;
 }
+const Stream = streamCtor('Stream', EventEmitter);
+Object.assign(Stream.prototype, {
+  pipe(dest) { this.on('data', (c) => dest.write?.(c)); this.on('end', () => dest.end?.()); return dest; },
+  write(chunk, enc, cb) { this.emit('data', chunk); (typeof enc === 'function' ? enc : cb)?.(); return true; },
+  end(chunk) { if (chunk != null) this.write(chunk); this.emit('end'); this.emit('finish'); return this; },
+  push(chunk) { if (chunk === null) this.emit('end'); else this.emit('data', chunk); return true; },
+  destroy(err) { if (err) this.emit('error', err); this.emit('close'); return this; },
+  pause() { return this; }, resume() { return this; }, setEncoding() { return this; },
+});
+const Readable = streamCtor('Readable', Stream);
+const Writable = streamCtor('Writable', Stream);
+const Duplex = streamCtor('Duplex', Stream);
+const Transform = streamCtor('Transform', Duplex);
+const PassThrough = streamCtor('PassThrough', Transform);
+export const stream = Object.assign(Stream, { Stream, Readable, Writable, Duplex, Transform, PassThrough,
+  pipeline: (...a) => { const cb = typeof a[a.length - 1] === 'function' ? a.pop() : null; a.reduce((x, y) => x.pipe(y)); cb && a[a.length - 1].on('finish', () => cb()); return a[a.length - 1]; },
+  finished: (s, cb) => { s.on('finish', () => cb()); s.on('error', cb); } });
 
 // ------------------------------------------------------------------- child_process
 export function makeChildProcess(pluginId) {
@@ -266,6 +319,10 @@ export const util = {
   isDeepStrictEqual: (a, b) => JSON.stringify(a) === JSON.stringify(b),
   TextEncoder, TextDecoder,
   types: { isDate: (d) => d instanceof Date, isRegExp: (r) => r instanceof RegExp },
+  debuglog: () => Object.assign(() => {}, { enabled: false }),
+  deprecate: (fn) => fn,
+  inherits: (ctor, parent) => { Object.setPrototypeOf(ctor.prototype, parent.prototype); Object.setPrototypeOf(ctor, parent); ctor.super_ = parent; },
+  isArray: Array.isArray,
 };
 
 export function makeElectron(pluginId) {
@@ -295,11 +352,59 @@ export const process = {
   argv: [], pid: 1, cwd: () => window.app?.vault?.adapter?.getBasePath?.() || '/', nextTick: (fn, ...a) => queueMicrotask(() => fn(...a)),
   on() {}, once() {}, off() {}, emit() {}, exit() {}, hrtime: Object.assign(() => [0, 0], { bigint: () => BigInt(Math.round(performance.now() * 1e6)) }),
   memoryUsage: () => ({ heapUsed: 0 }), uptime: () => performance.now() / 1000,
+  umask: () => 0o022, emitWarning: (w) => console.warn(w), getuid: () => 1000, getgid: () => 1000,
+  stdout: { isTTY: false, write: (s) => { console.log(String(s)); return true; }, on() {}, once() {} },
+  stderr: { isTTY: false, write: (s) => { console.warn(String(s)); return true; }, on() {}, once() {} },
+  stdin: { isTTY: false, on() {}, once() {} },
 };
 
 function denied(name) {
   return new Proxy({}, { get: (t, k) => (k === '__esModule' ? false : () => { throw Object.assign(new Error(`${name} is not available in sk_notes`), { code: 'ENOTSUP' }); }) });
 }
+
+const HTTP_METHODS = ['ACL', 'BIND', 'CHECKOUT', 'CONNECT', 'COPY', 'DELETE', 'GET', 'HEAD', 'LINK', 'LOCK', 'M-SEARCH', 'MERGE',
+  'MKACTIVITY', 'MKCALENDAR', 'MKCOL', 'MOVE', 'NOTIFY', 'OPTIONS', 'PATCH', 'POST', 'PROPFIND', 'PROPPATCH', 'PURGE', 'PUT',
+  'REBIND', 'REPORT', 'SEARCH', 'SOURCE', 'SUBSCRIBE', 'TRACE', 'UNBIND', 'UNLINK', 'UNLOCK', 'UNSUBSCRIBE'];
+const STATUS_CODES = { 200: 'OK', 201: 'Created', 204: 'No Content', 301: 'Moved Permanently', 302: 'Found', 304: 'Not Modified',
+  400: 'Bad Request', 401: 'Unauthorized', 403: 'Forbidden', 404: 'Not Found', 405: 'Method Not Allowed', 409: 'Conflict',
+  500: 'Internal Server Error', 501: 'Not Implemented', 503: 'Service Unavailable' };
+
+/** http/https: constants are real, servers and raw sockets are not available (use requestUrl). */
+function netModule(name) {
+  const no = () => { throw Object.assign(new Error(`${name} servers and sockets are not available in sk_notes`), { code: 'ENOTSUP' }); };
+  return { METHODS: HTTP_METHODS, STATUS_CODES, IncomingMessage: Readable, ServerResponse: Writable, OutgoingMessage: Writable,
+    ClientRequest: Writable, createServer: no, request: no, get: no, Agent: class Agent {}, globalAgent: {}, Server: class Server { constructor() { no(); } } };
+}
+
+/** string_decoder: UTF-8 decoder that keeps partial characters between writes. */
+class StringDecoder {
+  constructor(encoding = 'utf8') { this.encoding = encoding; this._d = new TextDecoder(String(encoding).replace('utf8', 'utf-8')); }
+  write(buf) { return typeof buf === 'string' ? buf : this._d.decode(buf, { stream: true }); }
+  end(buf) { return (buf ? this.write(buf) : '') + this._d.decode(); }
+}
+
+/** vm: plugins already run with page privileges, so this only evaluates code with the given names in scope. */
+function runInContext(code, ctx = {}) {
+  const keys = Object.keys(ctx).filter((k) => /^[A-Za-z_$][\w$]*$/.test(k));
+  // eslint-disable-next-line no-new-func
+  return new Function(...keys, '__code', 'return eval(__code)')(...keys.map((k) => ctx[k]), String(code));
+}
+const vm = {
+  runInNewContext: runInContext, runInContext, runInThisContext: (code) => runInContext(code),
+  createContext: (o) => o || {}, isContext: () => true,
+  Script: class Script { constructor(code) { this.code = code; } runInNewContext(ctx) { return runInContext(this.code, ctx); } runInContext(ctx) { return runInContext(this.code, ctx); } runInThisContext() { return runInContext(this.code); } },
+};
+
+/** punycode: the parts bundled URL libraries use (UCS-2 helpers, toASCII through the URL parser). */
+const punycode = {
+  ucs2: {
+    decode: (str) => Array.from(String(str), (ch) => ch.codePointAt(0)),
+    encode: (codes) => String.fromCodePoint(...codes),
+  },
+  toASCII: (domain) => { try { return new URL('http://' + domain).hostname; } catch { return domain; } },
+  toUnicode: (domain) => domain,
+  version: '2.1.0',
+};
 
 /** Node-style module table for one plugin. */
 export function nodeModules(pluginId) {
@@ -308,12 +413,15 @@ export function nodeModules(pluginId) {
   const cr = makeCrypto(pluginId);
   const el = makeElectron(pluginId);
   return {
-    fs, 'fs/promises': fs.promises, 'original-fs': fs, path, 'path/posix': path, os, url, util, events: Object.assign(EventEmitter, { EventEmitter }),
-    child_process: cp, crypto: cr, electron: el, '@electron/remote': el.remote, buffer: { Buffer }, process,
+    fs, 'fs/promises': fs.promises, 'original-fs': fs, path, 'path/posix': path, os, url, util, events: EventEmitter,
+    child_process: cp, crypto: cr, electron: el, '@electron/remote': el.remote, buffer: { Buffer, constants: { MAX_LENGTH: 2 ** 32 - 1, MAX_STRING_LENGTH: 2 ** 29 - 24 }, kMaxLength: 2 ** 32 - 1 }, process,
     assert: Object.assign((c, m) => { if (!c) throw new Error(m || 'assertion failed'); }, { ok: (c, m) => { if (!c) throw new Error(m || 'assertion failed'); }, strictEqual: (a, b, m) => { if (a !== b) throw new Error(m || 'not equal'); } }),
     'assert/strict': (c, m) => { if (!c) throw new Error(m || 'assertion failed'); },
     querystring: { parse: (s) => Object.fromEntries(new URLSearchParams(s)), stringify: (o) => new URLSearchParams(o).toString() },
-    stream: denied('stream'), http: Object.assign(denied('http'), {}), https: denied('https'), net: denied('net'), tls: denied('tls'),
+    stream, http: netModule('http'), https: netModule('https'), tty: { isatty: () => false, ReadStream: Readable, WriteStream: Writable },
+    string_decoder: { StringDecoder }, vm, console: window.console, punycode, 'punycode/': punycode,
+    http2: Object.assign(netModule('http2'), { constants: {}, connect: () => netModule('http2').request() }),
+    net: denied('net'), tls: denied('tls'),
     zlib: denied('zlib'), worker_threads: denied('worker_threads'), readline: denied('readline'), async_hooks: { AsyncLocalStorage: class { run(s, f) { return f(); } getStore() { return undefined; } } },
     constants: {}, module: { createRequire: () => () => ({}) }, timers: { setTimeout, clearTimeout, setInterval, clearInterval },
   };

@@ -120,6 +120,12 @@ export class KeymapManager {
     return this.stack[this.stack.length - 1] || this.rootScope;
   }
 
+  getRootScope() {
+    return this.rootScope;
+  }
+
+  updateModifiers() {}
+
   handle(evt) {
     const info = { modifiers: modifiersOf(evt), key: keyOf(evt) };
     return this.current.handleKey(evt, info);

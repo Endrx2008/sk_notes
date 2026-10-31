@@ -37,6 +37,9 @@ export function installPluginManager(app) {
   window.global = window;
   window.Buffer ||= Buffer;
   window.process ||= nodeProcess;
+  // The page is not cross-origin isolated, so Chromium hides SharedArrayBuffer; bundled libraries
+  // only test for it, so a non-shared stand-in is enough.
+  if (typeof window.SharedArrayBuffer === 'undefined') window.SharedArrayBuffer = class SharedArrayBuffer extends ArrayBuffer {};
   // legacy editor globals some plugins touch even when they do not need them
   // (any unknown member is a harmless function, so mode definitions written for it load)
   const noop = function noop() { return undefined; };

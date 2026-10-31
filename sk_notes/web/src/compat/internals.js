@@ -58,6 +58,8 @@ export function installInternals(app) {
     printHotkeyForCommand: (id) => (app.commands.hotkeysFor(id)[0] ? `${(app.commands.hotkeysFor(id)[0].modifiers || []).join('+')}+${app.commands.hotkeysFor(id)[0].key}` : ''),
     setHotkeys: (id, list) => app.commands.setHotkeys(id, list),
     removeHotkeys: (id) => app.commands.setHotkeys(id, []),
+    addDefaultHotkeys: (id, list) => { const c = app.commands.findCommand(id); if (c && !c.hotkeys?.length) c.hotkeys = list; },
+    removeDefaultHotkeys: (id) => { const c = app.commands.findCommand(id); if (c) c.hotkeys = []; },
     save() {}, load() {}, bake() {}, bakedIds: [], bakedHotkeys: [],
   };
   app.customCss = {
