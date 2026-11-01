@@ -99,8 +99,38 @@ export function installPluginManager(app) {
   // legacy editor globals some plugins touch even when they do not need them
   // (any unknown member is a harmless function, so mode definitions written for it load)
   const noop = function noop() { return undefined; };
-  const cm5 = { getMode: () => ({}), modes: {}, mimeModes: {}, commands: {}, keyMap: {}, Pass: {}, helpers: {},
-    StringStream: class StringStream { constructor(s) { this.string = s || ''; this.pos = 0; } } };
+  // CodeMirror 5 modes (Templater…): a working registry, so a mode built from them always
+  // has a token() function (an empty one crashed every parse of the editor, A-8)
+  const plainMode = (name) => ({ name, token(stream) { stream.skipToEnd(); return null; } });
+  const cm5 = { modes: {}, mimeModes: {}, commands: {}, keyMap: {}, Pass: {}, helpers: {},
+    StringStream: class StringStream { constructor(s) { this.string = s || ''; this.pos = 0; } },
+    defineMode(name, factory) { cm5.modes[name] = factory; },
+    defineMIME(mime, spec) { cm5.mimeModes[mime] = spec; },
+    getMode(config, spec) {
+      const name = typeof spec === 'string' ? (cm5.mimeModes[spec]?.name || cm5.mimeModes[spec] || spec) : spec?.name;
+      const factory = cm5.modes[name];
+      if (typeof factory === 'function') {
+        try { const m = factory(config || {}, typeof spec === 'object' ? spec : {}); if (m && typeof m.token === 'function') return m; } catch (e) { console.warn('CodeMirror mode', name, e); }
+      }
+      return plainMode(name || 'null');
+    },
+    overlayMode(base, overlay) {
+      return {
+        name: overlay?.name || base?.name,
+        startState: () => ({ base: base?.startState?.() ?? {}, overlay: overlay?.startState?.() ?? {} }),
+        copyState: (st) => ({ base: base?.copyState ? base.copyState(st.base) : { ...st.base }, overlay: overlay?.copyState ? overlay.copyState(st.overlay) : { ...st.overlay } }),
+        token(stream, st) {
+          const start = stream.pos;
+          const style = overlay?.token?.(stream, st.overlay);
+          if (stream.pos > start) return style ?? null;
+          if (base?.token) { const b = base.token(stream, st.base); if (stream.pos > start) return b ?? null; }
+          stream.next();
+          return null;
+        },
+      };
+    },
+    startState(mode, a1, a2) { return mode?.startState ? mode.startState(a1, a2) : true; },
+  };
   window.CodeMirror ||= new Proxy(cm5, { get: (tg, k) => (k in tg ? tg[k] : typeof k === 'string' ? noop : undefined) });
   // translation helper some plugins use for the host app's strings
   const i18nShim = { language: getLanguage(), t: (k) => String(k).split('.').pop(), on() {}, off() {}, exists: () => false, init() { return i18nShim; },

@@ -1,5 +1,6 @@
 // The application object (also exposed as window.app for plugins).
 
+import { Language, LanguageSupport } from '@codemirror/language';
 import { call, onBackend } from '../core/api.js';
 import { Events } from '../core/events.js';
 import { t } from '../core/i18n.js';
@@ -389,8 +390,12 @@ export class App extends Events {
     call('app.setZoom', { zoom: z });
   }
 
+  /** Editor extensions registered by plugins, as editors use them. */
+  pluginEditorExtensions() { return this.editorExtensions.flat(Infinity).filter((e) => !replacesLanguage(e)); }
+
   updateEditorExtensions() {
-    this.workspace.iterateAllLeaves((l) => l.view?.cmHandle?.setPluginExtensions(this.editorExtensions.flat(Infinity)));
+    const exts = this.pluginEditorExtensions();
+    this.workspace.iterateAllLeaves((l) => l.view?.cmHandle?.setPluginExtensions(exts));
   }
 
   // shared helper for the subpath resolution exported to plugins
@@ -411,4 +416,16 @@ export class App extends Events {
   }
 
   menu() { return new Menu(); }
+}
+
+/** A plugin extension that is a whole editor language (e.g. a StreamLanguage built from a
+ * CodeMirror 5 mode) would replace the Markdown language that Live Preview and the
+ * editor features are built on: it is left out (A-8). */
+function replacesLanguage(ext, depth = 0) {
+  if (!ext || typeof ext !== 'object' || depth > 4) return false;
+  if (ext instanceof Language || ext instanceof LanguageSupport) {
+    console.info('plugin editor language ignored (sk_notes keeps its Markdown language)');
+    return true;
+  }
+  return 'inner' in ext && 'prec' in ext ? replacesLanguage(ext.inner, depth + 1) : false;
 }

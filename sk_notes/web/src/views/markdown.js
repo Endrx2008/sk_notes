@@ -117,7 +117,7 @@ export class MarkdownView extends TextFileView {
       info,
       livePreview: !this.sourceMode,
       settings: this.app.editorSettings(),
-      pluginExtensions: this.app.editorExtensions.slice(),
+      pluginExtensions: this.app.pluginEditorExtensions(),
       onChange: (u) => this._onDocChange(u),
       onFocus: () => this.app.workspace.activeEditor = this,
       openLink: (target, evt) => {
