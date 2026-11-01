@@ -115,10 +115,30 @@ def tasks(base: Path):
         assert not errors, errors[:2]
 
 
+def dataview(base: Path):
+    """A-5: inline queries rendered empty, plugin code blocks stayed raw in Live Preview and
+    Dataview's Live Preview plugin crashed."""
+    files = {f"Projects/P{i}.md": f"# P{i}" for i in range(3)}
+    files["QA/Dv.md"] = 'top line\n\nInline: `= this.file.name`\n\n```dataview\nLIST FROM "Projects"\n```\n'
+    v = vault_with(base, "dataview", files)
+    if v is None:
+        return "skip"
+    with App(v, port=9464) as app:
+        p = app.page
+        time.sleep(3)
+        open_note(p, "QA/Dv.md")
+        p.js("(() => { app.workspace.activeEditor.editor.setCursor(0, 0); return 1; })()")
+        p.wait("document.querySelectorAll('.workspace-leaf.mod-active .cm-sk-block-code .list-view-ul li').length === 3", timeout=20)
+        p.key("e", "ctrl")
+        p.wait("document.querySelector('.workspace-leaf.mod-active .markdown-reading-view .dataview-inline-query')?.innerText.trim() === 'Dv'", timeout=20)
+        errors = [c for c in p.console if c.startswith("exception") or "crashed" in c]
+        assert not errors, errors[:2]
+
+
 def main() -> int:
     failed = 0
     with tempfile.TemporaryDirectory(prefix="skn-flows-") as tmp:
-        for fn in (templater, calendar, tasks):
+        for fn in (templater, calendar, tasks, dataview):
             try:
                 r = fn(Path(tmp))
                 print(f"{'SKIP' if r == 'skip' else 'PASS'}  {fn.__name__}")

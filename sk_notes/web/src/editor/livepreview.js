@@ -315,6 +315,12 @@ function buildBlocks(state) {
     else if (name === 'Blockquote' && /^\s*>\s*\[!/.test(state.doc.sliceString(from, Math.min(to, from + 40)))) kind = 'callout';
     else if (name === 'CommentBlock') kind = 'comment';
     else if (name === 'HTMLBlock') kind = 'html';
+    else if (name === 'FencedCode') {
+      // a code block a plugin renders (dataview, tasks, ad-note…) shows its result, like in
+      // the reading view, while the cursor is outside it (A-5)
+      const lang = /^\s*(`{3,}|~{3,})\s*([^\s`{]+)/.exec(state.doc.lineAt(from).text)?.[2];
+      if (lang && info?.app?.markdownProcessors?.codeBlocks?.has(lang)) kind = 'code';
+    }
     if (kind && !rangeTouchesSelection(state, from, to)) {
       const start = state.doc.lineAt(from).from;
       const end = state.doc.lineAt(to).to;

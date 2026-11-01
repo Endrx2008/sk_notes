@@ -129,6 +129,8 @@ export class Plugin extends Component {
     this.app.markdownProcessors.codeBlocks.set(lang, handler);
     this._codeBlocks.push(lang);
     void sortOrder;
+    // open editors render the new block type at once in Live Preview
+    this.app.workspace.iterateAllLeaves((l) => l.view?.cmHandle?.refresh?.());
     return handler;
   }
 

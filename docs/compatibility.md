@@ -18,6 +18,8 @@ files outside the vault are reported as blocked even though they work once the u
 allows them.
 
 Last full run: 2026-10-31 (sk_notes 0.1.0, Qt WebEngine 6.8). 43 of 50 plugins load.
+Main flows of Templater, Calendar, Tasks and Dataview are checked by `qa/plugin_flows.py`
+(2026-11-01).
 
 ## Results
 
@@ -29,9 +31,9 @@ or touch app internals sk_notes does not have (errors are caught and logged).
 | Plugin | Status | Notes |
 |---|---|---|
 | better-word-count | Works | |
-| calendar | Works | |
+| calendar | Works | checked: clicking a day creates or opens the daily note (`qa/plugin_flows.py`) |
 | cmdr | Works | |
-| dataview | Works | |
+| dataview | Works with limits | queries and inline queries work in Reading view; query blocks also in Live Preview; inline queries (`= …`) show as code in Live Preview |
 | editing-toolbar | Works | needed the large request body fix |
 | highlightr-plugin | Works | |
 | homepage | Works | |
@@ -48,7 +50,7 @@ or touch app internals sk_notes does not have (errors are caught and logged).
 | obsidian-pandoc | Works | needs the "run programs" permission to call pandoc |
 | obsidian-spaced-repetition | Works | |
 | obsidian-style-settings | Works | |
-| obsidian-tasks-plugin | Works | |
+| obsidian-tasks-plugin | Works | query blocks checked in `qa/plugin_flows.py` |
 | obsidian-textgenerator-plugin | Works | needs the network permission for remote models |
 | obsidian-zotero-desktop-connector | Works | talks to Zotero on localhost: needs the network permission |
 | obsidian42-brat | Works | needs the network permission to download |
@@ -59,7 +61,7 @@ or touch app internals sk_notes does not have (errors are caught and logged).
 | table-editor-obsidian | Works | |
 | tag-wrangler | Works | |
 | tasknotes | Works | |
-| templater-obsidian | Works | system commands need the "run programs" permission |
+| templater-obsidian | Works with limits | insert and replace templates work (`qa/plugin_flows.py`); its own syntax highlighting is not used; system commands need the "run programs" permission |
 | various-complements | Works | |
 | obsidian-git | Works with limits | needs the "run programs" permission for `git`; sk_notes also has built-in Git sync |
 | notebook-navigator | Works with limits | downloads language data only with the network permission |

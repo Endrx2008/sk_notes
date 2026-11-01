@@ -79,8 +79,13 @@ async function obsidianModule(mgr) {
 
 const LOAD_TIMEOUT = 15000;
 
+// Plugins written for Obsidian import `tokenClassNodeProp` from @codemirror/language, which
+// upstream CodeMirror does not have; an empty prop keeps them from crashing (Dataview's
+// Live Preview plugin read `.id` of undefined, A-5). sk_notes' tree does not set it.
+const cmLanguageShared = { tokenClassNodeProp: new lezerCommon.NodeProp(), ...cmLanguage };
+
 const SHARED = {
-  '@codemirror/state': cmState, '@codemirror/view': cmView, '@codemirror/language': cmLanguage, '@codemirror/commands': cmCommands,
+  '@codemirror/state': cmState, '@codemirror/view': cmView, '@codemirror/language': cmLanguageShared, '@codemirror/commands': cmCommands,
   '@codemirror/search': cmSearch, '@codemirror/autocomplete': cmAutocomplete, '@codemirror/lang-markdown': cmLangMarkdown,
   '@codemirror/lint': cmLint, '@lezer/lr': lezerLr, '@lezer/common': lezerCommon, '@lezer/highlight': lezerHighlight, '@lezer/markdown': lezerMarkdown, moment,
 };
