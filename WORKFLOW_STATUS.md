@@ -87,3 +87,25 @@ markdown/YAML parsers in the first chunk.
 ## Check results
 
 None yet.
+
+## QA cycle 1 – fixes (2026-11-01)
+
+Reports: `qa/reports/cycle-1-agent-A.md`, `qa/reports/cycle-1-agent-B.md`.
+Fixed, one commit each with a regression test: A-1, A-2, A-3, A-4, A-9, A-10, A-11,
+A-14 (+ plugin-API writes reaching open editors), A-15, A-17, A-18, A-19, A-20, A-21,
+B-1…B-5 and B-21 (plugin caller tokens, native confirmations, protected files; test
+`qa/security.py`), B-6, B-7, B-8, B-9, B-10, B-11, B-12, B-13 (rename journal), B-14,
+B-15, B-16, B-17, B-18, B-19, B-20 (safe mode; `qa/plugin_safety.py`), B-24, B-25.
+A-7 (Calendar click) not reproduced: create dialog, create and open all work.
+
+Still open (next session):
+- A-8 Templater: its CM5 mode reaches `StreamLanguage.define` without `token` (shim
+  `getMode` returns `{}` in plugins/manager.js) and the Prec.high language would replace
+  the markdown language. Plan: minimal defineMode/getMode/overlayMode registry in the shim
+  and drop plugin editor extensions that are a `Language` (debug script qa/tmp/tpl_debug.py).
+- A-5 Dataview inline/Live Preview, A-6 Tasks query block, A-12 search speed,
+  A-13 lazy restore of background tabs, A-16 missing commands, B-22, B-23 (low).
+- Cosmetic for the user: C-1…C-6 (agent A), B-26.
+- Then QA cycle 2 (both agents from scratch), Phases 5–6, FINAL_REPORT, .deb/PKGBUILD.
+- Leftover test folders in /tmp (skn-home-*, ~600 MB): deleting them was blocked by the
+  permission check; qa/cdp.py now removes its own. The user may delete them.
