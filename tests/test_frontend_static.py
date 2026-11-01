@@ -27,6 +27,18 @@ class FrontendStaticTests(unittest.TestCase):
                         bad.append(f"{f.name}: {m.group(1)}({m.group(2)})")
         self.assertEqual(bad, [])
 
+    def test_text_file_views_keep_data_a_string(self):
+        # TextFileView.data is the file text (plugin API) and save() assigns it; the canvas
+        # once kept its parsed object there, and the first save turned it into a string
+        bad = []
+        for f in (WEB / "src" / "views").glob("*.js"):
+            if f.name in ("base.js", "markdown.js"):
+                continue
+            text = f.read_text(encoding="utf-8")
+            if re.search(r"extends TextFileView\b", text) and re.search(r"this\.data\b", text):
+                bad.append(f.name)
+        self.assertEqual(bad, [])
+
     def test_codemirror_overrides_beat_its_base_theme(self):
         css = (WEB / "styles" / "20-editor.css").read_text(encoding="utf-8")
         # a single-class rule loses against CodeMirror's injected ".ͼ2 .cm-gutters" (light background)

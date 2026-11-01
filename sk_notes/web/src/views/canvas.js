@@ -19,7 +19,7 @@ export class CanvasView extends TextFileView {
   constructor(leaf) {
     super(leaf);
     this.icon = 'canvas';
-    this.data = { nodes: [], edges: [] };
+    this.canvasData = { nodes: [], edges: [] };
     this.contentEl.addClass('canvas-wrapper');
     this.viewport = { x: 0, y: 0, k: 1 };
     this.selection = new Set();
@@ -78,7 +78,7 @@ export class CanvasView extends TextFileView {
 
   // ---------------------------------------------------------------- data
   /** Unchanged canvases are saved back byte for byte (no reformatting). */
-  getViewData() { return this._changed || this._origText === undefined ? JSON.stringify(this.data, null, '\t') : this._origText; }
+  getViewData() { return this._changed || this._origText === undefined ? JSON.stringify(this.canvasData, null, '\t') : this._origText; }
 
   setViewData(text, clear) {
     this._origText = text;
@@ -93,7 +93,7 @@ export class CanvasView extends TextFileView {
     this.readOnly = false;
     data.nodes = Array.isArray(data.nodes) ? data.nodes.filter((n) => n && n.id) : [];
     data.edges = Array.isArray(data.edges) ? data.edges.filter((e) => e && e.id && e.fromNode && e.toNode) : [];
-    this.data = data;
+    this.canvasData = data;
     if (clear) { this.undoStack = []; this.redoStack = []; this.selection.clear(); }
     this.render();
     if (clear) requestAnimationFrame(() => this.zoomToFit(true));
@@ -105,18 +105,18 @@ export class CanvasView extends TextFileView {
     this.undoStack.push(this._lastSnapshot ?? JSON.stringify({ nodes: [], edges: [] }));
     if (this.undoStack.length > 100) this.undoStack.shift();
     this.redoStack = [];
-    this._lastSnapshot = JSON.stringify(this.data);
+    this._lastSnapshot = JSON.stringify(this.canvasData);
     this._changed = true;
     this.requestSave();
   }
 
-  _snapshotBefore() { this._lastSnapshot = JSON.stringify(this.data); }
+  _snapshotBefore() { this._lastSnapshot = JSON.stringify(this.canvasData); }
 
   undo() {
     if (!this.undoStack.length) return;
-    this.redoStack.push(JSON.stringify(this.data));
-    this.data = JSON.parse(this.undoStack.pop());
-    this._lastSnapshot = JSON.stringify(this.data);
+    this.redoStack.push(JSON.stringify(this.canvasData));
+    this.canvasData = JSON.parse(this.undoStack.pop());
+    this._lastSnapshot = JSON.stringify(this.canvasData);
     this._changed = true;
     this.render();
     this.requestSave();
@@ -124,9 +124,9 @@ export class CanvasView extends TextFileView {
 
   redo() {
     if (!this.redoStack.length) return;
-    this.undoStack.push(JSON.stringify(this.data));
-    this.data = JSON.parse(this.redoStack.pop());
-    this._lastSnapshot = JSON.stringify(this.data);
+    this.undoStack.push(JSON.stringify(this.canvasData));
+    this.canvasData = JSON.parse(this.redoStack.pop());
+    this._lastSnapshot = JSON.stringify(this.canvasData);
     this._changed = true;
     this.render();
     this.requestSave();
@@ -143,7 +143,7 @@ export class CanvasView extends TextFileView {
     if (this.readOnly) return null;
     this._snapshotBefore();
     const n = { id: uid(16), width: 250, height: 120, ...node };
-    this.data.nodes.push(n);
+    this.canvasData.nodes.push(n);
     this._commit();
     this.render();
     this.select([n.id]);
@@ -164,7 +164,7 @@ export class CanvasView extends TextFileView {
   }
 
   addGroup() {
-    const sel = this.data.nodes.filter((n) => this.selection.has(n.id));
+    const sel = this.canvasData.nodes.filter((n) => this.selection.has(n.id));
     let box = { x: this._center().x, y: this._center().y, width: 500, height: 400 };
     if (sel.length) {
       const minX = Math.min(...sel.map((n) => n.x)) - 30;
@@ -179,8 +179,8 @@ export class CanvasView extends TextFileView {
   deleteSelection() {
     if (!this.selection.size || this.readOnly) return;
     this._snapshotBefore();
-    this.data.nodes = this.data.nodes.filter((n) => !this.selection.has(n.id));
-    this.data.edges = this.data.edges.filter((e) => !this.selection.has(e.id) && !this.selection.has(e.fromNode) && !this.selection.has(e.toNode));
+    this.canvasData.nodes = this.canvasData.nodes.filter((n) => !this.selection.has(n.id));
+    this.canvasData.edges = this.canvasData.edges.filter((e) => !this.selection.has(e.id) && !this.selection.has(e.fromNode) && !this.selection.has(e.toNode));
     this.selection.clear();
     this._commit();
     this.render();
@@ -200,7 +200,7 @@ export class CanvasView extends TextFileView {
     this.comp.unload();
     this.comp.load();
     // groups first (below other nodes)
-    const nodes = this.data.nodes.slice().sort((a, b) => (a.type === 'group' ? 0 : 1) - (b.type === 'group' ? 0 : 1));
+    const nodes = this.canvasData.nodes.slice().sort((a, b) => (a.type === 'group' ? 0 : 1) - (b.type === 'group' ? 0 : 1));
     for (const n of nodes) this.nodesEl.appendChild(this._renderNode(n));
     this.renderEdges();
     this.select([...this.selection]);
@@ -300,8 +300,8 @@ export class CanvasView extends TextFileView {
     const defs = svg.createSvg('defs');
     const marker = defs.createSvg('marker', { attr: { id: 'skn-arrow', viewBox: '0 0 10 10', refX: '9', refY: '5', markerWidth: '7', markerHeight: '7', orient: 'auto-start-reverse' } });
     marker.createSvg('path', { attr: { d: 'M0 0L10 5L0 10z', fill: 'context-stroke' } });
-    const byId = new Map(this.data.nodes.map((n) => [n.id, n]));
-    for (const e of this.data.edges) {
+    const byId = new Map(this.canvasData.nodes.map((n) => [n.id, n]));
+    for (const e of this.canvasData.edges) {
       const a = byId.get(e.fromNode);
       const b = byId.get(e.toNode);
       if (!a || !b) continue;
@@ -393,7 +393,7 @@ export class CanvasView extends TextFileView {
   }
 
   zoomToFit(initial) {
-    const ns = this.data.nodes;
+    const ns = this.canvasData.nodes;
     const r = this.contentEl.getBoundingClientRect();
     if (!ns.length || !r.width) { this.viewport = { x: r.width / 2, y: r.height / 2, k: 1 }; this._applyViewport(); return; }
     const minX = Math.min(...ns.map((n) => n.x));
@@ -435,7 +435,7 @@ export class CanvasView extends TextFileView {
         this.marqueeEl.show();
         const [ax, ay] = this.toWorld(x, y);
         const [bx, by] = this.toWorld(x + w, y + h);
-        this.select(this.data.nodes.filter((n) => n.x >= ax && n.y >= ay && n.x + n.width <= bx && n.y + n.height <= by).map((n) => n.id), e.shiftKey);
+        this.select(this.canvasData.nodes.filter((n) => n.x >= ax && n.y >= ay && n.x + n.width <= bx && n.y + n.height <= by).map((n) => n.id), e.shiftKey);
       };
       const mu = () => { this.marqueeEl.hide(); document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); };
       document.addEventListener('mousemove', mm);
@@ -470,7 +470,7 @@ export class CanvasView extends TextFileView {
       if (e.target.closest('textarea, input, [contenteditable]')) return;
       if (e.key === ' ') space = true;
       if ((e.key === 'Delete' || e.key === 'Backspace') && this.selection.size) { e.preventDefault(); this.deleteSelection(); }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') { e.preventDefault(); this.select(this.data.nodes.map((n) => n.id)); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') { e.preventDefault(); this.select(this.canvasData.nodes.map((n) => n.id)); }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.stopPropagation(); if (e.shiftKey) this.redo(); else this.undo(); }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); e.stopPropagation(); this.redo(); }
       if (e.key === 'Escape') this.select([]);
@@ -496,10 +496,10 @@ export class CanvasView extends TextFileView {
     this.contentEl.focus();
     if (!this.selection.has(n.id)) this.select([n.id], e.shiftKey);
     const start = [e.clientX, e.clientY];
-    const moving = this.data.nodes.filter((x) => this.selection.has(x.id));
+    const moving = this.canvasData.nodes.filter((x) => this.selection.has(x.id));
     // dragging a group drags the nodes inside it
     for (const g of moving.filter((x) => x.type === 'group')) {
-      for (const x of this.data.nodes) {
+      for (const x of this.canvasData.nodes) {
         if (x !== g && !moving.includes(x) && x.x >= g.x && x.y >= g.y && x.x + x.width <= g.x + g.width && x.y + x.height <= g.y + g.height) moving.push(x);
       }
     }
@@ -555,16 +555,16 @@ export class CanvasView extends TextFileView {
       temp.detach();
       const targetEl = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('.canvas-node');
       const [x, y] = this.toWorld(ev.clientX - r.left, ev.clientY - r.top);
-      let target = targetEl ? this.data.nodes.find((m) => m.id === targetEl.getAttr('data-id')) : null;
+      let target = targetEl ? this.canvasData.nodes.find((m) => m.id === targetEl.getAttr('data-id')) : null;
       if (!target) {
         // dropping on empty space creates a new card, connected
         this.addText({ x: Math.round(x - 125), y: Math.round(y - 60) }, false);
-        target = this.data.nodes[this.data.nodes.length - 1];
+        target = this.canvasData.nodes[this.canvasData.nodes.length - 1];
       }
       if (!target || target.id === n.id) return;
       this._snapshotBefore();
       const toSide = this._autoSide(target, n);
-      this.data.edges.push({ id: uid(16), fromNode: n.id, fromSide: side, toNode: target.id, toSide, toEnd: 'arrow' });
+      this.canvasData.edges.push({ id: uid(16), fromNode: n.id, fromSide: side, toNode: target.id, toSide, toEnd: 'arrow' });
       this._commit();
       this.renderEdges();
     };
@@ -636,7 +636,7 @@ export class CanvasView extends TextFileView {
     this._colorMenu(m, edge, () => this.renderEdges());
     m.addItem((i) => i.setTitle(t('common.delete')).setIcon('trash').setWarning(true).onClick(() => {
       this._snapshotBefore();
-      this.data.edges.remove(edge);
+      this.canvasData.edges.remove(edge);
       this._commit();
       this.renderEdges();
     }));
@@ -644,7 +644,7 @@ export class CanvasView extends TextFileView {
   }
 
   onResize() { this._applyViewport(); }
-  clear() { this.data = { nodes: [], edges: [] }; }
+  clear() { this.canvasData = { nodes: [], edges: [] }; }
 }
 
 export { setTooltip };

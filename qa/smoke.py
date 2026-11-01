@@ -26,6 +26,10 @@ NOTES = {
     "Home.md": "---\ntags: [start]\n---\n# Home\n\nWelcome. See [[Ideas]] and [[Projects/Plan|the plan]].\n\n- [ ] first task\n",
     "Ideas.md": "# Ideas\n\nA quiet garden of thoughts. #idea\n\n## Later\n\nsomething for later\n",
     "Projects/Plan.md": "# Plan\n\nStep one links back to [[Home]].\n",
+    "Board.canvas": json.dumps({"nodes": [
+        {"id": "t1", "type": "text", "text": "hello", "x": 0, "y": 0, "width": 250, "height": 120},
+        {"id": "f1", "type": "file", "file": "Projects/Plan.md", "x": 400, "y": 0, "width": 300, "height": 200}],
+        "edges": []}),
 }
 
 
@@ -204,6 +208,24 @@ class Smoke:
         self.page.wait("app.workspace.getLeavesOfType('search')[0]?.view?.input?.getValue() === 'quiet'", timeout=10)
         return f"hand-over {secs:.1f}s"
 
+    def canvas_typing(self):
+        """Regression: typing in a canvas card once saved the canvas as a JSON string and lost the text."""
+        self.open_with_switcher("board", "Board.canvas")
+        self.page.js("(() => { const v = app.workspace.activeLeaf.view; v.addText(v._center()); return 1; })()")
+        self.page.wait("document.activeElement?.classList.contains('canvas-node-editor')")
+        self.page.type("typed")
+        time.sleep(1.5)  # an autosave runs while the card is still being edited
+        self.page.key("Escape")
+        end = time.time() + 10
+        while True:
+            data = json.loads((self.vault / "Board.canvas").read_text(encoding="utf-8"))
+            if isinstance(data, dict) and any(n.get("text") == "typed" for n in data.get("nodes", [])):
+                break
+            assert time.time() < end, f"canvas not saved as an object with the typed card: {str(data)[:120]}"
+            time.sleep(0.3)
+        assert {n["id"] for n in data["nodes"]} >= {"t1", "f1"}
+        assert self.page.js("document.querySelectorAll('.canvas-node').length") == 3
+
     def no_uncaught_errors(self):
         bad = [c for c in self.page.console if c.startswith("exception")]
         assert not bad, bad[:3]
@@ -222,7 +244,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:
