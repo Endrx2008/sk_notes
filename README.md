@@ -102,8 +102,11 @@ uses the Super key or Alt+F1/Alt+F9, so they never clash with i3 or Hyprland on 
 ## Development
 
 - `python3 -m unittest discover tests` — core tests (parser, index, search, rename, history, importers, i18n, permissions)
-- `npm test` — JavaScript unit tests (Node.js shims for plugins)
+- `npm test` — JavaScript unit tests (Node.js shims for plugins, metadata cache, Bases labels)
 - `python3 qa/smoke.py` — UI smoke test under Xvfb (keyboard-driven, Chrome DevTools Protocol)
 - `python3 qa/plugin_compat.py <dir> [ids]` — community plugin compatibility ([results](docs/compatibility.md))
+- `python3 qa/plugin_flows.py` — main flows of Templater, Calendar, Tasks and Dataview
+- `python3 qa/security.py` — a hostile plugin tries to get around the permission system
+- `python3 qa/plugin_safety.py` — plugins that never finish loading or crash the app (safe mode)
 - `python3 qa/startup_time.py` — start-up time; `SK_NOTES_DEBUG=1` adds debug lines to the log
 - Architecture: [docs/architecture.md](docs/architecture.md); native plugin API: [docs/api.md](docs/api.md); contributing and translations: [CONTRIBUTING.md](CONTRIBUTING.md)

@@ -107,5 +107,8 @@ entrano mai in conflitto con i3 o Hyprland su Skorpion OS.
 - `npm test` — test JavaScript (shim Node.js per i plugin)
 - `python3 qa/smoke.py` — smoke test dell'interfaccia sotto Xvfb (da tastiera, Chrome DevTools Protocol)
 - `python3 qa/plugin_compat.py <cartella> [id]` — compatibilità con i plugin della community ([risultati](docs/compatibility.md))
+- `python3 qa/plugin_flows.py` — i flussi principali di Templater, Calendar, Tasks e Dataview
+- `python3 qa/security.py` — un plugin ostile prova ad aggirare il sistema dei permessi
+- `python3 qa/plugin_safety.py` — plugin che non finiscono di caricarsi o bloccano l'app (modalità sicura)
 - `python3 qa/startup_time.py` — tempo di avvio; `SK_NOTES_DEBUG=1` aggiunge righe di debug al log
 - Architettura: [docs/architecture.md](docs/architecture.md); API nativa dei plugin: [docs/api.md](docs/api.md); contribuire e tradurre: [CONTRIBUTING.md](CONTRIBUTING.md)
