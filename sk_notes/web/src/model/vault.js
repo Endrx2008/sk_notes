@@ -63,7 +63,12 @@ export class DataAdapter {
   async list(p) { return call('vault.list', { path: p }); }
   async read(p) { return (await call('vault.read', { path: p })).text; }
   async readBinary(p) { return b64ToBuffer(await call('vault.readBinary', { path: p })); }
-  async write(p, data) { await this.vault._writeText(normalizePath(p), data); }
+  async write(p, data) {
+    const path = normalizePath(p);
+    await this.vault._writeText(path, data);
+    const f = this.vault.getFileByPath?.(path);
+    if (f) this.vault.app?.workspace?._onFileModified?.(f);
+  }
   async writeBinary(p, data) { await call('vault.writeBinary', { path: normalizePath(p), data: bufferToB64(data) }); }
   async append(p, data) {
     const old = (await this.exists(p)) ? await this.read(p) : '';
@@ -295,6 +300,9 @@ export class Vault extends Events {
 
   async modify(file, data, options) {
     await this._writeText(file.path, data, options || {});
+    // writes from plugins, templates, properties: open editors must show them, or their
+    // next autosave writes the old text back (a view's own save passes itself as fromView)
+    this.app?.workspace?._onFileModified?.(file, options?.fromView);
   }
 
   async modifyBinary(file, data) { await this.adapter.writeBinary(file.path, data); }

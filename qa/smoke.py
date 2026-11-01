@@ -294,8 +294,10 @@ class Smoke:
         self.page.key("Enter")
         text = self._wait_file("Ideas.md", lambda t: t.startswith("---\ntype: meeting\n---\n") and "# Meeting Ideas" in t,
                                "template properties missing")
-        time.sleep(2)  # a later autosave must not drop them again
-        assert (self.vault / "Ideas.md").read_text(encoding="utf-8") == text
+        self.page.wait("app.workspace.activeEditor.editor.getValue().startsWith('---\\ntype: meeting')", timeout=5)
+        self.page.js("(() => { const e = app.workspace.activeEditor.editor; e.replaceRange('!', { line: e.lastLine(), ch: 0 }); return 1; })()")
+        self._wait_file("Ideas.md", lambda t: t.startswith("---\ntype: meeting") and "\n!" in t,
+                        "next edit dropped the template properties")
 
     def skai_rewrite_replaces_selection(self):
         """Regression: the rewrite was inserted next to the selection (range read after the
