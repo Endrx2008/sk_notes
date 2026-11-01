@@ -85,10 +85,12 @@
 .cm-matchingBracket { background: var(--sk-select); }
 
 /* autocomplete */
-.cm-tooltip { background: var(--sk-bg2); border: 1px solid var(--sk-border) !important; border-radius: var(--radius-m); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
-.cm-tooltip-autocomplete > ul { font-family: var(--font-interface) !important; max-height: 280px !important; min-width: 260px; }
-.cm-tooltip-autocomplete ul li { padding: 5px 10px !important; color: var(--text-normal); }
-.cm-tooltip-autocomplete ul li[aria-selected] { background: var(--sk-select) !important; color: var(--text-normal) !important; }
+/* two classes: CodeMirror's injected base theme (".ͼ2 .cm-tooltip", light) must lose (C-1) */
+.cm-editor.cm-editor .cm-tooltip { background: var(--sk-bg2); color: var(--text-normal); border: 1px solid var(--sk-border) !important; border-radius: var(--radius-m); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+.cm-editor.cm-editor .cm-tooltip-autocomplete > ul { font-family: var(--font-interface) !important; max-height: 280px !important; min-width: 260px; }
+.cm-editor.cm-editor .cm-tooltip-autocomplete ul li { padding: 5px 10px !important; color: var(--text-normal); }
+.cm-editor.cm-editor .cm-tooltip-autocomplete ul li[aria-selected] { background: var(--sk-select) !important; color: var(--text-normal) !important; }
+.cm-editor.cm-editor .cm-completionDetail { color: var(--text-muted); }
 .cm-completionDetail { color: var(--text-faint); font-style: normal; margin-left: 10px; font-size: var(--font-ui-smaller); }
 .cm-completionMatchedText { color: var(--sk-accent2); text-decoration: none; font-weight: 600; }
 
