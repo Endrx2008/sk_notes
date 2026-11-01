@@ -285,6 +285,26 @@ class Smoke:
         time.sleep(2)  # a later autosave must not drop them again
         assert (self.vault / "Ideas.md").read_text(encoding="utf-8") == text
 
+    def skai_rewrite_replaces_selection(self):
+        """Regression: the rewrite was inserted next to the selection (range read after the
+        model answered, when the selection was gone). The model is stubbed here."""
+        self.open_with_switcher("plan", "Projects/Plan.md")
+        self.page.js("""(async () => {
+          const leaf = await app.workspace.ensureSideLeaf('skai', 'right', { reveal: false });
+          const sv = leaf.view, e = app.workspace.activeEditor.editor;
+          const n = e.getValue().split('\\n').findIndex((l) => l.startsWith('Step one'));
+          e.setSelection({ line: n, ch: 0 }, { line: n, ch: e.getLine(n).length });
+          sv._askStyle = async () => { e.setCursor({ line: 0, ch: 0 }); return 'make it clearer'; };
+          sv._stream = async () => 'Step one, rewritten.';
+          sv.run('rewrite');
+          return 1; })()""")
+        self.page.wait("!!document.querySelector('.skai-message-actions button.mod-cta')")
+        self.page.js("(() => { document.querySelector('.skai-message-actions button.mod-cta').click(); return 1; })()")
+        self.page.wait("!!document.querySelector('.modal button.mod-cta')")
+        self.page.js("(() => { document.querySelector('.modal button.mod-cta').click(); return 1; })()")
+        text = self._wait_file("Projects/Plan.md", lambda t: "Step one, rewritten." in t, "rewrite not applied")
+        assert "links back" not in text, text
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -318,7 +338,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:

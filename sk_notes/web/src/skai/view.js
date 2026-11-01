@@ -246,6 +246,10 @@ export class SkaiView extends ItemView {
       const sel = v.editor.getSelection();
       const useSel = action !== 'proofread' && sel;
       const target = useSel ? sel : text;
+      // take the range now: the answer comes minutes later, when the selection is gone
+      const before = v.getViewData();
+      const from = v.editor.posToOffset(v.editor.getCursor('from'));
+      const to = v.editor.posToOffset(v.editor.getCursor('to'));
       let instruction = 'Correct spelling, grammar and punctuation. Keep the meaning, the language, the Markdown formatting, links ([[...]]), tags and the frontmatter exactly as they are.';
       if (action === 'rewrite') {
         const choice = await this._askStyle();
@@ -256,13 +260,10 @@ export class SkaiView extends ItemView {
       const out = await this._stream([sys, { role: 'user', content: `${instruction}\nReply with the corrected text only, no comments.\n\n"""\n${target.slice(0, 16000)}\n"""` }], { temperature: 0.2 });
       if (out === null) return;
       const clean = out.replace(/^```(?:markdown|md)?\n([\s\S]*?)\n```$/m, '$1').replace(/^"""\n?|\n?"""$/g, '').trim();
-      const before = v.getViewData();
+      if (v.getViewData() !== before) { this.app.notice(t('skai.note-changed')); return; }
       let after;
-      if (useSel) {
-        const from = v.editor.posToOffset(v.editor.getCursor('from'));
-        const to = v.editor.posToOffset(v.editor.getCursor('to'));
-        after = before.slice(0, from) + clean + before.slice(to);
-      } else after = clean + (text.endsWith('\n') && !clean.endsWith('\n') ? '\n' : '');
+      if (useSel) after = before.slice(0, from) + clean + before.slice(to);
+      else after = clean + (text.endsWith('\n') && !clean.endsWith('\n') ? '\n' : '');
       if (after === before) { this._bubble('info', '').body.setText(t('skai.no-changes')); return; }
       const bar = this.messagesEl.lastChild.createDiv('skai-message-actions');
       new ButtonComponent(bar).setButtonText(t('skai.review-apply')).setCta().onClick(async () => {
