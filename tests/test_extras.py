@@ -340,6 +340,19 @@ class RealPathProtectionTests(unittest.TestCase):
                 os.environ["XDG_CONFIG_HOME"] = old
 
 
+class GitConfigTests(unittest.TestCase):
+    def test_hostile_git_config_is_refused(self):  # B4-3
+        from sk_notes.extras.api import _refuse_hostile_git_config as check
+        with tempfile.TemporaryDirectory() as d:
+            for bad in ('[filter "x"]\n\tclean = touch /tmp/x\n', '[core]\n\tfsmonitor = true\n', '[core]\n\thooksPath = /x\n',
+                        '[alias]\n\tco = !sh\n', '[include]\n\tpath = /etc/x\n', '[core]\n\tsshCommand = sh -c x\n'):
+                (Path(d) / "config").write_text(bad)
+                with self.assertRaises(ApiError, msg=bad):
+                    check(d)
+            (Path(d) / "config").write_text('[core]\n\trepositoryformatversion = 0\n[remote "origin"]\n\turl = https://x/y.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n[branch "main"]\n\tremote = origin\n')
+            check(d)  # an ordinary config passes
+
+
 class ProtectedConfigTests(unittest.TestCase):
     def test_protected_names(self):
         # B-5: what decides plugin rights is written by Python only

@@ -111,9 +111,10 @@ def register(app) -> None:
         if gitdir.exists() and not gitdir.is_dir() or gitdir.is_symlink():
             # a ".git" file or link points git at a folder page code may have written (B2-4)
             raise ApiError("permission-denied", ".git is not a folder")
+        _refuse_hostile_git_config(gitdir)
         env = dict(os.environ, GIT_DIR=str(gitdir), GIT_WORK_TREE=str(root), GIT_TERMINAL_PROMPT="0")
         try:
-            res = subprocess.run(["git", "-c", "core.fsmonitor=false", *args], cwd=root, env=env, capture_output=True,  # noqa: S603,S607
+            res = subprocess.run(["git", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "protocol.ext.allow=never", *args], cwd=root, env=env, capture_output=True,  # noqa: S603,S607
                                  text=True, timeout=timeout)
         except FileNotFoundError as exc:
             raise ApiError("git-missing") from exc
@@ -280,6 +281,22 @@ def register(app) -> None:
                 "\nbody{background:#fff;color:#111;margin:0;padding:0 8px;font-family:sans-serif}"
                 ".copy-code-button{display:none}</style></head><body class='theme-light'>" + p.get("html", "") + "</body></html>")
         return _print_pdf(app.profile, app.scheme, html, target)
+
+
+# A vault that arrives with its own .git (copied, synced, downloaded) can make git run programs:
+# filters, hooks, fsmonitor, ssh/askpass/editor/pager commands, aliases, includes (B4-3).
+_HOSTILE_GIT = re.compile(r"^\s*\[\s*(filter|alias|include|includeif|credential|diff|merge|difftool|mergetool|url)\b"
+                          r"|^\s*(fsmonitor|hookspath|sshcommand|askpass|editor|pager|textconv|clean|smudge|process|program|"
+                          r"external|driver|cmd|helper|gpg\w*)\s*=", re.I | re.M)
+
+
+def _refuse_hostile_git_config(gitdir) -> None:
+    try:
+        text = (Path(gitdir) / "config").read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return
+    if _HOSTILE_GIT.search(text):
+        raise ApiError("git-untrusted-config", "this vault's .git/config can run programs; remove those entries or use git yourself")
 
 
 _printing: set = set()  # pages kept alive until their PDF is written

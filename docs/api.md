@@ -73,8 +73,8 @@ anything. Instead (see `sk_notes/app/callers.py`):
 
 Known limits (accepted, logged): a plugin can still use sk_notes' own JavaScript objects
 (`app.vault`, `app.workspace`, `app.plugins`…) like any other plugin, so it can read and
-change notes inside the vault, write other plugins' `data.json`, write through a symlinked
-folder that points outside the vault, enable a plugin you already trusted, and open files
+change notes inside the vault, write other plugins' `data.json`, read, write or delete through a
+symlinked folder (made by you) that points outside the vault, enable a plugin you already trusted, and open files
 with the system's default program. WebRTC (STUN) is not covered by the network guard.
 Install only plugins you trust; restricted mode (the default) runs none.
 

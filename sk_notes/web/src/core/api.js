@@ -17,6 +17,7 @@ const encode = encodeURIComponent;
 const hasOwn = Object.hasOwn;
 const textEncode = TextEncoder.prototype.encode;
 const parseJson = JSON.parse;
+const setProto = Object.setPrototypeOf;
 
 // Plugins share this page. They must not see the caller tokens of other plugins (see
 // app/callers.py), so the browser functions used here are taken now, before any plugin
@@ -28,7 +29,10 @@ const XHR = globalThis.XMLHttpRequest; // absent in Node (unit tests)
 const xhrOpen = XHR?.prototype.open;
 const xhrSend = XHR?.prototype.send;
 const xhrText = XHR && Object.getOwnPropertyDescriptor(XHR.prototype, 'responseText').get;
-const fetchJson = async (u, init) => apply(responseJson, await apply(nativeFetch, globalThis, [u, init]), []);
+// The parsed reply has no prototype: when a promise is resolved with an object, JavaScript
+// looks up `then` on it, and a plugin hooking Object.prototype.then would see replies that
+// carry a plugin token (B4-1).
+const fetchJson = async (u, init) => setProto(apply(responseJson, await apply(nativeFetch, globalThis, [u, init]), []), null);
 
 // window.open() never opens a page (see application.Page.createWindow): web links go to the
 // browser like a clicked link
@@ -61,27 +65,25 @@ function bodyOf(obj) {
   return apply(textEncode, enc, [JSON.stringify(obj)]);
 }
 
+/** A call whose reply holds a secret: only primitives / prototype-less objects leave here. */
+async function secretReply(method, params) {
+  await authReady;
+  const bytes = bodyOf(params);
+  const r = await fetchJson(url(method, null, false, { len: bytes.length }), { method: 'POST', body: bytes });
+  if (!r || r.ok !== true) throw new ApiError(r?.error || 'bad-response', r?.detail || '');
+  return r.result;
+}
+
 /** Tokens for the plugins that may run (one each); only the plugin manager calls this. */
 export async function pluginTokens() {
-  await authReady;
-  return call('plugins.tokens', {});
+  const r = await secretReply('plugins.tokens', {});
+  const out = setProto({}, null);
+  for (const k in r) if (apply(hasOwn, Object, [r, k])) out[k] = r[k];
+  return out;
 }
 
 export async function pluginToken(id) {
-  await authReady;
-  return call('plugins.token', { id });
-}
-
-// Only string concatenation and functions taken above: a plugin that replaces
-// encodeURIComponent, Array.prototype.push/join or Object.entries must not see the caller
-// token of another plugin's call (B2-3). Tokens and keys are URL-safe, so they need no encoding.
-function url(method, caller, sync, extra = {}) {
-  let q = '';
-  if (caller) q += '&c=' + caller;
-  else if (appKey) q += '&a=' + appKey;
-  if (sync) q += '&sync=1';
-  for (const k in extra) if (apply(hasOwn, Object, [extra, k])) q += '&' + k + '=' + encode(String(extra[k]));
-  return 'skn://api/' + method + (q ? '?' + q.slice(1) : '');
+  return String(await secretReply('plugins.token', { id }));
 }
 
 function unwrap(data) {

@@ -166,6 +166,7 @@ def register(app) -> None:
         m = json.loads(mf.read_text(encoding="utf-8"))
         pid = _safe_id(m.get("id", ""))
         _confirm_install(app, m.get("name") or pid, str(src))
+        permissions.trust(app, pid, False)  # new code under an old id must be enabled (and confirmed) again (B4-4)
         dest = plugins_dir() / pid
         dest.mkdir(exist_ok=True)
         for name in ("manifest.json", "main.js", "styles.css"):
@@ -200,6 +201,7 @@ def register(app) -> None:
             raise ApiError("not-a-plugin", "manifest") from exc
         pid = _safe_id(m.get("id", ""))
         _confirm_install(app, m.get("name") or pid, f"https://github.com/{repo}")
+        permissions.trust(app, pid, False)  # B4-4
         dest = plugins_dir() / pid
         dest.mkdir(exist_ok=True)
         for name, data in files.items():
