@@ -618,6 +618,14 @@ export class MarkdownRenderer extends MarkdownRenderChild {
     const secs = renderSections(app, markdown, el, sourcePath || '', component);
     const fm = sourcePath ? app.metadataCache.getCache(sourcePath)?.frontmatter : undefined;
     await postProcess(app, secs, sourcePath || '', component, fm, markdown);
+    // plugins expect the blocks as direct children of `el` (Tasks moves a <p>'s children
+    // up with el.insertBefore), not inside the section wrappers of the reading view (A-6)
+    for (const sec of secs) {
+      const div = sec.el;
+      if (div.parentNode !== el || div.className) continue;
+      while (div.firstChild) el.insertBefore(div.firstChild, div);
+      div.remove();
+    }
   }
 
   static async renderMarkdown(markdown, el, sourcePath, component) {

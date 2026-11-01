@@ -94,10 +94,31 @@ def calendar(base: Path):
         p.wait(f"app.workspace.getActiveFile()?.path === '{other}.md'", timeout=10)
 
 
+def tasks(base: Path):
+    """A-6: a `tasks` query block showed 1 of 5 tasks and threw DOM exceptions (the
+    renderer kept section wrappers that Tasks does not expect)."""
+    files = {f"Projects/P{i}.md": f"# P{i}\n\n- [ ] open task {i}\n- [x] done task {i}\n" for i in range(8)}
+    files["QA/Tasks.md"] = "# Q\n\n```tasks\nnot done\npath includes Projects\nlimit 5\n```\n"
+    v = vault_with(base, "obsidian-tasks-plugin", files)
+    if v is None:
+        return "skip"
+    with App(v, port=9463) as app:
+        p = app.page
+        time.sleep(3)
+        open_note(p, "QA/Tasks.md")
+        p.console.clear()
+        p.key("e", "ctrl")
+        p.wait("document.querySelectorAll('.workspace-leaf.mod-active .markdown-reading-view .task-list-item').length >= 5", timeout=20)
+        n = p.js("document.querySelectorAll('.workspace-leaf.mod-active .markdown-reading-view .task-list-item').length")
+        assert n == 5, n
+        errors = [c for c in p.console if c.startswith("exception")]
+        assert not errors, errors[:2]
+
+
 def main() -> int:
     failed = 0
     with tempfile.TemporaryDirectory(prefix="skn-flows-") as tmp:
-        for fn in (templater, calendar):
+        for fn in (templater, calendar, tasks):
             try:
                 r = fn(Path(tmp))
                 print(f"{'SKIP' if r == 'skip' else 'PASS'}  {fn.__name__}")
