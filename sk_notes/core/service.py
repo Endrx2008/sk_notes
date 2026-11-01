@@ -265,6 +265,9 @@ class VaultService:
             data = json.loads(p.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return None
+        if not isinstance(data, dict):  # damaged or planted: drop it (B2-20)
+            self._journal(None)
+            return None
         result = None
         try:
             old, new = data["old"], data["new"]
@@ -282,7 +285,7 @@ class VaultService:
                         self.vault.write_text(w["path"], w["text"])
                 result = "completed"
             log.warning("interrupted rename %s -> %s %s", old, new, result or "had nothing left to do")
-        except (KeyError, OSError, VaultError) as exc:
+        except (KeyError, TypeError, AttributeError, OSError, VaultError) as exc:
             log.error("could not recover an interrupted rename: %s", exc)
         self._journal(None)
         return result
@@ -360,8 +363,8 @@ class VaultService:
     def external_change(self, path: str) -> None:
         """Called by the watcher for changes not made by sk_notes."""
         path = normalize_path(path)
-        if self.is_own_echo(path):
-            return
+        # (no "own echo" shortcut: our own writes are filtered by the stat check below, and a
+        # time window hid other programs' changes made right after a save, B2-11)
         with self.lock:
             st = self.vault.stat(path)
             if st is None:
@@ -382,7 +385,7 @@ class VaultService:
             meta = self.index.update(path)
             if ext_of(path) in TEXT_EXT:
                 try:
-                    self.history.snapshot(path, self.vault.read_text(path), reason="external")
+                    self.history.snapshot(path, self.vault.read_text(path), reason="external", force=True)
                 except OSError:
                     pass
             self.emit("modify" if known else "create",

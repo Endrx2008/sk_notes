@@ -271,10 +271,18 @@ export class Vault extends Events {
 
   // ---------------------------------------------------------------- write
   async _writeText(path, text, opts = {}) {
-    const res = await call('vault.write', { path, text, mtime: opts.mtime, reason: opts.reason });
+    // a view's save says which version of the file it started from: if another program
+    // changed the file since, Python keeps that version in the history and reports it (B2-11, A2-3)
+    const expectedMtime = opts.checkConflict ? this._cache.get(path)?.mtime : undefined;
+    let res = await call('vault.write', { path, text, mtime: opts.mtime, reason: opts.reason, expectedMtime });
+    let conflict = false;
+    if (res.conflict) {
+      conflict = true;
+      res = await call('vault.write', { path, text, mtime: opts.mtime, reason: opts.reason });
+    }
     const info = res.file;
     this._cache.set(path, { text, mtime: info.mtime });
-    return info;
+    return Object.assign({}, info, { conflict });
   }
 
   async create(path, data, options) {
@@ -304,7 +312,8 @@ export class Vault extends Events {
   }
 
   async modify(file, data, options) {
-    await this._writeText(file.path, data, options || {});
+    const info = await this._writeText(file.path, data, options || {});
+    if (info.conflict && options?.onConflict) options.onConflict(file);
     // writes from plugins, templates, properties: open editors must show them, or their
     // next autosave writes the old text back (a view's own save passes itself as fromView)
     this.app?.workspace?._onFileModified?.(file, options?.fromView);

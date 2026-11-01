@@ -342,6 +342,65 @@ class SymlinkScanTests(unittest.TestCase):
                 tmp.cleanup()
 
 
+class CycleTwoTests(unittest.TestCase):
+    def test_non_utf8_file_name_is_skipped_not_fatal(self):  # B2-10
+        tmp, svc = make_vault({"ok.md": "x"})
+        try:
+            os.close(os.open(os.path.join(os.fsencode(tmp.name), "Caf\xe9.md".encode("latin-1")), os.O_CREAT | os.O_WRONLY))
+            svc.open()
+            self.assertEqual(sorted(svc.index.files), ["ok.md"])
+        finally:
+            svc.close()
+            tmp.cleanup()
+
+    def test_garbage_rename_journal_is_ignored(self):  # B2-20
+        tmp, svc = make_vault({"a.md": "x"})
+        svc.close()
+        try:
+            for junk in ("[1,2]", "null", "42", '"x"'):
+                (Path(tmp.name) / ".sk_notes" / "rename-journal.json").write_text(junk)
+                s2 = VaultService(tmp.name)
+                s2.open()
+                self.assertIsNone(s2.recovered_rename)
+                self.assertFalse((Path(tmp.name) / ".sk_notes" / "rename-journal.json").exists())
+                s2.close()
+        finally:
+            tmp.cleanup()
+
+    def test_external_change_right_after_our_save_is_seen(self):  # B2-11
+        events = []
+        tmp, svc = make_vault({"N.md": "one"})
+        try:
+            svc.emit = lambda name, payload: events.append((name, payload))
+            r = svc.read("N.md")
+            svc.write("N.md", "mine", expected_mtime=r["mtime"])
+            p = Path(tmp.name) / "N.md"
+            p.write_text("mine + external line")
+            svc.external_change("N.md")  # the watcher event, well inside the old 2 s window
+            self.assertTrue(events and events[-1][1].get("external"))
+            self.assertEqual(svc.index.files["N.md"].size, len("mine + external line"))
+            self.assertIn("mine + external line", [h for h in (svc.history.read(x["id"]) for x in svc.history.list("N.md"))])
+        finally:
+            svc.close()
+            tmp.cleanup()
+
+    def test_stale_save_reports_a_conflict_and_keeps_the_other_version(self):  # A2-3
+        tmp, svc = make_vault({"N.md": "one"})
+        try:
+            r = svc.read("N.md")
+            p = Path(tmp.name) / "N.md"
+            time.sleep(0.02)
+            p.write_text("changed elsewhere")
+            os.utime(p, (time.time() + 5, time.time() + 5))
+            out = svc.write("N.md", "my text", expected_mtime=r["mtime"])
+            self.assertTrue(out.get("conflict"))
+            self.assertEqual(p.read_text(), "changed elsewhere")
+            self.assertIn("changed elsewhere", [svc.history.read(x["id"]) for x in svc.history.list("N.md")])
+        finally:
+            svc.close()
+            tmp.cleanup()
+
+
 class UnicodeNameTests(unittest.TestCase):
     def test_nfd_names_are_reachable_by_nfc_path(self):
         import unicodedata

@@ -230,7 +230,8 @@ export class TextFileView extends EditableFileView {
     const job = (async () => {
       await prev;
       try {
-        await this.app.vault.modify(file, data, { fromView: this });
+        await this.app.vault.modify(file, data, { fromView: this, checkConflict: true,
+          onConflict: () => this.app.notice(t('notice.external-change', { name: file.basename }), 10000) });
         this.lastSavedData = data;
         this.dirty = false;
       } catch (e) {

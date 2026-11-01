@@ -30,7 +30,7 @@ async function newAction(app, p) {
   const content = p.content || '';
   let file = name ? findFile(app, name) : null;
   if (file instanceof TFile && (truthy(p.append) || truthy(p.prepend) || truthy(p.overwrite))) {
-    if (truthy(p.overwrite)) await app.vault.modify(file, content);
+    if (truthy(p.overwrite)) await app.vault.modify(file, content, { reason: 'link-overwrite' }); // old text kept in the history (B2-13)
     else await app.vault.process(file, (text) => (truthy(p.prepend) ? content + '\n' + text : text + (text.endsWith('\n') || !text ? '' : '\n') + content));
   } else if (name && name.includes('/')) {
     const path = name.endsWith('.md') ? name : name + '.md';

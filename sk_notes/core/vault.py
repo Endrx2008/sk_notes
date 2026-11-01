@@ -3,6 +3,7 @@ POSIX paths ("Folder/Note.md"); every access is checked to stay inside the vault
 
 from __future__ import annotations
 
+import logging
 import os
 import threading
 import shutil
@@ -15,6 +16,8 @@ from pathlib import Path
 CONFIG_DIR = ".sk_notes"
 IGNORED_DIRS = {".git", ".trash", "node_modules", ".obsidian", CONFIG_DIR}
 MAX_NAME_BYTES = 255
+
+log = logging.getLogger(__name__)
 
 
 def eol_of(data: bytes) -> str:
@@ -154,6 +157,13 @@ class Vault:
                 for e in it:
                     name = e.name
                     if name.startswith(".") or name in IGNORED_DIRS:
+                        continue
+                    try:
+                        name.encode("utf-8")
+                    except UnicodeEncodeError:
+                        # a name in another encoding (Latin-1 from old archives): it cannot be
+                        # stored or sent as text, and listing it crashed the start-up (B2-10)
+                        log.warning("skipping %r: file name is not valid UTF-8", name)
                         continue
                     rel = unicodedata.normalize("NFC", e.path[root_len:].replace(os.sep, "/"))
                     try:
