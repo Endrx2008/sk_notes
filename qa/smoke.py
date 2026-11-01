@@ -425,6 +425,24 @@ class Smoke:
         time.sleep(1.5)
         assert not (self.vault / "Ren.md").exists(), "old file re-created"
 
+    def hidden_tabs_deferred(self):
+        """Restoring a layout created every tab, graph and canvas included: start-up took 18 s
+        on a big vault (A-13). Hidden non-note tabs now load when first shown."""
+        r = self.page.js("""(async () => {
+          const layout = { main: { type: 'split', direction: 'vertical', children: [{ type: 'tabs', currentTab: 0, children: [
+            { type: 'leaf', id: 'l-home', state: { type: 'markdown', state: { file: 'Home.md' } } },
+            { type: 'leaf', id: 'l-graph', state: { type: 'graph', state: {} } },
+            { type: 'leaf', id: 'l-board', state: { type: 'canvas', state: { file: 'Board.canvas' } } }] }] }, active: 'l-home' };
+          await app.workspace.changeLayout(layout);
+          const g = app.workspace.getLeafById('l-graph'), b = app.workspace.getLeafById('l-board');
+          const before = { graph: g.isDeferred, board: b.isDeferred, saved: b.getViewState().state.file, title: b.getDisplayText() };
+          g.parent.selectTab(g);
+          await new Promise((ok) => setTimeout(ok, 500));
+          return { ...before, loaded: g.view?.getViewType() };
+        })()""")
+        assert r == {"graph": True, "board": True, "saved": "Board.canvas", "title": "Board", "loaded": "graph"}, r
+        self.page.key("w", "ctrl")
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -458,7 +476,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "folder_setting_suggests", "external_rename_follows", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "folder_setting_suggests", "external_rename_follows", "hidden_tabs_deferred", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:

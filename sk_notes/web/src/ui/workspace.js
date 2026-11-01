@@ -286,6 +286,7 @@ export class WorkspaceTabs extends WorkspaceParent {
     if (i === -1) return;
     this.currentTab = i;
     this._render();
+    if (leaf.isDeferred) leaf.loadIfDeferred();
     leaf.view?.onResize?.();
   }
 
@@ -453,7 +454,18 @@ export class WorkspaceLeaf extends WorkspaceItem {
 
   _currentNavState() { return { state: this.getViewState(), eState: this.getEphemeralState() }; }
 
+  /** Restored but not shown yet: the view is created when the tab is first shown (A-13). */
+  get isDeferred() { return !!this._pending && !this.view; }
+
+  async loadIfDeferred() {
+    if (!this.isDeferred) return;
+    const st = this._pending;
+    delete this._pending;
+    await this.setViewState(st);
+  }
+
   getViewState() {
+    if (this.isDeferred) return { ...this._pending, pinned: this.pinned || undefined, group: this.group || undefined };
     if (!this.view) return { type: 'empty', state: {} };
     return { type: this.view.getViewType(), state: this.view.getState(), pinned: this.pinned || undefined,
       active: this.workspace.activeLeaf === this || undefined, group: this.group || undefined };
@@ -527,8 +539,15 @@ export class WorkspaceLeaf extends WorkspaceItem {
     if (openState.active !== false) this.workspace.setActiveLeaf(this, { focus: true });
   }
 
-  getDisplayText() { return this.view ? this.view.getDisplayText() : ''; }
-  getIcon() { return this.view ? this.view.getIcon() : 'file'; }
+  getDisplayText() {
+    if (this.view) return this.view.getDisplayText();
+    const f = this.isDeferred && this._pending.state?.file;
+    return f ? String(f).split('/').pop().replace(/\.[^.]+$/, '') : this.isDeferred && this._pending.type === 'graph' ? t('graph.title') : '';
+  }
+  getIcon() {
+    if (this.view) return this.view.getIcon();
+    return { canvas: 'canvas', bases: 'database', graph: 'graph', localgraph: 'graph' }[this._pending?.type] || 'file';
+  }
 
   updateHeader() {
     setIcon(this.tabHeaderInnerIconEl, this.getIcon());
@@ -560,9 +579,6 @@ export class WorkspaceLeaf extends WorkspaceItem {
   setGroupMember(other) { const g = other.group || uid(8); other.setGroup(g); this.setGroup(g); }
 
   getContainer() { return this.getRoot(); }
-
-  isDeferred = false;
-  async loadIfDeferred() {}
 
   onResize() { this.view?.onResize(); }
 
@@ -761,7 +777,10 @@ export class Workspace extends Events {
 
   getLeavesOfType(type) {
     const out = [];
-    this.iterateAllLeaves((l) => { if (l.view?.getViewType() === type) out.push(l); });
+    this.iterateAllLeaves((l) => {
+      if (l.view?.getViewType() === type) out.push(l);
+      else if (l.isDeferred && l._pending.type === type) { out.push(l); l.loadIfDeferred(); }
+    });
     return out;
   }
 
@@ -906,6 +925,7 @@ export class Workspace extends Events {
   setActiveLeaf(leaf, params = {}) {
     if (typeof params === 'boolean') params = { focus: params };
     if (!leaf || !leaf.parent) return;
+    if (leaf.isDeferred) leaf.loadIfDeferred();
     if (leaf.parent instanceof WorkspaceTabs) leaf.parent.selectTab(leaf);
     const changed = this.activeLeaf !== leaf;
     if (changed) {
@@ -1144,6 +1164,15 @@ export class Workspace extends Events {
     this.iterateAllLeaves((l) => all.push(l));
     for (const l of all) {
       const st = l._pending || { type: 'empty' };
+      // hidden tabs of the main area that are not notes (graph, canvas, base, plugin views)
+      // are created when first shown: restoring them all made start-up slow (A-13)
+      const tabs = l.parent;
+      const hidden = tabs instanceof WorkspaceTabs && !tabs.isStacked && tabs.children[tabs.currentTab] !== l;
+      if (hidden && l.getRoot() === this.rootSplit && !['markdown', 'empty'].includes(st.type) && l.id !== layout?.active) {
+        l._pending = st;
+        l.updateHeader();
+        continue;
+      }
       delete l._pending;
       await l.setViewState(st);
     }
