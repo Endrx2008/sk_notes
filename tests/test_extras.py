@@ -299,7 +299,7 @@ class ProtectedConfigTests(unittest.TestCase):
     def test_protected_names(self):
         # B-5: what decides plugin rights is written by Python only
         from sk_notes.app.api_core import protected
-        for name in ("permissions.json", "community-plugins.json", "plugins", "plugins/x", "plugins/x/main.js",
+        for name in ("permissions.json", "community-plugins.json", "rename-journal.json", "plugins", "plugins/x", "plugins/x/main.js",
                      "plugins/x/manifest.json", "plugins/x/styles.css", "/plugins/x/"):
             self.assertTrue(protected(name), name)
         for name in ("plugins/x/data.json", "app.json", "workspace.json", "snippets/a.css"):

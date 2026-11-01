@@ -37,7 +37,7 @@ CONFIG_NAME_RE = re.compile(r"^(?:[A-Za-z0-9_.-]+\.json|plugins/[A-Za-z0-9_.-]+/
 
 # Written only by Python (plugin install, enable, permission dialogs): page code, plugins
 # included, can never change what plugins may do or replace a plugin's code.
-_PROTECTED = re.compile(r"^(permissions\.json|community-plugins\.json|plugins(/[^/]+(/(main\.js|manifest\.json|styles\.css))?)?)$")
+_PROTECTED = re.compile(r"^(permissions\.json|community-plugins\.json|rename-journal\.json(\.tmp)?|plugins(/[^/]+(/(main\.js|manifest\.json|styles\.css))?)?)$")
 
 
 def protected(config_name: str) -> bool:
