@@ -292,7 +292,27 @@ class _Eval:
                 return val is None
             return any(self.match_text(node.value, _prop_str(v)) for v in vals)
         if isinstance(node, Scoped):
+            if node.field == "line":
+                return self._match_lines(node, doc)
             return any(self.match_text(node.node, unit, doc) for unit in _units(node.field, doc))
+        return False
+
+    def _match_lines(self, node: Node, doc: _Doc) -> bool:
+        """line:(…): only lines holding a term the line must contain are examined."""
+        terms = _prefilter_terms(node.node)
+        if not terms:
+            return any(self.match_text(node.node, unit, doc) for unit in _units("line", doc))
+        text = doc.content
+        pat = self.pat(Term(terms[0]))
+        seen = set()
+        for m in pat.finditer(text):
+            a = text.rfind("\n", 0, m.start()) + 1
+            if a in seen:
+                continue
+            seen.add(a)
+            b = text.find("\n", m.start())
+            if self.match_text(node.node, text[a:] if b == -1 else text[a:b], doc):
+                return True
         return False
 
     def highlights(self, node: Node, doc: _Doc, out: list):
@@ -358,11 +378,18 @@ def _prefilter_terms(node: Node) -> list[str]:
         for n in node.items:
             out += _prefilter_terms(n)
         return out
+    if isinstance(node, Scoped):
+        # what a line/block/section/task must contain, the note contains too (A-12: these
+        # queries used to scan every note)
+        return _prefilter_terms(node.node)
     return []
 
 
 def search(index: VaultIndex, query: str, *, case_sensitive: bool = False, limit_files: int = 2000,
-           context: int = 1, max_matches: int = 20) -> dict:
+           context: int = 1, max_matches: int = 20, snippet_files: int | None = None) -> dict:
+    """Files matching `query`. Snippets ("matches") are built for the first `snippet_files`
+    results only (all by default); the others get None and the caller asks snippets()
+    for them when it shows them (building them was most of the search time, A-12)."""
     t0 = time.perf_counter()
     node = parse_query(query)
     ev = _Eval(case_sensitive)
@@ -389,14 +416,39 @@ def search(index: VaultIndex, query: str, *, case_sensitive: bool = False, limit
             total += 1
             if len(results) >= limit_files:
                 continue
-            pats: list = []
-            ev.highlights(node, doc, pats)
-            results.append({"path": path, "matches": _snippets(doc, pats, context, max_matches) if pats else [],
+            if snippet_files is not None and len(results) >= snippet_files:
+                matches = None
+            else:
+                pats: list = []
+                ev.highlights(node, doc, pats)
+                matches = _snippets(doc, pats, context, max_matches) if pats else []
+            results.append({"path": path, "matches": matches,
                             "mtime": int(index.files[path].mtime * 1000), "ctime": int(index.files[path].ctime * 1000)})
     return {"query": query, "total": total, "results": results, "ms": round((time.perf_counter() - t0) * 1000, 1)}
 
 
+def snippets(index: VaultIndex, query: str, paths: list[str], *, case_sensitive: bool = False, context: int = 1,
+             max_matches: int = 20) -> dict[str, list[dict]]:
+    """Snippets of `query` in the given files (see search(snippet_files=...))."""
+    node = parse_query(query)
+    ev = _Eval(case_sensitive)
+    out = {}
+    with index.lock:
+        for path in paths[:500]:
+            if path not in index.files:
+                continue
+            doc = _Doc(index, path)
+            pats: list = []
+            ev.highlights(node, doc, pats)
+            out[path] = _snippets(doc, pats, context, max_matches) if pats else []
+    return out
+
+
 def _snippets(doc: _Doc, pats: list, context: int, max_matches: int) -> list[dict]:
+    """Lines around the matches, with the matched parts marked. Works only around the
+    matches (no split of the whole note into lines): this was most of the time of a
+    search for common words (A-12)."""
+    import bisect
     text = doc.content
     spans = []
     for p in pats:
@@ -406,26 +458,35 @@ def _snippets(doc: _Doc, pats: list, context: int, max_matches: int) -> list[dic
             if len(spans) > max_matches * 4:
                 break
     spans.sort()
+    starts = [sp[0] for sp in spans]
     out, used_lines = [], set()
-    line_starts = [0] + [m.end() for m in re.finditer("\n", text)]
-    import bisect
+    ln, counted_to = 0, 0
     for s, e in spans:
-        ln = bisect.bisect_right(line_starts, s) - 1
+        ln += text.count("\n", counted_to, s)
+        counted_to = s
         if ln in used_lines:
             continue
         used_lines.add(ln)
-        a = max(0, ln - context + 1) if context > 1 else ln
-        b = min(len(line_starts) - 1, ln + context - 1) if context > 1 else ln
-        start = line_starts[a]
-        end = (line_starts[b + 1] - 1) if b + 1 < len(line_starts) else len(text)
+        start = text.rfind("\n", 0, s) + 1
+        end = text.find("\n", s)
+        end = len(text) if end == -1 else end
+        for _ in range(max(0, context - 1)):  # extra lines of context before and after
+            if start > 0:
+                start = text.rfind("\n", 0, start - 1) + 1
+            if end < len(text):
+                nxt = text.find("\n", end + 1)
+                end = len(text) if nxt == -1 else nxt
         chunk = text[start:end]
         if len(chunk) > 400:  # long lines: window around the match
             ws = max(start, s - 150)
             we = min(end, e + 200)
             chunk, start = text[ws:we], ws
         segs, pos = [], 0
-        for s2, e2 in spans:
-            if s2 >= start and e2 <= start + len(chunk) and s2 - start >= pos:
+        for i in range(bisect.bisect_left(starts, start), len(spans)):
+            s2, e2 = spans[i]
+            if e2 > start + len(chunk):
+                break
+            if s2 - start >= pos:
                 segs.append([chunk[pos:s2 - start], False])
                 segs.append([chunk[s2 - start:e2 - start], True])
                 pos = e2 - start

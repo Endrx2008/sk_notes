@@ -443,6 +443,22 @@ class Smoke:
         assert r == {"graph": True, "board": True, "saved": "Board.canvas", "title": "Board", "loaded": "graph"}, r
         self.page.key("w", "ctrl")
 
+    def search_snippets_lazy(self):
+        """A-12: snippets are built for the first results only; the others arrive when shown."""
+        for i in range(90):
+            (self.vault / "Many" / f"m{i:02d}.md").parent.mkdir(exist_ok=True)
+            (self.vault / "Many" / f"m{i:02d}.md").write_text(f"# m{i}\n\nzebrafish line {i}\n", encoding="utf-8")
+        self.page.wait("app.vault.getMarkdownFiles().filter((f) => f.path.startsWith('Many/')).length === 90", timeout=20)
+        self.page.key("f", "ctrl+shift")
+        self.page.wait("!!app.workspace.getLeavesOfType('search')[0]?.view")
+        self.page.js("(() => { app.workspace.getLeavesOfType('search')[0].view.setQuery('zebrafish'); return 1; })()")
+        self.page.wait("document.querySelectorAll('.search-result').length === 90", timeout=15)
+        first = self.page.js("document.querySelectorAll('.search-result-file-match').length")
+        assert 0 < first < 90, first  # not all at once
+        self.page.js("(() => { const r = [...document.querySelectorAll('.search-result')]; r[r.length - 1].scrollIntoView(); return 1; })()")
+        # rows that come into view get their snippet
+        self.page.wait("(() => { const r = [...document.querySelectorAll('.search-result')]; return !!r[r.length - 1].querySelector('.search-result-file-match'); })()", timeout=15)
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -476,7 +492,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "folder_setting_suggests", "external_rename_follows", "hidden_tabs_deferred", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "folder_setting_suggests", "external_rename_follows", "hidden_tabs_deferred", "search_snippets_lazy", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:

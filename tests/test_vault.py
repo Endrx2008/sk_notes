@@ -548,6 +548,36 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(type(parse_query("a OR b c")).__name__, "Or")
 
 
+class ScopedSearchTests(unittest.TestCase):
+    """A-12: the fast paths (FTS prefilter inside line:/section:, line scan by term) give
+    the same results as a full scan."""
+
+    def test_fast_paths_match_full_scan(self):
+        from sk_notes.core import search as S
+        notes = {f"n{i}.md": f"# n{i}\nalpha beta {i}\nbeta gamma\n## Sub\nalpha only {i % 3}\ndelta alpha" for i in range(30)}
+        notes["edge.md"] = "alpha\nbeta alpha beta\nlast line alpha gamma"
+        tmp, svc = make_vault(notes)
+        try:
+            queries = ["line:(alpha beta)", "line:(alpha -beta)", "line:(gamma alpha)", "section:(alpha gamma)",
+                       "line:(/alph./ beta)", "line:(beta)", "block:(delta alpha)", "line:(alpha gamma) n1"]
+            fast = {q: sorted(r["path"] for r in search(svc.index, q, snippet_files=0)["results"]) for q in queries}
+            orig_pre, orig_lines = S._prefilter_terms, S._Eval._match_lines
+            S._prefilter_terms = lambda node: [] if isinstance(node, S.Scoped) else orig_pre(node)
+            S._Eval._match_lines = lambda self, node, doc: any(self.match_text(node.node, u, doc) for u in S._units("line", doc))
+            try:
+                slow = {q: sorted(r["path"] for r in search(svc.index, q)["results"]) for q in queries}
+            finally:
+                S._prefilter_terms, S._Eval._match_lines = orig_pre, orig_lines
+            self.assertEqual(fast, slow)
+            self.assertTrue(all(fast[q] for q in queries[:4]))
+            self.assertIsNone(search(svc.index, "alpha", snippet_files=0)["results"][0]["matches"])
+            got = S.snippets(svc.index, "alpha", ["edge.md"])
+            self.assertEqual([m["line"] for m in got["edge.md"]], [0, 1, 2])
+        finally:
+            svc.close()
+            tmp.cleanup()
+
+
 class PerformanceTests(unittest.TestCase):
     """Target from the spec: search results under 100 ms on 10,000 notes."""
 

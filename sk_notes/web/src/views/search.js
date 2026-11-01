@@ -75,7 +75,7 @@ export class SearchView extends ItemView {
     if (!q) { this.result = null; this.resultsEl.empty(); this.infoEl.empty(); return; }
     let res;
     try {
-      res = await call('search.query', { query: q, caseSensitive: this.caseSensitive, context: this.moreContext ? 3 : 1, limit: 1000 });
+      res = await call('search.query', { query: q, caseSensitive: this.caseSensitive, context: this.moreContext ? 3 : 1, limit: 1000, snippetFiles: SNIPPET_BATCH });
     } catch (e) {
       if (token !== this._token) return;
       this.infoEl.setText(t('search.bad-query'));
@@ -112,20 +112,53 @@ export class SearchView extends ItemView {
       const col = head.createDiv('tree-item-icon collapse-icon');
       setIcon(col, 'chevron-down');
       head.createDiv({ cls: 'tree-item-inner', text: file.extension === 'md' ? file.basename : file.name });
-      if (r.matches.length) head.createDiv({ cls: 'tree-item-flair-outer' }).createSpan({ cls: 'tree-item-flair', text: String(r.matches.length) });
+      const flair = head.createDiv({ cls: 'tree-item-flair-outer' }).createSpan({ cls: 'tree-item-flair' });
       col.addEventListener('click', (e) => { e.stopPropagation(); item.toggleClass('is-collapsed', !item.hasClass('is-collapsed')); });
       head.addEventListener('click', (e) => this.openResult(file, null, e));
       head.addEventListener('mouseover', (e) => this.app.pagePreview?.onHover(e, head, file.path, '', true, true));
       const kids = item.createDiv('search-result-file-matches');
-      for (const m of r.matches) {
-        const row = kids.createDiv('search-result-file-match tree-item-self is-clickable');
-        for (const [text, hit] of m.segments) {
-          if (hit) row.createSpan({ cls: 'search-result-file-matched-text', text });
-          else row.appendText(text);
+      const fill = (matches) => {
+        flair.setText(matches.length ? String(matches.length) : '');
+        for (const m of matches) {
+          const row = kids.createDiv('search-result-file-match tree-item-self is-clickable');
+          for (const [text, hit] of m.segments) {
+            if (hit) row.createSpan({ cls: 'search-result-file-matched-text', text });
+            else row.appendText(text);
+          }
+          row.addEventListener('click', (e) => this.openResult(file, m.line, e));
         }
-        row.addEventListener('click', (e) => this.openResult(file, m.line, e));
-      }
+      };
+      if (r.matches) fill(r.matches);
+      else this._lazy(item, r.path, fill, res);
     }
+  }
+
+  /** Snippets of results beyond the first batch are fetched when they scroll into view. */
+  _lazy(item, path, fill, res) {
+    if (!this._observer) {
+      this._observer = new IntersectionObserver((entries) => {
+        for (const en of entries) if (en.isIntersecting) { this._observer.unobserve(en.target); this._want.set(en.target.__sknPath, en.target.__sknFill); }
+        clearTimeout(this._wantTimer);
+        this._wantTimer = setTimeout(() => this._fetchSnippets(), 50);
+      }, { rootMargin: '400px' });
+      this._want = new Map();
+      this.register(() => this._observer.disconnect());
+    }
+    item.__sknPath = path;
+    item.__sknFill = (m) => { if (this.result === res) fill(m); };
+    this._observer.observe(item);
+  }
+
+  async _fetchSnippets() {
+    const batch = [...this._want.entries()].slice(0, SNIPPET_BATCH);
+    for (const [p] of batch) this._want.delete(p);
+    if (!batch.length || !this.result) return;
+    const q = this.result.query;
+    try {
+      const got = await call('search.snippets', { query: q, paths: batch.map(([p]) => p), caseSensitive: this.caseSensitive, context: this.moreContext ? 3 : 1 });
+      for (const [p, fill] of batch) fill(got[p] || []);
+    } catch (e) { console.error('search snippets', e); }
+    if (this._want.size) this._fetchSnippets();
   }
 
   async openResult(file, line, e) {
@@ -137,3 +170,5 @@ export class SearchView extends ItemView {
 }
 
 export { setTooltip };
+
+const SNIPPET_BATCH = 60;

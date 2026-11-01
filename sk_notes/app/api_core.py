@@ -13,7 +13,7 @@ from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import QApplication, QFileDialog
 
 from ..core import i18n
-from ..core.search import QueryError, search
+from ..core.search import QueryError, search, snippets
 from ..core.vault import CONFIG_DIR, normalize_path
 from . import config
 from .bridge import ApiError, Ctx
@@ -313,7 +313,16 @@ def register(app) -> None:
     def search_query(p, ctx):
         try:
             return search(svc().index, p.get("query", ""), case_sensitive=bool(p.get("caseSensitive")),
-                          context=int(p.get("context", 1)), limit_files=int(p.get("limit", 2000)))
+                          context=int(p.get("context", 1)), limit_files=int(p.get("limit", 2000)),
+                          snippet_files=int(p["snippetFiles"]) if p.get("snippetFiles") is not None else None)
+        except QueryError as exc:
+            raise ApiError("bad-query", str(exc)) from exc
+
+    @r("search.snippets", slow=True)
+    def search_snippets(p, ctx):
+        try:
+            return snippets(svc().index, p.get("query", ""), list(p.get("paths") or []),
+                            case_sensitive=bool(p.get("caseSensitive")), context=int(p.get("context", 1)))
         except QueryError as exc:
             raise ApiError("bad-query", str(exc)) from exc
 
