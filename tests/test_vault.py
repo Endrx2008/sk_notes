@@ -191,6 +191,27 @@ class RenameTests(unittest.TestCase):
         self.assertIn(name[:-3].split("/")[-1], self.read("Index.md"))
 
 
+class CanvasSearchTests(unittest.TestCase):
+    def test_canvas_found_by_card_text_not_json(self):
+        board = json.dumps({"nodes": [{"id": "a", "type": "text", "text": "quantum garden", "x": 0, "y": 0, "width": 1, "height": 1},
+                                      {"id": "b", "type": "file", "file": "Notes/quantum.md", "x": 0, "y": 0, "width": 1, "height": 1},
+                                      {"id": "g", "type": "group", "label": "Physics", "x": 0, "y": 0, "width": 1, "height": 1}],
+                            "edges": []}, indent="\t")
+        tmp, svc = make_vault({"Board.canvas": board, "Notes/quantum.md": "x"})
+        try:
+            svc.open()
+            r = search(svc.index, "quantum")
+            hit = next(x for x in r["results"] if x["path"] == "Board.canvas")
+            texts = " ".join("".join(seg[0] for seg in m["segments"]) for m in hit["matches"])
+            self.assertIn("quantum garden", texts)
+            self.assertNotIn('"file"', texts)
+            self.assertNotIn("Board.canvas", [x["path"] for x in search(svc.index, "nodes")["results"]])
+            self.assertIn("Board.canvas", [x["path"] for x in search(svc.index, "Physics")["results"]])
+        finally:
+            svc.close()
+            tmp.cleanup()
+
+
 class SymlinkScanTests(unittest.TestCase):
     def test_symlink_loops_are_scanned_once(self):
         tmp, svc = make_vault({"a.md": "x", "sub/b.md": "y"})

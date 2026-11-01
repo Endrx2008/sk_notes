@@ -20,7 +20,7 @@ from .vault import FileEntry, Vault, normalize_path
 
 log = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5  # 5: canvas files indexed by their card text
 MARKDOWN_EXT = {"md"}
 TEXT_EXT = {"md", "canvas", "base", "txt"}
 MAX_INDEXED_BYTES = 8 * 1024 * 1024  # bigger notes are listed but not parsed/indexed
@@ -65,6 +65,25 @@ def ext_of(path: str) -> str:
 def basename_no_ext(path: str) -> str:
     name = path.rsplit("/", 1)[-1]
     return name.rsplit(".", 1)[0] if "." in name[1:] else name
+
+
+def searchable_text(path: str, text: str) -> str:
+    """What search sees of a file: canvases by the text of their cards and group labels
+    (not their JSON), other text files as they are."""
+    ext = ext_of(path)
+    if ext == "canvas":
+        try:
+            data = json.loads(text) if text.strip() else {}
+        except ValueError:
+            return ""
+        parts = []
+        for n in data.get("nodes", []) if isinstance(data, dict) else []:
+            if isinstance(n, dict):
+                for key in ("text", "label"):
+                    if isinstance(n.get(key), str) and n[key].strip():
+                        parts.append(n[key].strip())
+        return "\n\n".join(parts)
+    return text if ext in TEXT_EXT else ""
 
 
 class VaultIndex:
@@ -167,7 +186,7 @@ class VaultIndex:
                         (path, entry.mtime, entry.size, json.dumps(meta, separators=(",", ":"))))
         self.db.execute("DELETE FROM docs WHERE path=?", (path,))
         self.db.execute("INSERT INTO docs(path, name, content) VALUES (?,?,?)",
-                        (path, basename_no_ext(path), text if ext_of(path) in TEXT_EXT else ""))
+                        (path, basename_no_ext(path), searchable_text(path, text)))
         return meta
 
     # ------------------------------------------------------------- incremental
