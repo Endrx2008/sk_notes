@@ -1,3 +1,4 @@
+import time
 import unittest
 
 from sk_notes.core.parser import aliases, all_tags, parse, parse_linktext
@@ -95,6 +96,24 @@ class FrontmatterTests(unittest.TestCase):
     def test_unterminated_frontmatter(self):
         m = parse("---\na: 1\nno end")
         self.assertNotIn("frontmatter", m)
+
+    def test_yaml_alias_bomb_is_rejected_quickly(self):
+        lines = ['a: &a ["x","x","x","x","x","x","x","x","x"]']
+        for i, name in enumerate("bcdefghi"):
+            prev = "abcdefghi"[i]
+            lines.append(f"{name}: &{name} [" + ",".join([f"*{prev}"] * 9) + "]")
+        t0 = time.time()
+        meta = parse("---\n" + "\n".join(lines) + "\n---\nbody")
+        self.assertLess(time.time() - t0, 2)
+        self.assertIsNone(meta.get("frontmatter"))
+        self.assertTrue(meta.get("frontmatterError"))
+        # a few ordinary aliases still work
+        meta = parse("---\nbase: &b [1, 2]\ncopy: *b\n---\n")
+        self.assertEqual(meta["frontmatter"]["copy"], [1, 2])
+
+    def test_self_referencing_yaml(self):
+        meta = parse("---\na: &a [*a]\n---\n")
+        self.assertIsNone(meta.get("frontmatter"))
 
     def test_frontmatter_links(self):
         m = parse("---\nup: \"[[Home]]\"\nrel:\n  - \"[[A|x]]\"\n  - plain\n---\n")

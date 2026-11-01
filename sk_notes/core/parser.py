@@ -25,8 +25,22 @@ __all__ = ["parse", "parse_frontmatter", "parse_linktext", "split_frontmatter", 
 
 # --------------------------------------------------------------------------- YAML
 
+# YAML aliases can expand a few hundred bytes into millions of values ("billion laughs"):
+# a synced note must never be able to exhaust memory
+MAX_ALIASES = 50
+MAX_VALUES = 100_000
+
+
 class FrontmatterLoader(yaml.SafeLoader):
-    """Safe YAML loader that keeps dates/times as plain strings (like the JS side)."""
+    """Safe YAML loader that keeps dates/times as plain strings (like the JS side) and
+    limits aliases."""
+
+    def compose_node(self, parent, index):
+        if self.check_event(yaml.AliasEvent):
+            self._aliases = getattr(self, "_aliases", 0) + 1
+            if self._aliases > MAX_ALIASES:
+                raise yaml.YAMLError("too many aliases in frontmatter")
+        return super().compose_node(parent, index)
 
 
 FrontmatterLoader.yaml_implicit_resolvers = {
@@ -35,11 +49,20 @@ FrontmatterLoader.yaml_implicit_resolvers = {
 }
 
 
-def _jsonable(value: Any) -> Any:
+class _TooBig(Exception):
+    pass
+
+
+def _jsonable(value: Any, budget: list[int] | None = None) -> Any:
+    if budget is None:
+        budget = [MAX_VALUES]
+    budget[0] -= 1
+    if budget[0] < 0:
+        raise _TooBig
     if isinstance(value, dict):
-        return {str(k): _jsonable(v) for k, v in value.items()}
+        return {str(k): _jsonable(v, budget) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
-        return [_jsonable(v) for v in value]
+        return [_jsonable(v, budget) for v in value]
     if isinstance(value, (str, int, float, bool)) or value is None:
         if isinstance(value, float) and value != value:  # NaN is not valid JSON
             return None
@@ -85,7 +108,10 @@ def parse_frontmatter(yaml_text: str) -> tuple[dict | None, str | None]:
         return {}, None
     if not isinstance(data, dict):
         return None, "frontmatter is not a key/value mapping"
-    return _jsonable(data), None
+    try:
+        return _jsonable(data), None
+    except (_TooBig, RecursionError):
+        return None, "frontmatter is too large"
 
 
 # --------------------------------------------------------------------------- helpers
