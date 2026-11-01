@@ -50,7 +50,7 @@ or touch app internals sk_notes does not have (errors are caught and logged).
 | obsidian-style-settings | Works | |
 | obsidian-tasks-plugin | Works | |
 | obsidian-textgenerator-plugin | Works | needs the network permission for remote models |
-| obsidian-zotero-desktop-connector | Works | talks to Zotero on localhost |
+| obsidian-zotero-desktop-connector | Works | talks to Zotero on localhost: needs the network permission |
 | obsidian42-brat | Works | needs the network permission to download |
 | periodic-notes | Works | |
 | recent-files-obsidian | Works | |

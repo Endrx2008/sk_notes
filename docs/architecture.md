@@ -102,14 +102,17 @@ updated cache entry after each save (debounced 300 ms, like autosave).
   - `moment` → shared Moment;
   - Node/Electron names → shims (`fs`, `fs/promises`, `path`, `os`, `crypto`,
     `child_process`, `electron`, `url`, `events`, `buffer`) whose privileged calls go to
-    Python through `skn://api/shim/*` with the plugin id; Python checks the
-    permission store and, the first time, asks the user (native dialog: Allow once /
-    Always / Deny).
+    Python through `skn://api/shim.*` with the plugin's caller token (`app/callers.py`:
+    one-time boot secret per page → one token per plugin, held only in closures);
+    Python checks the permission store and, the first time, asks the user (native
+    dialog: Allow once / Always / Deny). Granting, installing and first-time enabling
+    are native confirmations; the permission and plugin files are Python-only.
 - Permissions: `vault-read` (granted), `vault-write` (granted), `fs-outside-vault`,
   `exec` (child processes), `network` (requestUrl to remote hosts), `clipboard`,
-  `open-external`. Direct `fetch`/XHR to remote hosts from the page are blocked by a
-  request interceptor unless the "network" permission was granted to at least one
-  enabled plugin (Chromium cannot tell which plugin issued a raw fetch – documented).
+  `open-external`. Direct `fetch`/XHR from the page (local services included, except
+  the configured Ollama server) are blocked by a request interceptor unless the
+  "network" permission was granted to at least one enabled plugin (Chromium cannot tell
+  which plugin issued a raw fetch – documented).
 - Restricted mode (default on): no community plugin runs until the user turns it off
   after reading the third-party-code warning.
 - Theme variables and DOM classes: plugins style themselves with the publicly

@@ -43,6 +43,28 @@ the first time it is needed: *Allow once*, *Always allow*, *Deny*. Answers are s
 `.sk_notes/permissions.json` and can be changed in Settings → Community plugins → 🛡.
 Plugins can never write into `.sk_notes` outside their own folder.
 
+Local services count as network: only the configured Ollama server is reachable without
+the `network` permission.
+
+### How permissions are enforced
+
+Plugins run in the same JavaScript context as sk_notes (needed to run plugins written
+for Obsidian), so a plugin id sent by page code proves nothing. Instead:
+
+- each plugin gets a secret token when it is loaded (see `sk_notes/app/callers.py`); only
+  its own `require()` modules hold it, and Python looks the plugin up from it. Page code
+  without a token never gets a plugin permission;
+- granting a permission, installing a plugin, enabling a plugin for the first time and
+  setting a Git remote show a **native** confirmation that page code cannot answer;
+- `permissions.json`, `community-plugins.json` and the plugin folders and code are
+  written only by sk_notes itself;
+- files outside the vault (imports, static site output) are only those the user picked
+  in a native file dialog; symlinks are judged by their real target.
+
+Limit: a plugin can still use sk_notes' own JavaScript objects (`app.vault`,
+`app.workspace`…) like any other plugin, so it can read and change notes inside the vault.
+Install only plugins you trust; restricted mode (on by default) runs none.
+
 ## Native API (`require('sknotes')`)
 
 ```js
