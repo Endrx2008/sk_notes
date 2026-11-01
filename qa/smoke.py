@@ -229,6 +229,15 @@ class Smoke:
         assert {n["id"] for n in data["nodes"]} >= {"t1", "f1"}
         assert self.page.js("document.querySelectorAll('.canvas-node').length") == 3
 
+    def active_editor_after_open(self):
+        """Regression: activeEditor stayed null after openFile() in the active (empty) tab until a click."""
+        self.page.key("t", "ctrl")
+        self.page.wait("app.workspace.activeLeaf?.view?.getViewType() === 'empty'")
+        self.page.js("(async () => { await app.workspace.getLeaf(false).openFile(app.vault.getAbstractFileByPath('Ideas.md')); return 1; })()")
+        self.page.wait("(() => { const v = app.workspace.activeLeaf?.view; return v?.file?.path === 'Ideas.md' && !v.isLoading; })()")
+        assert self.page.js("app.workspace.activeEditor === app.workspace.activeLeaf.view"), "activeEditor not set"
+        assert self.page.js("app.workspace.activeEditor.editor.getValue().startsWith('# Ideas')")
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -262,7 +271,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:

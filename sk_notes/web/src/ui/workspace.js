@@ -504,6 +504,7 @@ export class WorkspaceLeaf extends WorkspaceItem {
     if (eState) this.setEphemeralState(eState);
     this.updateHeader();
     this.view?.updateNavButtons?.();
+    if (this.workspace.activeLeaf === this) this.workspace._syncActiveEditor(this);
     this.workspace.trigger('layout-change');
     this.workspace.requestSaveLayout();
     if (viewState.active) this.workspace.setActiveLeaf(this, { focus: true });
@@ -914,14 +915,22 @@ export class Workspace extends Events {
       leaf.containerEl.addClass('mod-active');
       leaf.tabHeaderEl.addClass('mod-active');
       this._recentLeaves = [leaf, ...this._recentLeaves.filter((l) => l !== leaf)].slice(0, 30);
-      this.activeEditor = leaf.view?.editor ? leaf.view : (leaf.view?.getViewType?.() === 'markdown' ? leaf.view : this.activeEditor && leaf.getRoot() === this.rootSplit ? null : this.activeEditor);
+      this._syncActiveEditor(leaf);
       this.trigger('active-leaf-change', leaf);
       const file = leaf.view instanceof FileView ? leaf.view.file : null;
       if (leaf.getRoot() === this.rootSplit) this.trigger('file-open', file);
       this._updateTitle();
       this.requestSaveLayout();
     }
+    else this._syncActiveEditor(leaf); // same leaf, but it may show a new view now
     if (params.focus) leaf.view?.focus?.();
+  }
+
+  /** The editor of the active leaf; a sidebar leaf keeps the last main-area editor. */
+  _syncActiveEditor(leaf) {
+    const v = leaf.view;
+    if (v?.editor || v?.getViewType?.() === 'markdown') this.activeEditor = v;
+    else if (leaf.getRoot() === this.rootSplit) this.activeEditor = null;
   }
 
   _updateTitle() {
