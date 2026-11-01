@@ -169,7 +169,8 @@ export class SkaiView extends ItemView {
       try {
         const r = await this.client.retrieve(q);
         sources = r.hits;
-        info.body.setText(r.method === 'embeddings' ? t('skai.found-semantic', { n: r.hits.length }) : t('skai.found-keywords', { n: r.hits.length }));
+        info.body.setText(r.method === 'embeddings' ? t('skai.found-semantic', { n: r.hits.length })
+          : t(r.reason === 'no-index' ? 'skai.found-keywords-no-index' : r.reason === 'no-match' ? 'skai.found-keywords-plain' : 'skai.found-keywords', { n: r.hits.length, cmd: t('skai.cmd.index') }));
         context = r.hits.map((h, i) => `[${i + 1}] Note "${h.path.replace(/\.md$/, '')}":\n${h.text}`).join('\n\n');
         if (r.memory?.length) context += '\n\nShared SKAI memory:\n' + r.memory.map((m) => m.text).join('\n');
       } catch (e) { info.body.setText(this.client.errorText(e)); }

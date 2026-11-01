@@ -814,5 +814,7 @@
  "plugins.unclean-ok": "Démarrer sans modules",
  "plugins.safe-mode": "Mode sans échec : les modules de la communauté sont désactivés pour cette session. Désactivez celui qui a causé le problème dans Paramètres → Modules de la communauté, puis redémarrez.",
  "plugins.slow-load": "toujours en chargement",
- "plugins.slow-load-notice": "« {name} » met longtemps à se charger ; les autres modules continuent de se charger."
+ "plugins.slow-load-notice": "« {name} » met longtemps à se charger ; les autres modules continuent de se charger.",
+ "skai.found-keywords-no-index": "{n} notes trouvées par mots-clés : l'index du coffre n'est pas encore construit (commande « {cmd} »).",
+ "skai.found-keywords-plain": "{n} notes trouvées par mots-clés."
 }

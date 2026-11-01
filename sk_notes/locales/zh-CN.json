@@ -814,5 +814,7 @@
  "plugins.unclean-ok": "不加载插件启动",
  "plugins.safe-mode": "安全模式：本次会话已关闭社区插件。请在 设置 → 社区插件 中停用导致问题的插件，然后重新启动。",
  "plugins.slow-load": "仍在加载",
- "plugins.slow-load-notice": "“{name}”加载时间过长；其他插件继续加载。"
+ "plugins.slow-load-notice": "“{name}”加载时间过长；其他插件继续加载。",
+ "skai.found-keywords-no-index": "通过关键词找到 {n} 条笔记：仓库索引尚未建立（命令“{cmd}”）。",
+ "skai.found-keywords-plain": "通过关键词找到 {n} 条笔记。"
 }

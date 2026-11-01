@@ -814,5 +814,7 @@
  "plugins.unclean-ok": "Start without plugins",
  "plugins.safe-mode": "Safe mode: community plugins are off for this session. Disable the plugin that caused the problem in Settings → Community plugins, then restart.",
  "plugins.slow-load": "still loading",
- "plugins.slow-load-notice": "\"{name}\" is taking a long time to load; the other plugins go on loading."
+ "plugins.slow-load-notice": "\"{name}\" is taking a long time to load; the other plugins go on loading.",
+ "skai.found-keywords-no-index": "{n} notes found by keywords: the vault index is not built yet (command \"{cmd}\").",
+ "skai.found-keywords-plain": "{n} notes found by keywords."
 }

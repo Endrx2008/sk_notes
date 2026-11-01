@@ -814,5 +814,7 @@
  "plugins.unclean-ok": "プラグインなしで起動",
  "plugins.safe-mode": "セーフモード：このセッションではコミュニティプラグインがオフです。設定 → コミュニティプラグイン で問題の原因となったプラグインを無効にしてから再起動してください。",
  "plugins.slow-load": "読み込み中",
- "plugins.slow-load-notice": "「{name}」の読み込みに時間がかかっています。他のプラグインは引き続き読み込まれます。"
+ "plugins.slow-load-notice": "「{name}」の読み込みに時間がかかっています。他のプラグインは引き続き読み込まれます。",
+ "skai.found-keywords-no-index": "キーワードで {n} 件のノートが見つかりました。保管庫のインデックスはまだ作成されていません（コマンド「{cmd}」）。",
+ "skai.found-keywords-plain": "キーワードで {n} 件のノートが見つかりました。"
 }

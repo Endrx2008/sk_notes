@@ -5,6 +5,7 @@ installed chat model with the most parameters. Standard library only."""
 from __future__ import annotations
 
 import json
+import socket
 import re
 import threading
 import time
@@ -14,6 +15,18 @@ from ..app.config import read_suite_ollama
 
 LIST_TIMEOUT = 4
 INACTIVITY_TIMEOUT = 600  # seconds without a streamed token before giving up
+
+
+def abort(cancel: threading.Event) -> None:
+    """Cancel a streamed request now, even while it waits for the server: shutting the
+    socket down ends the blocked read, and Ollama stops generating when the client goes."""
+    cancel.set()
+    resp = getattr(cancel, "response", None)
+    try:
+        sock = resp.fp.raw._sock  # http.client response -> socket
+        sock.shutdown(socket.SHUT_RDWR)
+    except (AttributeError, OSError):
+        pass
 
 
 class OllamaError(Exception):
@@ -143,6 +156,11 @@ class Ollama:
         if options:
             payload["options"] = options
         resp = self._request("/api/chat", payload, timeout=INACTIVITY_TIMEOUT)
+        if cancel is not None:
+            cancel.response = resp  # lets abort() end a read that is waiting for the server
+            if cancel.is_set():
+                resp.close()
+                raise OllamaError("cancelled")
         got_any = False
         try:
             for raw in resp:
@@ -164,9 +182,13 @@ class Ollama:
                 if obj.get("done"):
                     break
             else:
+                if cancel is not None and cancel.is_set():
+                    raise OllamaError("cancelled")  # abort() closed the stream
                 if not got_any:
                     raise OllamaError("interrupted")
-        except (OSError, TimeoutError) as exc:
+        except (OSError, TimeoutError, ValueError) as exc:
+            if cancel is not None and cancel.is_set():
+                raise OllamaError("cancelled") from exc
             raise OllamaError("timeout" if "timed out" in str(exc) else "interrupted", str(exc)) from exc
         finally:
             resp.close()

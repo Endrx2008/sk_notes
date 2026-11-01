@@ -814,5 +814,7 @@
  "plugins.unclean-ok": "Iniciar sin complementos",
  "plugins.safe-mode": "Modo seguro: los complementos de la comunidad están desactivados en esta sesión. Desactiva el que causó el problema en Ajustes → Complementos de la comunidad y reinicia.",
  "plugins.slow-load": "aún cargando",
- "plugins.slow-load-notice": "\"{name}\" tarda mucho en cargar; los demás complementos siguen cargándose."
+ "plugins.slow-load-notice": "\"{name}\" tarda mucho en cargar; los demás complementos siguen cargándose.",
+ "skai.found-keywords-no-index": "{n} notas encontradas por palabras clave: el índice de la bóveda aún no se ha creado (comando \"{cmd}\").",
+ "skai.found-keywords-plain": "{n} notas encontradas por palabras clave."
 }

@@ -814,5 +814,7 @@
  "plugins.unclean-ok": "Avvia senza plugin",
  "plugins.safe-mode": "Modalità sicura: i plugin della community sono disattivati in questa sessione. Disattiva il plugin che ha causato il problema in Impostazioni → Plugin della community, poi riavvia.",
  "plugins.slow-load": "ancora in caricamento",
- "plugins.slow-load-notice": "\"{name}\" impiega molto a caricarsi; gli altri plugin continuano a caricarsi."
+ "plugins.slow-load-notice": "\"{name}\" impiega molto a caricarsi; gli altri plugin continuano a caricarsi.",
+ "skai.found-keywords-no-index": "{n} note trovate per parole chiave: l'indice del vault non è ancora stato creato (comando \"{cmd}\").",
+ "skai.found-keywords-plain": "{n} note trovate per parole chiave."
 }

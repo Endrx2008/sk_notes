@@ -814,5 +814,7 @@
  "plugins.unclean-ok": "Iniciar sem plugins",
  "plugins.safe-mode": "Modo seguro: os plugins da comunidade estão desligados nesta sessão. Desative o plugin que causou o problema em Definições → Plugins da comunidade e reinicie.",
  "plugins.slow-load": "ainda a carregar",
- "plugins.slow-load-notice": "\"{name}\" está a demorar a carregar; os outros plugins continuam a carregar."
+ "plugins.slow-load-notice": "\"{name}\" está a demorar a carregar; os outros plugins continuam a carregar.",
+ "skai.found-keywords-no-index": "{n} notas encontradas por palavras-chave: o índice do cofre ainda não foi criado (comando \"{cmd}\").",
+ "skai.found-keywords-plain": "{n} notas encontradas por palavras-chave."
 }

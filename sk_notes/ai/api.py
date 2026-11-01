@@ -8,7 +8,7 @@ import threading
 from ..app.bridge import ApiError
 from .embeddings import EmbeddingIndex, keyword_retrieve
 from .memory import get_memory
-from .ollama import Ollama, OllamaError
+from .ollama import Ollama, OllamaError, abort
 
 log = logging.getLogger(__name__)
 
@@ -54,10 +54,14 @@ def register(app) -> None:
         def run():
             try:
                 for piece in ollama.chat_stream(messages, cancel=cancel, json_mode=bool(p.get("json")), options=options):
+                    if cancel.is_set():
+                        return
                     app.emit("ai-chunk", {"id": job, "text": piece})
-                app.emit("ai-done", {"id": job})
+                if not cancel.is_set():
+                    app.emit("ai-done", {"id": job})
             except OllamaError as exc:
-                app.emit("ai-error", {"id": job, "kind": exc.kind, "detail": exc.detail[:500]})
+                if not cancel.is_set():  # a cancel was already reported by ai.cancel
+                    app.emit("ai-error", {"id": job, "kind": exc.kind, "detail": exc.detail[:500]})
             except Exception as exc:  # noqa: BLE001
                 log.exception("chat failed")
                 app.emit("ai-error", {"id": job, "kind": "bug", "detail": str(exc)[:500]})
@@ -69,9 +73,11 @@ def register(app) -> None:
 
     @r("ai.cancel")
     def ai_cancel(p, ctx):
-        ev = jobs.get(str(p.get("id")))
-        if ev:
-            ev.set()
+        job = str(p.get("id"))
+        ev = jobs.get(job)
+        if ev and not ev.is_set():
+            abort(ev)
+            app.emit("ai-error", {"id": job, "kind": "cancelled", "detail": ""})  # the UI is free at once
         return bool(ev)
 
     @r("ai.index.build")
@@ -110,7 +116,9 @@ def register(app) -> None:
             model = ollama.embed_model()
         except OllamaError:
             model = None
-        if model and index().status(model)["chunks"]:
+        # why keywords are used, so the UI says the right thing (A-18)
+        reason = "no-model" if not model else ("no-index" if not index().status(model)["chunks"] else "no-match")
+        if model and reason != "no-index":
             try:
                 vec = ollama.embed([query], model=model)[0]
                 hits = index().search(vec, model, k)
@@ -118,7 +126,7 @@ def register(app) -> None:
                     return {"method": "embeddings", "hits": hits, "memory": memory.recall(query, 3)}
             except OllamaError as exc:
                 log.info("embedding search unavailable (%s); keyword fallback", exc.kind)
-        return {"method": "keywords", "hits": keyword_retrieve(s, query, k), "memory": memory.recall(query, 3)}
+        return {"method": "keywords", "reason": reason, "hits": keyword_retrieve(s, query, k), "memory": memory.recall(query, 3)}
 
     @r("ai.memory")
     def ai_memory(p, ctx):
