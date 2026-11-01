@@ -79,6 +79,7 @@ def register(app) -> None:
             "vault": {"name": s.vault.name, "path": str(s.vault.root)} if s else None,
             "home": str(Path.home()),
             "zoom": app.settings.zoom,
+            "safeMode": app.safe_mode,
         }
 
     @r("app.setLanguage")

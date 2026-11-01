@@ -122,6 +122,7 @@ export class App extends Events {
     performance.mark('skn:layout');
     this.metadataCache.trigger('resolved');
     if (this.plugins) await this.plugins.loadAll();
+    if (this.info.safeMode) this.notice(t('plugins.safe-mode'), 10000);
     performance.mark('skn:plugins');
     this.trigger('ready');
     window.__skn.flush = () => this.flush();

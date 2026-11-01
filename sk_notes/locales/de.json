@@ -808,5 +808,11 @@
  "plugins.install-ok": "Installieren",
  "git.remote-title": "Git-Remote",
  "git.remote-question": "Die Notizen dieses Tresors beim Push an {url} senden?",
- "git.remote-ok": "Dieses Remote verwenden"
+ "git.remote-ok": "Dieses Remote verwenden",
+ "plugins.unclean-title": "Abgesicherter Modus",
+ "plugins.unclean-question": "sk_notes wurde beim letzten Mal nicht normal beendet, während Community-Plugins liefen: Ein Plugin hat es vielleicht blockiert. Diesmal ohne Community-Plugins starten?",
+ "plugins.unclean-ok": "Ohne Plugins starten",
+ "plugins.safe-mode": "Abgesicherter Modus: Community-Plugins sind in dieser Sitzung aus. Deaktiviere das Plugin, das das Problem verursacht hat, unter Einstellungen → Community-Plugins und starte neu.",
+ "plugins.slow-load": "lädt noch",
+ "plugins.slow-load-notice": "„{name}“ braucht lange zum Laden; die anderen Plugins werden weiter geladen."
 }

@@ -808,5 +808,11 @@
  "plugins.install-ok": "Installa",
  "git.remote-title": "Remote Git",
  "git.remote-question": "Inviare le note di questo vault a {url} quando fai push?",
- "git.remote-ok": "Usa questo remote"
+ "git.remote-ok": "Usa questo remote",
+ "plugins.unclean-title": "Modalità sicura",
+ "plugins.unclean-question": "L'ultima volta sk_notes non si è chiuso normalmente mentre erano attivi plugin della community: un plugin potrebbe averlo bloccato. Avviare senza plugin della community questa volta?",
+ "plugins.unclean-ok": "Avvia senza plugin",
+ "plugins.safe-mode": "Modalità sicura: i plugin della community sono disattivati in questa sessione. Disattiva il plugin che ha causato il problema in Impostazioni → Plugin della community, poi riavvia.",
+ "plugins.slow-load": "ancora in caricamento",
+ "plugins.slow-load-notice": "\"{name}\" impiega molto a caricarsi; gli altri plugin continuano a caricarsi."
 }

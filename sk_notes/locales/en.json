@@ -808,5 +808,11 @@
  "plugins.install-ok": "Install",
  "git.remote-title": "Git remote",
  "git.remote-question": "Send the notes of this vault to {url} when you push?",
- "git.remote-ok": "Use this remote"
+ "git.remote-ok": "Use this remote",
+ "plugins.unclean-title": "Safe mode",
+ "plugins.unclean-question": "sk_notes did not close normally last time, while community plugins were running. A plugin may have frozen or crashed it. Start without community plugins this time?",
+ "plugins.unclean-ok": "Start without plugins",
+ "plugins.safe-mode": "Safe mode: community plugins are off for this session. Disable the plugin that caused the problem in Settings → Community plugins, then restart.",
+ "plugins.slow-load": "still loading",
+ "plugins.slow-load-notice": "\"{name}\" is taking a long time to load; the other plugins go on loading."
 }

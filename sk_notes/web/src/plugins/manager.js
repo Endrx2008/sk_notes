@@ -77,6 +77,8 @@ async function obsidianModule(mgr) {
   return compatModule;
 }
 
+const LOAD_TIMEOUT = 15000;
+
 const SHARED = {
   '@codemirror/state': cmState, '@codemirror/view': cmView, '@codemirror/language': cmLanguage, '@codemirror/commands': cmCommands,
   '@codemirror/search': cmSearch, '@codemirror/autocomplete': cmAutocomplete, '@codemirror/lang-markdown': cmLangMarkdown,
@@ -128,7 +130,7 @@ class PluginManager {
     this.compat = null;
   }
 
-  get restricted() { return this.app.settings.get('restrictedMode') !== false; }
+  get restricted() { return !!this.app.info?.safeMode || this.app.settings.get('restrictedMode') !== false; }
 
   async obsidianModule() { return obsidianModule(this); }
 
@@ -178,7 +180,19 @@ class PluginManager {
       plugin = new PluginClass(this.app, manifest);
       this.plugins[id] = plugin;
       this.enabledPlugins.add(id);
-      await plugin.load();
+      // a plugin whose onload() never finishes must not hold back the others (B-19)
+      const loading = plugin.load();
+      const slow = await Promise.race([loading.then(() => false), new Promise((r) => setTimeout(() => r(true), LOAD_TIMEOUT))]);
+      if (slow) {
+        this.errors[id] = t('plugins.slow-load');
+        this.app.notice(t('plugins.slow-load-notice', { name: manifest.name || id }), 10000);
+        loading.then(() => { delete this.errors[id]; this.app.workspace.trigger('plugin-loaded', id); }, (e) => {
+          this.errors[id] = e.message;
+          notifyPluginError(this.app, manifest, e);
+          this.unloadPlugin(id).catch(() => {});
+        });
+        return plugin;
+      }
       this.app.workspace.trigger('plugin-loaded', id);
       delete this.errors[id];
     } catch (e) {

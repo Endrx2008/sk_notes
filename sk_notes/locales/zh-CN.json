@@ -808,5 +808,11 @@
  "plugins.install-ok": "安装",
  "git.remote-title": "Git 远程仓库",
  "git.remote-question": "推送时将此仓库的笔记发送到 {url}？",
- "git.remote-ok": "使用此远程仓库"
+ "git.remote-ok": "使用此远程仓库",
+ "plugins.unclean-title": "安全模式",
+ "plugins.unclean-question": "上次运行社区插件时 sk_notes 未正常关闭，可能是某个插件导致其卡死。这次不加载社区插件启动吗？",
+ "plugins.unclean-ok": "不加载插件启动",
+ "plugins.safe-mode": "安全模式：本次会话已关闭社区插件。请在 设置 → 社区插件 中停用导致问题的插件，然后重新启动。",
+ "plugins.slow-load": "仍在加载",
+ "plugins.slow-load-notice": "“{name}”加载时间过长；其他插件继续加载。"
 }

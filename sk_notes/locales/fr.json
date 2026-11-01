@@ -808,5 +808,11 @@
  "plugins.install-ok": "Installer",
  "git.remote-title": "Dépôt distant Git",
  "git.remote-question": "Envoyer les notes de ce coffre vers {url} lors d'un push ?",
- "git.remote-ok": "Utiliser ce dépôt"
+ "git.remote-ok": "Utiliser ce dépôt",
+ "plugins.unclean-title": "Mode sans échec",
+ "plugins.unclean-question": "La dernière fois, sk_notes ne s'est pas fermé normalement alors que des modules de la communauté tournaient : l'un d'eux l'a peut-être bloqué. Démarrer cette fois sans modules de la communauté ?",
+ "plugins.unclean-ok": "Démarrer sans modules",
+ "plugins.safe-mode": "Mode sans échec : les modules de la communauté sont désactivés pour cette session. Désactivez celui qui a causé le problème dans Paramètres → Modules de la communauté, puis redémarrez.",
+ "plugins.slow-load": "toujours en chargement",
+ "plugins.slow-load-notice": "« {name} » met longtemps à se charger ; les autres modules continuent de se charger."
 }

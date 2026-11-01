@@ -808,5 +808,11 @@
  "plugins.install-ok": "Instalar",
  "git.remote-title": "Remoto Git",
  "git.remote-question": "Enviar as notas deste cofre para {url} ao fazer push?",
- "git.remote-ok": "Usar este remoto"
+ "git.remote-ok": "Usar este remoto",
+ "plugins.unclean-title": "Modo seguro",
+ "plugins.unclean-question": "Da última vez o sk_notes não fechou normalmente enquanto havia plugins da comunidade ativos: um deles pode tê-lo bloqueado. Iniciar desta vez sem plugins da comunidade?",
+ "plugins.unclean-ok": "Iniciar sem plugins",
+ "plugins.safe-mode": "Modo seguro: os plugins da comunidade estão desligados nesta sessão. Desative o plugin que causou o problema em Definições → Plugins da comunidade e reinicie.",
+ "plugins.slow-load": "ainda a carregar",
+ "plugins.slow-load-notice": "\"{name}\" está a demorar a carregar; os outros plugins continuam a carregar."
 }

@@ -808,5 +808,11 @@
  "plugins.install-ok": "インストール",
  "git.remote-title": "Git リモート",
  "git.remote-question": "プッシュ時にこの保管庫のノートを {url} に送信しますか？",
- "git.remote-ok": "このリモートを使う"
+ "git.remote-ok": "このリモートを使う",
+ "plugins.unclean-title": "セーフモード",
+ "plugins.unclean-question": "前回、コミュニティプラグインの実行中に sk_notes が正常に終了しませんでした。プラグインが原因で停止した可能性があります。今回はコミュニティプラグインなしで起動しますか？",
+ "plugins.unclean-ok": "プラグインなしで起動",
+ "plugins.safe-mode": "セーフモード：このセッションではコミュニティプラグインがオフです。設定 → コミュニティプラグイン で問題の原因となったプラグインを無効にしてから再起動してください。",
+ "plugins.slow-load": "読み込み中",
+ "plugins.slow-load-notice": "「{name}」の読み込みに時間がかかっています。他のプラグインは引き続き読み込まれます。"
 }

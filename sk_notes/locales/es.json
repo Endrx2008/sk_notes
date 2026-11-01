@@ -808,5 +808,11 @@
  "plugins.install-ok": "Instalar",
  "git.remote-title": "Remoto de Git",
  "git.remote-question": "¿Enviar las notas de esta bóveda a {url} al hacer push?",
- "git.remote-ok": "Usar este remoto"
+ "git.remote-ok": "Usar este remoto",
+ "plugins.unclean-title": "Modo seguro",
+ "plugins.unclean-question": "La última vez sk_notes no se cerró normalmente mientras había complementos de la comunidad activos: uno pudo haberlo bloqueado. ¿Iniciar esta vez sin complementos de la comunidad?",
+ "plugins.unclean-ok": "Iniciar sin complementos",
+ "plugins.safe-mode": "Modo seguro: los complementos de la comunidad están desactivados en esta sesión. Desactiva el que causó el problema en Ajustes → Complementos de la comunidad y reinicia.",
+ "plugins.slow-load": "aún cargando",
+ "plugins.slow-load-notice": "\"{name}\" tarda mucho en cargar; los demás complementos siguen cargándose."
 }

@@ -14,6 +14,7 @@ import sys
 def main() -> int:
     parser = argparse.ArgumentParser(prog="sk-notes", description="sk_notes – Markdown notes and knowledge base")
     parser.add_argument("--vault", help="open this folder as a vault")
+    parser.add_argument("--safe-mode", action="store_true", help="start without community plugins")
     parser.add_argument("uri", nargs="?", help="sknotes:// link to open")
     args = parser.parse_args()
 
@@ -46,7 +47,7 @@ def main() -> int:
     log = logging.getLogger("sk_notes.startup")
     log.debug("startup: QApplication at %.2fs", process_age() or 0)
     from sk_notes.app.application import SkNotesApp
-    app = SkNotesApp(qapp, vault_path=args.vault)
+    app = SkNotesApp(qapp, vault_path=args.vault, safe_mode=args.safe_mode)
     log.debug("startup: app and vault at %.2fs", process_age() or 0)
     win = app.new_window()
     win.view.setZoomFactor(app.settings.zoom)
@@ -55,6 +56,13 @@ def main() -> int:
     log.debug("startup: window shown at %.2fs", process_age() or 0)
     if args.uri:
         app.handle_uri(args.uri)  # delivered once the page is ready
+    # SIGTERM (logout, shutdown) is a normal close: quit through Qt so that app.quit() runs
+    import signal
+    from PyQt6.QtCore import QTimer
+    signal.signal(signal.SIGTERM, lambda *_: qapp.quit())
+    tick = QTimer(interval=500)  # let Python handle signals while Qt's loop runs
+    tick.timeout.connect(lambda: None)
+    tick.start()
     code = qapp.exec()
     app.quit()
     return code

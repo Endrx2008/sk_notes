@@ -162,9 +162,11 @@ def Qt_color(theme: str):  # noqa: N802
 class SkNotesApp(QObject):
     event_ready = pyqtSignal(str, str)  # name, json (thread-safe hop to the UI thread)
 
-    def __init__(self, qapp: QApplication, vault_path: str | None = None):
+    def __init__(self, qapp: QApplication, vault_path: str | None = None, safe_mode: bool = False):
         super().__init__()
         self.qapp = qapp
+        self.safe_mode = safe_mode  # no community plugins this session
+        self._run_marker: Path | None = None
         self.settings = config.GlobalSettings.load()
         self.language = self.settings.language or i18n.system_language()
         self.theme = config.read_skai_theme()
@@ -250,7 +252,27 @@ class SkNotesApp(QObject):
         for w in self.windows:
             w.setWindowTitle(f"{self.service.vault.name} – sk_notes")
         self._listen_for_links(path)
+        self._check_last_exit(path)
         return {"path": path, **stats}
+
+    def _check_last_exit(self, vault: str) -> None:
+        """A plugin that freezes or exhausts memory would do it again at every start, and
+        Settings cannot be reached then (B-20): if the last session with community plugins
+        did not close normally, offer to start without them."""
+        marker = config.cache_dir() / f"running-{sknotes_uri.server_name(vault)}"
+        app_cfg = self.service.config_read("app.json", {}) or {}
+        plugins_on = app_cfg.get("restrictedMode") is False and bool(self.service.config_read("community-plugins.json", []))
+        if marker.exists() and plugins_on and not self.safe_mode:
+            from ..plugins.permissions import confirm
+            s = i18n.strings(self.language)
+            self.safe_mode = confirm(self, s.get("plugins.unclean-title", "Safe mode"),
+                                     s.get("plugins.unclean-question", "Start without community plugins?"),
+                                     ok=s.get("plugins.unclean-ok", "Start without plugins"))
+        try:
+            marker.write_text(str(os.getpid()))
+            self._run_marker = marker
+        except OSError:
+            pass
 
     # ------------------------------------------------------------------ sknotes:// links
     def _listen_for_links(self, vault: str) -> None:
@@ -351,6 +373,8 @@ class SkNotesApp(QObject):
             self.emit("skai-theme", {"theme": theme})
 
     def quit(self) -> None:
+        if self._run_marker:
+            self._run_marker.unlink(missing_ok=True)  # closed normally
         if self.uri_server:
             self.uri_server.close()
         if self.watcher:
