@@ -108,6 +108,14 @@ class Vault:
         out: list[FileEntry] = []
         root_len = len(str(self.root)) + 1
         stack = [str(self.root)]
+        # symlinked folders: each real folder is scanned once (loops like `a -> .` made the
+        # tree grow as 2^depth), and links up to a folder containing the vault are skipped
+        real_root = os.path.realpath(self.root)
+        try:
+            rs = os.stat(self.root)
+            seen = {(rs.st_dev, rs.st_ino)}
+        except OSError:
+            seen = set()
         while stack:
             d = stack.pop()
             try:
@@ -125,6 +133,14 @@ class Vault:
                     except OSError:
                         continue  # broken symlink, permission denied
                     if statmod.S_ISDIR(st.st_mode):
+                        key = (st.st_dev, st.st_ino)
+                        if key in seen:
+                            continue
+                        if e.is_symlink():
+                            target = os.path.realpath(e.path)
+                            if real_root == target or real_root.startswith(target + os.sep):
+                                continue
+                        seen.add(key)
                         out.append(FileEntry(rel, True))
                         stack.append(e.path)
                     elif statmod.S_ISREG(st.st_mode):

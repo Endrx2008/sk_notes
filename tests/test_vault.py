@@ -191,6 +191,35 @@ class RenameTests(unittest.TestCase):
         self.assertIn(name[:-3].split("/")[-1], self.read("Index.md"))
 
 
+class SymlinkScanTests(unittest.TestCase):
+    def test_symlink_loops_are_scanned_once(self):
+        tmp, svc = make_vault({"a.md": "x", "sub/b.md": "y"})
+        try:
+            root = Path(tmp.name)
+            os.symlink(".", root / "loopA")
+            os.symlink(".", root / "loopB")
+            os.symlink("..", root / "sub" / "up")
+            os.symlink("..", root / "parent")  # the folder that contains the vault
+            t0 = time.time()
+            files = [e.path for e in svc.vault.scan() if not e.is_dir]
+            self.assertLess(time.time() - t0, 2)
+            self.assertEqual(sorted(files), ["a.md", "sub/b.md"])
+        finally:
+            svc.close()
+            tmp.cleanup()
+
+    def test_symlinked_folder_outside_is_scanned(self):
+        tmp, svc = make_vault({"a.md": "x"})
+        with tempfile.TemporaryDirectory() as other:
+            try:
+                (Path(other) / "ext.md").write_text("z")
+                os.symlink(other, Path(tmp.name) / "linked")
+                self.assertIn("linked/ext.md", [e.path for e in svc.vault.scan()])
+            finally:
+                svc.close()
+                tmp.cleanup()
+
+
 class WriteDeleteHistoryTests(unittest.TestCase):
     def setUp(self):
         self.tmp, self.svc = make_vault({"A.md": "one"})
