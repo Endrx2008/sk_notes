@@ -818,5 +818,13 @@
  "skai.found-keywords-no-index": "{n} Notizen per Stichwort gefunden: Der Tresor-Index ist noch nicht erstellt (Befehl „{cmd}“).",
  "skai.found-keywords-plain": "{n} Notizen per Stichwort gefunden.",
  "rename.recovered-undone": "Eine Umbenennung wurde beim letzten Schließen von sk_notes unterbrochen; sie wurde rückgängig gemacht, damit kein Link kaputt ist.",
- "rename.recovered-completed": "Eine Umbenennung wurde beim letzten Schließen von sk_notes unterbrochen; die Aktualisierung der Links wurde jetzt abgeschlossen."
+ "rename.recovered-completed": "Eine Umbenennung wurde beim letzten Schließen von sk_notes unterbrochen; die Aktualisierung der Links wurde jetzt abgeschlossen.",
+ "cmd.toggle-fold": "Am Cursor ein-/ausklappen",
+ "cmd.bookmark-all-tabs": "Alle offenen Tabs als Lesezeichen speichern",
+ "cmd.debug-info": "Debug-Informationen anzeigen",
+ "debug.copy": "Kopieren",
+ "debug.copied": "In die Zwischenablage kopiert.",
+ "settings.status-bar": "Statusleiste",
+ "settings.word-count": "Wortanzahl",
+ "settings.word-count-desc": "Zeigt die Anzahl der Wörter und Zeichen der offenen Notiz (ausschalten, wenn ein Plugin eine eigene Zählung zeigt)."
 }

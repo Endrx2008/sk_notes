@@ -818,5 +818,13 @@
  "skai.found-keywords-no-index": "通过关键词找到 {n} 条笔记：仓库索引尚未建立（命令“{cmd}”）。",
  "skai.found-keywords-plain": "通过关键词找到 {n} 条笔记。",
  "rename.recovered-undone": "上次关闭 sk_notes 时有一次重命名被中断；已撤销，以免链接失效。",
- "rename.recovered-completed": "上次关闭 sk_notes 时有一次重命名被中断；现已完成链接更新。"
+ "rename.recovered-completed": "上次关闭 sk_notes 时有一次重命名被中断；现已完成链接更新。",
+ "cmd.toggle-fold": "折叠/展开光标处的块",
+ "cmd.bookmark-all-tabs": "将所有打开的标签页加入书签",
+ "cmd.debug-info": "显示调试信息",
+ "debug.copy": "复制",
+ "debug.copied": "已复制到剪贴板。",
+ "settings.status-bar": "状态栏",
+ "settings.word-count": "字数统计",
+ "settings.word-count-desc": "显示当前笔记的字数和字符数（如果插件显示自己的统计，可将其关闭）。"
 }

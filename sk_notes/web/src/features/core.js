@@ -140,6 +140,14 @@ export function registerCoreFeatures(app) {
     if (!check) { app.bookmarks.addFile(f); app.notice(t('bookmarks.added')); }
     return true;
   } });
+  cmd('bookmarks:bookmark-all-tabs', t('cmd.bookmark-all-tabs'), { checkCallback: (check) => {
+    const files = [];
+    ws.iterateRootLeaves((l) => { const f = l.view?.file; if (f && !files.includes(f)) files.push(f); });
+    if (!files.length) return false;
+    if (!check) { for (const f of files) app.bookmarks.addFile(f); app.notice(t('bookmarks.added')); }
+    return true;
+  } });
+  cmd('app:show-debug-info', t('cmd.debug-info'), { callback: () => showDebugInfo(app) });
   cmd('backlink:open', t('cmd.backlinks'), { callback: openSide('backlink', 'right') });
   cmd('outgoing-links:open', t('cmd.outgoing'), { callback: openSide('outgoing-link', 'right') });
   cmd('tag-pane:open', t('cmd.tags'), { callback: openSide('tag', 'right') });
@@ -244,6 +252,7 @@ export function registerCoreFeatures(app) {
   cmd('editor:indent-list', t('cmd.indent'), { hotkeys: [{ modifiers: [M], key: ']' }], editorCallback: (e) => e.exec('indentMore') });
   cmd('editor:unindent-list', t('cmd.unindent'), { hotkeys: [{ modifiers: [M], key: '[' }], editorCallback: (e) => e.exec('indentLess') });
   cmd('editor:fold-all', t('cmd.fold-all'), { editorCallback: (e) => e.exec('foldAll') });
+  cmd('editor:toggle-fold', t('cmd.toggle-fold'), { editorCallback: (e) => e.exec('toggleFold') });
   cmd('editor:unfold-all', t('cmd.unfold-all'), { editorCallback: (e) => e.exec('unfoldAll') });
   const linkCmd = (id, name, hotkeys, mode, toggleTask) => cmd(id, name, { hotkeys, editorCheckCallback: (check, editor, view) => {
     const link = linkAtCursor(editor);
@@ -696,3 +705,18 @@ class VersionHistoryModal extends Modal {
 }
 
 export { tn, debounce, TFolder };
+
+/** Version, environment and plugins, ready to paste into a bug report. */
+function showDebugInfo(app) {
+  const m = new Modal(app);
+  m.titleEl.setText(t('cmd.debug-info'));
+  const enabled = [...(app.plugins?.enabledPlugins || [])].map((id) => `${id} ${app.plugins.manifests?.[id]?.version || ''}`.trim());
+  const text = [`sk_notes ${app.info.version}`, `language: ${app.info.language}`, `theme: ${app.info.theme}`,
+    `user agent: ${navigator.userAgent}`, `restricted mode: ${app.plugins?.restricted ? 'on' : 'off'}`,
+    `community plugins: ${enabled.length ? enabled.join(', ') : '-'}`,
+    `files: ${app.vault.getFiles().length}, notes: ${app.vault.getMarkdownFiles().length}`].join('\n');
+  m.contentEl.createEl('pre', { cls: 'sk-debug-info', text });
+  new ButtonComponent(m.contentEl.createDiv('modal-button-container')).setButtonText(t('debug.copy')).setCta()
+    .onClick(() => { navigator.clipboard.writeText(text).then(() => app.notice(t('debug.copied')), () => {}); });
+  m.open();
+}

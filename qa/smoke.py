@@ -459,6 +459,14 @@ class Smoke:
         # rows that come into view get their snippet
         self.page.wait("(() => { const r = [...document.querySelectorAll('.search-result')]; return !!r[r.length - 1].querySelector('.search-result-file-match'); })()", timeout=15)
 
+    def new_commands(self):
+        """A-16: commands an Obsidian user looks for."""
+        for cid in ("editor:toggle-fold", "bookmarks:bookmark-all-tabs", "app:show-debug-info", "editor:open-link-in-new-split"):
+            assert self.page.js(f"!!app.commands.commands[{json.dumps(cid)}]"), cid
+        self.page.js("(() => { app.commands.executeCommandById('app:show-debug-info'); return 1; })()")
+        self.page.wait("document.querySelector('.modal pre.sk-debug-info')?.innerText.startsWith('sk_notes')")
+        self.page.key("Escape")
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -492,7 +500,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "folder_setting_suggests", "external_rename_follows", "hidden_tabs_deferred", "search_snippets_lazy", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "folder_setting_suggests", "external_rename_follows", "hidden_tabs_deferred", "search_snippets_lazy", "new_commands", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:

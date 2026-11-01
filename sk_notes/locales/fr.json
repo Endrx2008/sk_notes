@@ -818,5 +818,13 @@
  "skai.found-keywords-no-index": "{n} notes trouvées par mots-clés : l'index du coffre n'est pas encore construit (commande « {cmd} »).",
  "skai.found-keywords-plain": "{n} notes trouvées par mots-clés.",
  "rename.recovered-undone": "Un renommage a été interrompu à la dernière fermeture de sk_notes ; il a été annulé pour qu'aucun lien ne soit cassé.",
- "rename.recovered-completed": "Un renommage a été interrompu à la dernière fermeture de sk_notes ; la mise à jour des liens vient d'être terminée."
+ "rename.recovered-completed": "Un renommage a été interrompu à la dernière fermeture de sk_notes ; la mise à jour des liens vient d'être terminée.",
+ "cmd.toggle-fold": "Plier/déplier au curseur",
+ "cmd.bookmark-all-tabs": "Ajouter tous les onglets ouverts aux signets",
+ "cmd.debug-info": "Afficher les informations de débogage",
+ "debug.copy": "Copier",
+ "debug.copied": "Copié dans le presse-papiers.",
+ "settings.status-bar": "Barre d'état",
+ "settings.word-count": "Nombre de mots",
+ "settings.word-count-desc": "Affiche le nombre de mots et de caractères de la note ouverte (désactivez-le si un module affiche son propre compte)."
 }

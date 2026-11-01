@@ -818,5 +818,13 @@
  "skai.found-keywords-no-index": "{n} note trovate per parole chiave: l'indice del vault non è ancora stato creato (comando \"{cmd}\").",
  "skai.found-keywords-plain": "{n} note trovate per parole chiave.",
  "rename.recovered-undone": "L'ultima volta una rinomina è stata interrotta alla chiusura di sk_notes; è stata annullata perché nessun link resti rotto.",
- "rename.recovered-completed": "L'ultima volta una rinomina è stata interrotta alla chiusura di sk_notes; l'aggiornamento dei link è stato completato ora."
+ "rename.recovered-completed": "L'ultima volta una rinomina è stata interrotta alla chiusura di sk_notes; l'aggiornamento dei link è stato completato ora.",
+ "cmd.toggle-fold": "Piega/espandi il blocco al cursore",
+ "cmd.bookmark-all-tabs": "Aggiungi ai segnalibri tutte le schede aperte",
+ "cmd.debug-info": "Mostra informazioni di debug",
+ "debug.copy": "Copia",
+ "debug.copied": "Copiato negli appunti.",
+ "settings.status-bar": "Barra di stato",
+ "settings.word-count": "Conteggio parole",
+ "settings.word-count-desc": "Mostra il numero di parole e caratteri della nota aperta (disattivalo se un plugin mostra un suo conteggio)."
 }

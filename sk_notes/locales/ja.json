@@ -818,5 +818,13 @@
  "skai.found-keywords-no-index": "キーワードで {n} 件のノートが見つかりました。保管庫のインデックスはまだ作成されていません（コマンド「{cmd}」）。",
  "skai.found-keywords-plain": "キーワードで {n} 件のノートが見つかりました。",
  "rename.recovered-undone": "前回 sk_notes の終了時に名前の変更が中断されました。リンクが壊れないよう取り消しました。",
- "rename.recovered-completed": "前回 sk_notes の終了時に名前の変更が中断されました。リンクの更新を今完了しました。"
+ "rename.recovered-completed": "前回 sk_notes の終了時に名前の変更が中断されました。リンクの更新を今完了しました。",
+ "cmd.toggle-fold": "カーソル位置の折りたたみを切り替え",
+ "cmd.bookmark-all-tabs": "開いているすべてのタブをブックマーク",
+ "cmd.debug-info": "デバッグ情報を表示",
+ "debug.copy": "コピー",
+ "debug.copied": "クリップボードにコピーしました。",
+ "settings.status-bar": "ステータスバー",
+ "settings.word-count": "単語数",
+ "settings.word-count-desc": "開いているノートの単語数と文字数を表示します（プラグインが独自の数を表示する場合はオフにしてください）。"
 }

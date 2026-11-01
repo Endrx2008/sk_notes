@@ -289,6 +289,10 @@ class SettingsModal extends Modal {
     this.heading(el, t('settings.unique'));
     this.text(el, 'uniqueNotePrefix', t('settings.unique-format'), '', 'YYYYMMDDHHmm');
     this.folder(el, 'uniqueNoteFolder', t('settings.unique-folder'), '', '');
+    this.heading(el, t('settings.status-bar'));
+    new Setting(el).setName(t('settings.word-count')).setDesc(t('settings.word-count-desc')).addToggle((tg) => tg
+      .setValue(this.app.settings.get('wordCount') !== false)
+      .onChange((v) => { this.app.settings.set('wordCount', v); this.app.statusBar?.updateCounts(this.app.workspace.activeLeaf?.view); }));
     this.heading(el, t('settings.preview'));
     this.toggle(el, 'pagePreviewRequireMod', t('settings.preview-mod'), t('settings.preview-mod-desc'));
     this.heading(el, t('settings.sync-publish'));

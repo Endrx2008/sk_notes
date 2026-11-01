@@ -818,5 +818,13 @@
  "skai.found-keywords-no-index": "{n} notes found by keywords: the vault index is not built yet (command \"{cmd}\").",
  "skai.found-keywords-plain": "{n} notes found by keywords.",
  "rename.recovered-undone": "A rename was interrupted last time sk_notes closed; it was undone so that no link is broken.",
- "rename.recovered-completed": "A rename was interrupted last time sk_notes closed; its link updates were finished now."
+ "rename.recovered-completed": "A rename was interrupted last time sk_notes closed; its link updates were finished now.",
+ "cmd.toggle-fold": "Toggle fold at the cursor",
+ "cmd.bookmark-all-tabs": "Bookmark all open tabs",
+ "cmd.debug-info": "Show debug info",
+ "debug.copy": "Copy",
+ "debug.copied": "Copied to the clipboard.",
+ "settings.status-bar": "Status bar",
+ "settings.word-count": "Word count",
+ "settings.word-count-desc": "Show the number of words and characters of the open note (turn it off if a plugin shows its own count)."
 }

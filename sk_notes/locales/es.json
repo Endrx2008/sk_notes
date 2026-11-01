@@ -818,5 +818,13 @@
  "skai.found-keywords-no-index": "{n} notas encontradas por palabras clave: el índice de la bóveda aún no se ha creado (comando \"{cmd}\").",
  "skai.found-keywords-plain": "{n} notas encontradas por palabras clave.",
  "rename.recovered-undone": "La última vez se interrumpió un cambio de nombre al cerrarse sk_notes; se deshizo para que ningún enlace quede roto.",
- "rename.recovered-completed": "La última vez se interrumpió un cambio de nombre al cerrarse sk_notes; la actualización de los enlaces se completó ahora."
+ "rename.recovered-completed": "La última vez se interrumpió un cambio de nombre al cerrarse sk_notes; la actualización de los enlaces se completó ahora.",
+ "cmd.toggle-fold": "Plegar/desplegar en el cursor",
+ "cmd.bookmark-all-tabs": "Añadir a marcadores todas las pestañas abiertas",
+ "cmd.debug-info": "Mostrar información de depuración",
+ "debug.copy": "Copiar",
+ "debug.copied": "Copiado al portapapeles.",
+ "settings.status-bar": "Barra de estado",
+ "settings.word-count": "Recuento de palabras",
+ "settings.word-count-desc": "Muestra el número de palabras y caracteres de la nota abierta (desactívalo si un complemento muestra su propio recuento)."
 }

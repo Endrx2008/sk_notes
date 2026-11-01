@@ -4,7 +4,7 @@ import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap, s
 import { defaultKeymap, history, historyKeymap, indentLess, indentMore, indentWithTab, redo, undo, selectAll } from '@codemirror/commands';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
-import { HighlightStyle, bracketMatching, foldGutter, foldKeymap, foldService, indentOnInput, syntaxHighlighting, foldEffect, unfoldAll, foldAll } from '@codemirror/language';
+import { HighlightStyle, bracketMatching, foldGutter, foldKeymap, foldService, indentOnInput, syntaxHighlighting, foldEffect, unfoldAll, foldAll, foldCode, unfoldCode } from '@codemirror/language';
 import { highlightSelectionMatches, openSearchPanel, search, searchKeymap } from '@codemirror/search';
 import { Compartment, EditorSelection, EditorState, Prec } from '@codemirror/state';
 import { EditorView, drawSelection, dropCursor, keymap, placeholder, rectangularSelection, crosshairCursor } from '@codemirror/view';
@@ -587,7 +587,7 @@ export class Editor {
     if (command === 'swapLineUp') return commands.swapUp(this.cm);
     if (command === 'swapLineDown') return commands.swapDown(this.cm);
     if (command === 'deleteLine') return commands.deleteParagraph(this.cm);
-    if (command === 'toggleFold') return foldAll(this.cm);
+    if (command === 'toggleFold') return foldCode(this.cm) || unfoldCode(this.cm); // the block at the cursor
     if (command === 'foldAll') return foldAll(this.cm);
     if (command === 'unfoldAll') return unfoldAll(this.cm);
     import('@codemirror/commands').then((m) => m[map[command]]?.(this.cm));
