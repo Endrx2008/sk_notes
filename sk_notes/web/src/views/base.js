@@ -199,7 +199,7 @@ export class TextFileView extends EditableFileView {
     this.data = data;
     const file = this.file;
     const prev = this._saving;
-    this._saving = (async () => {
+    const job = (async () => {
       await prev;
       try {
         await this.app.vault.modify(file, data);
@@ -210,7 +210,12 @@ export class TextFileView extends EditableFileView {
         this.app.notice(t('notice.save-failed', { name: file.basename, error: e.code || e.message }));
       }
     })();
-    await this._saving;
+    this._saving = job;
+    await job;
+    // only "saving" while a write is running: the workspace skips external-change
+    // reloads for saving views, and a stale promise here hid every later change made
+    // outside the editor (templates, plugins), which the next autosave then overwrote
+    if (this._saving === job) this._saving = null;
     if (clear) this.clear();
   }
 

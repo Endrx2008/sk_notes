@@ -26,6 +26,7 @@ NOTES = {
     "Home.md": "---\ntags: [start]\n---\n# Home\n\nWelcome. See [[Ideas]] and [[Projects/Plan|the plan]].\n\n- [ ] first task\n",
     "Ideas.md": "# Ideas\n\nA quiet garden of thoughts. #idea\n\n## Later\n\nsomething for later\n",
     "Projects/Plan.md": "# Plan\n\nStep one links back to [[Home]].\n",
+    "Templates/Meeting.md": "---\ntype: meeting\n---\n# Meeting {{title}}\n",
     "Board.canvas": json.dumps({"nodes": [
         {"id": "t1", "type": "text", "text": "hello", "x": 0, "y": 0, "width": 250, "height": 120},
         {"id": "f1", "type": "file", "file": "Projects/Plan.md", "x": 400, "y": 0, "width": 300, "height": 200}],
@@ -250,6 +251,40 @@ class Smoke:
         finally:
             self.page.js(f"(() => {{ app.workspace.activeEditor.editor.setValue({json.dumps(before)}); return 1; }})()")
 
+    def _wait_file(self, rel: str, pred, what: str, timeout: float = 10):
+        end = time.time() + timeout
+        while True:
+            text = (self.vault / rel).read_text(encoding="utf-8")
+            if pred(text):
+                return text
+            assert time.time() < end, f"{what}: {text[:200]!r}"
+            time.sleep(0.3)
+
+    def external_change_after_save(self):
+        """Regression: after a note had been saved once, changes made outside the editor
+        never reached it, and the next autosave wrote the old text back."""
+        self.open_with_switcher("plan", "Projects/Plan.md")
+        self.page.js("(async () => { const v = app.workspace.activeLeaf.view; v.editor.replaceRange('edited ', { line: 0, ch: 0 }); await v.save(); return 1; })()")
+        self.page.js("(async () => { await app.vault.process(app.vault.getAbstractFileByPath('Projects/Plan.md'), (t) => t + '\\nfrom a plugin\\n'); return 1; })()")
+        self.page.wait("app.workspace.activeLeaf.view.editor.getValue().includes('from a plugin')", timeout=5)
+        self.page.js("(() => { app.workspace.activeLeaf.view.editor.replaceRange('typed ', { line: 0, ch: 0 }); return 1; })()")
+        self._wait_file("Projects/Plan.md", lambda t: t.startswith("typed edited") and "from a plugin" in t, "plugin change lost")
+
+    def template_keeps_properties(self):
+        """Regression: inserting a template dropped its properties."""
+        self.page.js("(() => { app.settings.set('templatesFolder', 'Templates'); return 1; })()")
+        self.open_with_switcher("idea", "Ideas.md")
+        self.page.js("(() => { const e = app.workspace.activeEditor.editor; e.setCursor(e.lastLine(), 0); e.focus(); return 1; })()")
+        self.page.js("(() => { app.commands.executeCommandById('insert-template'); return 1; })()")
+        self.page.wait("!!document.querySelector('.prompt input')")
+        self.page.type("Meeting")
+        self.page.wait("!!document.querySelector('.suggestion-item.is-selected')")
+        self.page.key("Enter")
+        text = self._wait_file("Ideas.md", lambda t: t.startswith("---\ntype: meeting\n---\n") and "# Meeting Ideas" in t,
+                               "template properties missing")
+        time.sleep(2)  # a later autosave must not drop them again
+        assert (self.vault / "Ideas.md").read_text(encoding="utf-8") == text
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -283,7 +318,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:
