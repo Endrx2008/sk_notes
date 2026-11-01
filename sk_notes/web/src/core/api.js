@@ -13,6 +13,10 @@ export class ApiError extends Error {
 // and the exact length always travels in the URL.
 const PART = 60000;
 const enc = new TextEncoder();
+const encode = encodeURIComponent;
+const hasOwn = Object.hasOwn;
+const textEncode = TextEncoder.prototype.encode;
+const parseJson = JSON.parse;
 
 // Plugins share this page. They must not see the caller tokens of other plugins (see
 // app/callers.py), so the browser functions used here are taken now, before any plugin
@@ -39,32 +43,42 @@ if (globalThis.window && globalThis.document) {
 let boot = globalThis.__sknBoot?.token || null;
 try { delete globalThis.__sknBoot; } catch { globalThis.__sknBoot = undefined; }
 
-/** The page's one-time boot secret (first call only; the plugin manager takes it). */
-export function takeBootSecret() {
+// The app key (see app/callers.py): every call of the app carries it; plugins and the
+// HTML of notes never see it. Strings are built by concatenation and the body is not
+// produced with JSON.stringify, which a plugin could replace.
+let appKey = null;
+const authReady = (async () => {
+  if (!boot) return; // pages opened by window.open(): no identity (they open none now)
   const b = boot;
   boot = null;
-  return b;
+  const bytes = apply(textEncode, enc, ['{"boot":"' + b + '"}']);
+  const r = await fetchJson('skn://api/app.auth?len=' + bytes.length, { method: 'POST', body: bytes });
+  if (r && r.ok) appKey = r.result;
+  else console.error('sk_notes: not authenticated', r);
+})();
+
+function bodyOf(obj) {
+  return apply(textEncode, enc, [JSON.stringify(obj)]);
 }
 
-const encode = encodeURIComponent;
-const hasOwn = Object.hasOwn;
-const textEncode = TextEncoder.prototype.encode;
-const parseJson = JSON.parse;
+/** Tokens for the plugins that may run (one each); only the plugin manager calls this. */
+export async function pluginTokens() {
+  await authReady;
+  return call('plugins.tokens', {});
+}
 
-/** A call whose body holds a secret (boot secret, page key): the body is a string the
- * caller builds, sent without JSON.stringify or TextEncoder lookups a plugin could
- * replace. Returns the result. */
-export async function secretCall(method, body) {
-  const bytes = apply(textEncode, enc, [body]);
-  return unwrap(await fetchJson('skn://api/' + method + '?len=' + bytes.length, { method: 'POST', body: bytes }));
+export async function pluginToken(id) {
+  await authReady;
+  return call('plugins.token', { id });
 }
 
 // Only string concatenation and functions taken above: a plugin that replaces
 // encodeURIComponent, Array.prototype.push/join or Object.entries must not see the caller
-// token of another plugin's call (B2-3). Tokens are URL-safe, so they need no encoding.
+// token of another plugin's call (B2-3). Tokens and keys are URL-safe, so they need no encoding.
 function url(method, caller, sync, extra = {}) {
   let q = '';
   if (caller) q += '&c=' + caller;
+  else if (appKey) q += '&a=' + appKey;
   if (sync) q += '&sync=1';
   for (const k in extra) if (apply(hasOwn, Object, [extra, k])) q += '&' + k + '=' + encode(String(extra[k]));
   return 'skn://api/' + method + (q ? '?' + q.slice(1) : '');
@@ -84,14 +98,15 @@ function partsOf(bytes) {
 /** Asynchronous call: `await call('vault.read', {path})`. `caller` is a plugin's token
  * (only its own shims have it); without one the call is the app's. */
 export async function call(method, params = {}, caller = null) {
-  const bytes = enc.encode(JSON.stringify(params));
+  await authReady;
+  const bytes = bodyOf(params);
   if (bytes.length <= PART) {
     return unwrap(await fetchJson(url(method, caller, false, { len: bytes.length }), { method: 'POST', body: bytes }));
   }
   const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
   const parts = partsOf(bytes);
   for (let i = 0; i < parts.length; i++) {
-    unwrap(await fetchJson(url('_upload', null, false, { id, i, len: parts[i].length }), { method: 'POST', body: parts[i] }));
+    unwrap(await fetchJson(url('_upload', caller, false, { id, i, len: parts[i].length }), { method: 'POST', body: parts[i] }));
   }
   return unwrap(await fetchJson(url(method, caller, false, { upload: id, parts: parts.length, len: 0 }), { method: 'POST' }));
 }
@@ -105,11 +120,11 @@ function syncPost(u, body) {
 
 /** Synchronous call (blocks the page): only for plugin APIs that must be synchronous. */
 export function callSync(method, params = {}, caller = null) {
-  const bytes = enc.encode(JSON.stringify(params));
+  const bytes = bodyOf(params);
   if (bytes.length <= PART) return unwrap(syncPost(url(method, caller, true, { len: bytes.length }), bytes));
   const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
   const parts = partsOf(bytes);
-  parts.forEach((p, i) => unwrap(syncPost(url('_upload', null, true, { id, i, len: p.length }), p)));
+  parts.forEach((p, i) => unwrap(syncPost(url('_upload', caller, true, { id, i, len: p.length }), p)));
   return unwrap(syncPost(url(method, caller, true, { upload: id, parts: parts.length, len: 0 }), null));
 }
 
@@ -136,3 +151,14 @@ async function dispatch(name, payload) {
 
 window.__skn = window.__skn || {};
 window.__skn.emit = (name, payload) => { dispatch(name, payload); };
+
+// A script clicking a link (a.click()) must not open the browser: opening external links
+// needs the user's own click or the open-external permission (B2-9, B3-4). Registered in
+// the capture phase before any plugin runs.
+if (globalThis.document) {
+  document.addEventListener('click', (e) => {
+    if (e.isTrusted) return;
+    const a = e.target?.closest?.('a[href]');
+    if (a && /^(https?|mailto):/i.test(a.getAttribute('href') || '')) { e.preventDefault(); e.stopImmediatePropagation(); }
+  }, true);
+}

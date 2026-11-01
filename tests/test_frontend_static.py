@@ -43,6 +43,7 @@ class FrontendStaticTests(unittest.TestCase):
         css = (WEB / "styles" / "20-editor.css").read_text(encoding="utf-8")
         # a single-class rule loses against CodeMirror's injected ".ͼ2 .cm-gutters" (light background)
         self.assertNotRegex(css, r"(?m)^\.cm-gutters\s*\{")
+        self.assertNotRegex(css, r"(?m)^\.cm-panel[\w-]*[\s.{]")  # light find bar in the dark theme (A2-4)
         self.assertNotRegex(css, r"(?m)^\.cm-tooltip[\w-]*\s*[{>]")  # light popups in the dark theme (C-1)
         self.assertIn(".cm-editor.cm-editor .cm-gutters", css)
 

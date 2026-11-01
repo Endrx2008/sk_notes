@@ -217,3 +217,28 @@ def _plugin_name(app, plugin: str) -> str:
         return m.get("name") or plugin
     except (OSError, ValueError, AttributeError):
         return plugin
+
+
+def protected_real(app, real: str, *, write: bool) -> bool:
+    """True if the real (symlink-resolved) path `real` is a place page code must not touch:
+    the machine-local trust store (never), and in the vault the git folder and the files that
+    decide what plugins may do (writes) (B3-2). Checking only the typed path was bypassed
+    with a symlink such as `gl -> .git`."""
+    from ..app.api_core import protected
+    real = os.path.realpath(real)
+
+    def inside(base: str) -> str | None:
+        base = os.path.realpath(base)
+        return os.path.relpath(real, base) if real == base or real.startswith(base + os.sep) else None
+
+    if inside(str(config.config_dir())) is not None:
+        return True
+    if not app.service or not write:
+        return False
+    root = app.service.vault.root
+    if inside(str(root / ".git")) is not None:
+        return True
+    rel = inside(str(root / ".sk_notes"))
+    if rel is not None:
+        return rel == "." or protected(rel.replace(os.sep, "/"))
+    return False

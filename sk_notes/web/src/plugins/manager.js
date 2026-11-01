@@ -14,7 +14,7 @@ import * as lezerLr from '@lezer/lr';
 import * as cmLint from '@codemirror/lint';
 import * as cmLangMarkdown from '@codemirror/lang-markdown';
 import moment from 'moment';
-import { call, secretCall, takeBootSecret } from '../core/api.js';
+import { call, pluginToken, pluginTokens } from '../core/api.js';
 import { setIcon } from '../core/icons.js';
 import { getLanguage, t } from '../core/i18n.js';
 import { Buffer, nodeModules, process as nodeProcess } from '../compat/node.js';
@@ -26,18 +26,13 @@ import { ButtonComponent, Modal, Setting, confirmDialog, promptDialog } from '..
 // Caller tokens (see app/callers.py): kept in this module's private variables and
 // handed only to each plugin's own shims, never to the manager object plugins can reach.
 const tokens = Object.create(null); // plain object: no Map methods a plugin could replace
-let pageKey = null;
 let exchange = null;
 
 function ensureTokens() {
   exchange ||= (async () => {
-    const boot = takeBootSecret();
-    if (!boot) return; // pages opened by window.open(): plugins run without identity
     try {
-      // secrets are URL-safe; the body is built without JSON.stringify (B2-3)
-      const r = await secretCall('plugins.tokens', '{"boot":"' + boot + '"}');
-      pageKey = r.key;
-      for (const id in r.tokens) tokens[id] = r.tokens[id];
+      const r = await pluginTokens();
+      for (const id in r) if (r[id]) tokens[id] = r[id];
     } catch (e) { console.error('plugin tokens', e); }
   })();
   return exchange;
@@ -45,8 +40,8 @@ function ensureTokens() {
 
 async function tokenFor(id) {
   await ensureTokens();
-  if (!tokens[id] && pageKey && /^[A-Za-z0-9._-]+$/.test(id)) {
-    try { tokens[id] = await secretCall('plugins.token', '{"key":"' + pageKey + '","id":"' + id + '"}'); } catch (e) { console.warn('plugin without identity', id, e.code || e); }
+  if (!tokens[id] && /^[A-Za-z0-9._-]+$/.test(id)) {
+    try { tokens[id] = await pluginToken(id); } catch (e) { console.warn('plugin without identity', id, e.code || e); }
   }
   return tokens[id] || null;
 }

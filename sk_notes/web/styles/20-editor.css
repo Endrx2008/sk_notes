@@ -74,11 +74,15 @@
 @keyframes sk-flash { 0%, 40% { background: var(--sk-select); } 100% { background: transparent; } }
 
 /* CodeMirror search panel */
-.cm-panels { background: var(--sk-bg); color: var(--text-normal); border-color: var(--sk-border) !important; }
-.cm-panel.cm-search { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; font-family: var(--font-interface); font-size: var(--font-ui-small); }
-.cm-panel.cm-search input[type=checkbox] { margin-right: 3px; }
-.cm-panel.cm-search .cm-button { background: var(--interactive-normal); border: 1px solid var(--sk-border); color: var(--text-normal); border-radius: var(--radius-s); background-image: none; padding: 3px 8px; }
-.cm-panel.cm-search button[name=close] { color: var(--text-muted); }
+/* two classes: CodeMirror's injected base theme (".ͼ2 .cm-panels", light) must lose (A2-4) */
+.cm-editor.cm-editor .cm-panels { background: var(--sk-bg2); color: var(--text-normal); border-color: var(--sk-border) !important; }
+.cm-editor.cm-editor .cm-panels-top { border-bottom: 1px solid var(--sk-border); }
+.cm-editor.cm-editor .cm-panel.cm-search { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; font-family: var(--font-interface); font-size: var(--font-ui-small); }
+.cm-editor.cm-editor .cm-panel.cm-search input.cm-textfield { background: var(--background-modifier-form-field, var(--sk-bg)); color: var(--text-normal); border: 1px solid var(--sk-border); border-radius: var(--radius-s); padding: 3px 6px; margin: 0; min-width: 0; flex: 1 1 120px; }
+.cm-editor.cm-editor .cm-panel.cm-search input[type=checkbox] { margin-right: 3px; }
+.cm-editor.cm-editor .cm-panel.cm-search label { color: var(--text-muted); display: inline-flex; align-items: center; gap: 2px; }
+.cm-editor.cm-editor .cm-panel.cm-search .cm-button { background: var(--interactive-normal); border: 1px solid var(--sk-border); color: var(--text-normal); border-radius: var(--radius-s); background-image: none; padding: 3px 8px; text-transform: none; }
+.cm-editor.cm-editor .cm-panel.cm-search button[name=close] { color: var(--text-muted); background: transparent; border: 0; }
 .cm-searchMatch { background: rgba(227, 179, 65, .25); }
 .cm-searchMatch-selected { background: rgba(224, 92, 0, .45); }
 .cm-selectionMatch { background: var(--sk-select); }
@@ -149,16 +153,29 @@
 .markdown-rendered .math-block { overflow-x: auto; padding: 6px 0; }
 
 /* callouts */
-.callout { --callout-color: var(--sk-blue); margin: 1em 0; border-left: 3px solid var(--callout-color); border-radius: var(--radius-m); background: color-mix(in srgb, var(--callout-color) 10%, transparent); padding: 10px 14px; }
-.callout[data-callout=warning], .callout[data-callout=caution], .callout[data-callout=attention] { --callout-color: var(--color-yellow); }
-.callout[data-callout=danger], .callout[data-callout=error], .callout[data-callout=bug], .callout[data-callout=failure], .callout[data-callout=fail], .callout[data-callout=missing] { --callout-color: var(--sk-red); }
-.callout[data-callout=tip], .callout[data-callout=hint], .callout[data-callout=important] { --callout-color: var(--color-cyan); }
-.callout[data-callout=success], .callout[data-callout=check], .callout[data-callout=done] { --callout-color: var(--sk-green); }
-.callout[data-callout=question], .callout[data-callout=help], .callout[data-callout=faq] { --callout-color: var(--color-orange); }
-.callout[data-callout=example] { --callout-color: var(--color-purple); }
-.callout[data-callout=quote], .callout[data-callout=cite] { --callout-color: var(--sk-dim); }
-.callout[data-callout=note] { --callout-color: var(--sk-accent); }
-.callout-title { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--callout-color); }
+/* --callout-<type> are "r, g, b" triplets and --callout-color holds one of them (themes and
+   plugins such as Admonition rely on this format, A2-5) */
+:root {
+  --callout-default: 66, 135, 245; --callout-note: 224, 92, 0; --callout-info: 66, 135, 245;
+  --callout-tip: 0, 190, 200; --callout-hint: 0, 190, 200; --callout-important: 0, 190, 200;
+  --callout-success: 60, 190, 100; --callout-check: 60, 190, 100; --callout-done: 60, 190, 100;
+  --callout-question: 230, 140, 30; --callout-help: 230, 140, 30; --callout-faq: 230, 140, 30;
+  --callout-warning: 235, 190, 40; --callout-caution: 235, 190, 40; --callout-attention: 235, 190, 40;
+  --callout-failure: 230, 70, 70; --callout-fail: 230, 70, 70; --callout-missing: 230, 70, 70;
+  --callout-danger: 230, 70, 70; --callout-error: 230, 70, 70; --callout-bug: 230, 70, 70;
+  --callout-example: 160, 100, 230; --callout-quote: 150, 150, 150; --callout-cite: 150, 150, 150;
+}
+.callout { --callout-color: var(--callout-default); margin: 1em 0; border-left: 3px solid rgb(var(--callout-color)); border-radius: var(--radius-m); background: rgba(var(--callout-color), .1); padding: 10px 14px; }
+.callout[data-callout=note] { --callout-color: var(--callout-note); }
+.callout[data-callout=info] { --callout-color: var(--callout-info); }
+.callout[data-callout=tip], .callout[data-callout=hint], .callout[data-callout=important] { --callout-color: var(--callout-tip); }
+.callout[data-callout=success], .callout[data-callout=check], .callout[data-callout=done] { --callout-color: var(--callout-success); }
+.callout[data-callout=question], .callout[data-callout=help], .callout[data-callout=faq] { --callout-color: var(--callout-question); }
+.callout[data-callout=warning], .callout[data-callout=caution], .callout[data-callout=attention] { --callout-color: var(--callout-warning); }
+.callout[data-callout=danger], .callout[data-callout=error], .callout[data-callout=bug], .callout[data-callout=failure], .callout[data-callout=fail], .callout[data-callout=missing] { --callout-color: var(--callout-danger); }
+.callout[data-callout=example] { --callout-color: var(--callout-example); }
+.callout[data-callout=quote], .callout[data-callout=cite] { --callout-color: var(--callout-quote); }
+.callout-title { display: flex; align-items: center; gap: 8px; font-weight: 600; color: rgb(var(--callout-color)); }
 .callout.is-collapsible .callout-title { cursor: pointer; }
 .callout-icon { display: flex; }
 .callout-fold { display: flex; transition: transform var(--transition); }

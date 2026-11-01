@@ -305,6 +305,41 @@ class PermissionTests(unittest.TestCase):
         self.assertFalse(permissions.chosen(self.app, self.outside.name + "-other/x"))
 
 
+class RealPathProtectionTests(unittest.TestCase):
+    def test_symlinks_to_protected_places_are_protected(self):  # B3-2
+        tmp, svc = make_vault({"a.md": "x"})
+        cfg = tempfile.TemporaryDirectory()
+        old = os.environ.get("XDG_CONFIG_HOME")
+        os.environ["XDG_CONFIG_HOME"] = cfg.name
+        try:
+            root = Path(tmp.name)
+            (root / ".git").mkdir()
+            (root / ".sk_notes" / "plugins" / "p").mkdir(parents=True)
+            from sk_notes.app import config
+            trust = config.config_dir() / "vault-trust"
+            trust.mkdir(parents=True)
+            os.symlink(root / ".git", root / "gl")
+            os.symlink(root / ".sk_notes" / "plugins", root / "pl")
+            os.symlink(trust, root / "tl")
+            app = SimpleNamespace(service=svc)
+            P = permissions.protected_real
+            self.assertTrue(P(app, str(root / "gl" / "config"), write=True))
+            self.assertTrue(P(app, str(root / "pl" / "p" / "main.js"), write=True))
+            self.assertTrue(P(app, str(root / "tl" / "x.json"), write=True))
+            self.assertTrue(P(app, str(root / "tl" / "x.json"), write=False))  # the trust store is not even readable
+            self.assertFalse(P(app, str(root / "a.md"), write=True))
+            self.assertFalse(P(app, str(root / "pl" / "p" / "data.json"), write=True))  # a plugin's own data
+            self.assertFalse(P(app, str(root / "gl" / "config"), write=False))
+        finally:
+            svc.close()
+            tmp.cleanup()
+            cfg.cleanup()
+            if old is None:
+                os.environ.pop("XDG_CONFIG_HOME", None)
+            else:
+                os.environ["XDG_CONFIG_HOME"] = old
+
+
 class ProtectedConfigTests(unittest.TestCase):
     def test_protected_names(self):
         # B-5: what decides plugin rights is written by Python only

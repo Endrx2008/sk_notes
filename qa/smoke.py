@@ -178,9 +178,7 @@ class Smoke:
         assert n >= 9, n
 
     def history(self):
-        n = self.page.js("(async () => { const b = new TextEncoder().encode(JSON.stringify({ path: 'Home.md' }));"
-                         " const r = await (await fetch('skn://api/history.list?len=' + b.length, { method: 'POST', body: b })).json();"
-                         " return r.ok ? r.result.length : -1; })()")
+        n = self.page.js("(async () => (await app.api('history.list', { path: 'Home.md' })).length)()")
         assert n >= 1, n
 
     def typing_during_file_switch(self):
@@ -472,6 +470,27 @@ class Smoke:
         self.page.wait("document.querySelector('.modal pre.sk-debug-info')?.innerText.startsWith('sk_notes')")
         self.page.key("Escape")
 
+    def note_html_cannot_call_the_api(self):
+        """Regression: a note's HTML (<img src="skn://api/...">, forms, iframes) was treated as the
+        app and could delete files (B3-1). Calls without the app key are refused."""
+        victim = self.vault / "Victim.md"
+        victim.write_text("keep me", encoding="utf-8")
+        self.page.wait("!!app.vault.getAbstractFileByPath('Victim.md')", timeout=10)
+        body = json.dumps({"path": "Victim.md", "mode": "permanent"})
+        r = self.page.js("""(async () => {
+          const out = {};
+          const b = new TextEncoder().encode(JSON.stringify({ path: 'Victim.md', mode: 'permanent' }));
+          out.fetch = (await (await fetch('skn://api/vault.delete?len=' + b.length, { method: 'POST', body: b })).json()).error;
+          const img = new Image(); img.src = 'skn://api/vault.delete?len=0';
+          const f = document.createElement('iframe'); f.srcdoc = '<img src="skn://api/vault.delete?len=0">'; document.body.appendChild(f);
+          await new Promise((ok) => setTimeout(ok, 800)); f.remove();
+          out.guess = (await (await fetch('skn://api/vault.delete?a=guess&len=' + b.length, { method: 'POST', body: b })).json()).error;
+          return out; })()""")
+        assert r == {"fetch": "permission-denied", "guess": "permission-denied"}, r
+        assert victim.exists() and victim.read_text(encoding="utf-8") == "keep me", "a call without the app key was served"
+        victim.unlink()
+        assert body
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -505,7 +524,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "folder_setting_suggests", "external_rename_follows", "hidden_tabs_deferred", "search_snippets_lazy", "new_commands", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "folder_setting_suggests", "external_rename_follows", "hidden_tabs_deferred", "search_snippets_lazy", "new_commands", "note_html_cannot_call_the_api", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:

@@ -72,26 +72,30 @@ def register(app) -> None:
     # ------------------------------------------------------------- caller tokens (see app/callers.py)
     @r("plugins.tokens")
     def plugins_tokens(p, ctx):
-        # only plugins that may run get an identity: a disabled or untrusted plugin loaded
-        # by another one runs without any permission (B2-6)
-        res = app.scheme.callers.exchange(p.get("boot") or "", [x for x in permissions.active_plugins(app) if x in installed_ids()])
-        if res is None:
-            raise ApiError("permission-denied", "boot secret already used or unknown")
-        return res
+        """One token per plugin that may run, for the app's plugin manager (app calls only)."""
+        if ctx.plugin:
+            raise ApiError("permission-denied")
+        ids = [x for x in permissions.active_plugins(app) if x in installed_ids()]
+        return {x: app.scheme.callers.issue(ctx.key, x) for x in ids} if ctx.key else {}
 
     @r("plugins.token")
     def plugins_token(p, ctx):
+        if ctx.plugin:
+            raise ApiError("permission-denied")
         pid = _safe_id(p.get("id", ""))
         if pid not in permissions.active_plugins(app):
             raise ApiError("permission-denied", "plugin not enabled")
-        tok = app.scheme.callers.token(p.get("key") or "", pid)
+        tok = app.scheme.callers.issue(ctx.key or "", pid)
         if tok is None:
             raise ApiError("permission-denied", "no token")
         return tok
 
     @r("plugins.source")
     def plugins_source(p, ctx):
-        d = plugins_dir() / _safe_id(p["id"])
+        pid = _safe_id(p["id"])
+        if ctx.plugin or pid not in permissions.active_plugins(app):  # only code that may run is handed out
+            raise ApiError("permission-denied", "plugin not enabled")
+        d = plugins_dir() / pid
         try:
             main = (d / "main.js").read_text(encoding="utf-8")
         except OSError as exc:
@@ -233,6 +237,8 @@ def register(app) -> None:
         inside = path == root or root in path.parents
         if inside:
             # a symlink inside the vault may lead outside it: judge the real target (B-4)
+            if permissions.protected_real(app, str(path), write=write):
+                raise ApiError("permission-denied", "protected")  # B3-2
             real, real_root = Path(os.path.realpath(path)), Path(os.path.realpath(root))
             if real != real_root and real_root not in real.parents:
                 permissions.require(app, ctx, "fs-outside-vault", f"{path} -> {real}")

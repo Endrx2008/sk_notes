@@ -65,6 +65,9 @@ def register(app) -> None:
         """Community plugins may write inside the vault (default permission) but never
         into sk_notes' own configuration folder except their own data. Nobody writes the
         files that decide what plugins may do through these routes (see protected())."""
+        from ..plugins.permissions import protected_real
+        if protected_real(app, str(svc().vault.root / path), write=True):  # symlinks too (B3-2)
+            raise ApiError("permission-denied", path)
         if path == ".git" or path.startswith(".git/"):
             # git runs what its config says (fsmonitor, hooks, filters): never written by page code (B2-4)
             raise ApiError("permission-denied", path)
@@ -221,9 +224,10 @@ def register(app) -> None:
 
     @r("vault.createUnique")
     def vault_create_unique(p, ctx):
-        folder = normalize_path(p.get("folder", "") or "")
-        check_plugin_write(ctx, normalize_path((folder + "/" if folder != "/" else "") + p.get("base", "Untitled")))  # B2-7
-        return svc().create_unique(p.get("folder", ""), p.get("base", "Untitled"), p.get("ext", "md"), p.get("text", ""))
+        # the name with the numeric suffix it will really get is what is checked (B2-7, B3-5)
+        path = svc().vault.available_path(p.get("folder", ""), p.get("base", "Untitled"), p.get("ext", "md"))
+        check_plugin_write(ctx, normalize_path(path))
+        return svc().write(path, p.get("text", ""))
 
     @r("vault.availablePath")
     def vault_available(p, ctx):

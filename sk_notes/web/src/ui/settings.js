@@ -15,7 +15,77 @@ export class PluginSettingTab {
     this.name = plugin?.manifest?.name;
     this.icon = 'puzzle';
   }
-  display() {}
+  /** Tabs that declare getSettingDefinitions() (newer plugin API) are drawn from it; a tab
+   * that defines display() itself overrides this (A2-1). */
+  display() {
+    if (typeof this.getSettingDefinitions !== 'function') return;
+    this.update();
+  }
+
+  /** Draw the declared settings again (after state they depend on changed). */
+  update() {
+    if (typeof this.getSettingDefinitions !== 'function') return;
+    const el = this.containerEl;
+    el.empty();
+    let defs = [];
+    try { defs = this.getSettingDefinitions() || []; } catch (e) { console.error('getSettingDefinitions failed', e); }
+    this._renderDefs(el, defs);
+  }
+
+  getControlValue(key) { return this.plugin?.settings?.[key]; }
+
+  async setControlValue(key, value) {
+    if (!this.plugin) return;
+    this.plugin.settings = this.plugin.settings || {};
+    this.plugin.settings[key] = value;
+    await this.plugin.saveSettings?.();
+  }
+
+  _renderDefs(el, defs) {
+    const on = (v) => (typeof v === 'function' ? v() : v) !== false;
+    for (const def of defs) {
+      if (!def || !on(def.visible)) continue;
+      if (def.type === 'group' || def.type === 'list' || def.type === 'page') {
+        if (def.type === 'page') { new Setting(el).setName(def.name).setDesc(def.desc || '').setHeading(); }
+        else if (def.heading) new Setting(el).setName(def.heading).setHeading();
+        const box = el.createDiv(def.cls || '');
+        this._renderDefs(box, def.items || []);
+        if (def.type === 'list' && def.addItem) {
+          new Setting(box).setName(def.addItem.name).addButton((b) => b.setIcon?.('plus').onClick(() => def.addItem.action(b.buttonEl)));
+        }
+        continue;
+      }
+      const st = new Setting(el).setName(def.name || '').setDesc(def.desc || '');
+      if (def.render) { def.render(st.controlEl, st); continue; }
+      if (def.action) {
+        const dis = typeof def.disabled === 'function' ? def.disabled() : def.disabled;
+        st.addButton((b) => { b.setButtonText(def.buttonText || def.name || '›').setDisabled(!!dis).onClick(() => def.action(st.settingEl, 0)); });
+        st.settingEl.addClass('mod-clickable');
+        continue;
+      }
+      const c = def.control;
+      if (!c) continue;
+      const cur = () => {
+        const v = this.getControlValue(c.key);
+        return v === undefined ? c.defaultValue : v;
+      };
+      const set = async (v) => {
+        if (c.validate) { const bad = await c.validate(v); if (typeof bad === 'string' && bad) { this.app.notice(bad); return; } }
+        await this.setControlValue(c.key, v);
+      };
+      const dis = typeof def.disabled === 'function' ? def.disabled() : def.disabled;
+      if (c.type === 'toggle') st.addToggle((x) => x.setValue(!!cur()).setDisabled(!!dis).onChange(set));
+      else if (c.type === 'dropdown') st.addDropdown((x) => { x.addOptions(c.options || {}); x.setValue(String(cur() ?? '')); x.onChange(set); });
+      else if (c.type === 'textarea') st.addTextArea((x) => x.setPlaceholder(c.placeholder || '').setValue(String(cur() ?? '')).onChange(set));
+      else if (c.type === 'slider') st.addSlider((x) => x.setLimits(c.min, c.max, c.step).setValue(Number(cur() ?? c.min)).setDynamicTooltip().onChange(set));
+      else if (c.type === 'color') st.addColorPicker((x) => x.setValue(String(cur() ?? '#000000')).onChange(set));
+      else if (c.type === 'number') st.addText((x) => { x.inputEl.type = 'number'; if (c.min !== undefined) x.inputEl.min = c.min; if (c.max !== undefined) x.inputEl.max = c.max;
+        x.setPlaceholder(c.placeholder || '').setValue(String(cur() ?? '')).onChange((v) => { if (v !== '' && !Number.isNaN(Number(v))) set(Number(v)); }); });
+      else if (c.type === 'folder') st.addText((x) => { x.setPlaceholder(c.placeholder || '').setValue(String(cur() ?? '')).onChange(set); new FolderSuggest(this.app, x.inputEl).onSelect((v) => { x.setValue(v); set(v); }); });
+      else st.addText((x) => { if (c.type === 'secret') x.inputEl.type = 'password'; x.setPlaceholder(c.placeholder || '').setValue(String(cur() ?? '')).onChange(set); });
+    }
+  }
+
   hide() {}
 }
 export class SettingTab extends PluginSettingTab {}

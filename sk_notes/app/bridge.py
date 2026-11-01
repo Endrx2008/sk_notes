@@ -3,7 +3,7 @@
   skn://app/<file>              files of sk_notes/web/dist
   skn://vault/<path>            files of the open vault (images, PDFs, media)
   skn://print/<token>.html      one-off pages handed to an off-screen print page
-  skn://api/<method>[?c=token]  POST JSON (c: plugin caller token, see callers.py) → JSON {"ok": true, "result": ...} or
+  skn://api/<method>?a=key|c=token  POST JSON (app key / plugin token, see callers.py) → JSON {"ok": true, "result": ...} or
                                 {"ok": false, "error": "<code>", "detail": "..."}
 
 Handlers are plain functions ``fn(params: dict, ctx: Ctx) -> JSON``. Handlers
@@ -66,6 +66,7 @@ class ApiError(Exception):
 class Ctx:
     plugin: str | None  # id of the community plugin making the call, if any
     sync: bool  # synchronous XHR (renderer blocked)
+    key: str | None = None  # the app key, when the app itself is calling (see callers.py)
 
 
 Handler = Callable[[dict, Ctx], Any]
@@ -268,6 +269,18 @@ class SchemeHandler(QWebEngineUrlSchemeHandler):
         except ValueError:
             length = 0
         raw = _read_body(job, length)
+        # who is calling: the app (a=), a plugin (c=), or nobody (B3-1)
+        caller = (q.get("c") or [None])[0]
+        app_key = (q.get("a") or [None])[0]
+        if method == "app.auth":
+            key = self.callers.auth(json.loads(raw or b"{}").get("boot", "")) if raw else None
+            body = _json({"ok": True, "result": key}) if key else _json({"ok": False, "error": "permission-denied", "detail": "no boot secret"})
+            self._reply(job, b"application/json", body)
+            return
+        plugin = self.callers.plugin_for(caller)
+        if plugin is None and not self.callers.is_app(app_key):
+            self._reply(job, b"application/json", _json({"ok": False, "error": "permission-denied", "detail": "unauthenticated"}))
+            return
         if method == "_upload":
             self._store_part((q.get("id") or [""])[0], (q.get("i") or ["0"])[0], raw)
             self._reply(job, b"application/json", _json({"ok": True, "result": True}))
@@ -285,7 +298,7 @@ class SchemeHandler(QWebEngineUrlSchemeHandler):
             self._reply(job, b"application/json", _json({"ok": False, "error": "bad-request"}))
             return
         # the caller is known only from its token (c=); a "plugin=" in the URL proves nothing
-        ctx = Ctx(plugin=self.callers.plugin_for((q.get("c") or [None])[0]), sync=(q.get("sync") or ["0"])[0] == "1")
+        ctx = Ctx(plugin=plugin, sync=(q.get("sync") or ["0"])[0] == "1", key=app_key if plugin is None else None)
         entry = self.api.handlers.get(method)
         if entry is not None and entry[1] and not ctx.sync:
             with self._lock:
