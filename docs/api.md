@@ -48,22 +48,35 @@ the `network` permission.
 
 ### How permissions are enforced
 
-Plugins run in the same JavaScript context as sk_notes (needed to run plugins written
-for Obsidian), so a plugin id sent by page code proves nothing. Instead:
+Plugins and the HTML of notes run in the same JavaScript context as sk_notes (needed to
+run plugins written for Obsidian), so neither a plugin id nor "being the page" proves
+anything. Instead (see `sk_notes/app/callers.py`):
 
-- each plugin gets a secret token when it is loaded (see `sk_notes/app/callers.py`); only
-  its own `require()` modules hold it, and Python looks the plugin up from it. Page code
-  without a token never gets a plugin permission;
-- granting a permission, installing a plugin, enabling a plugin for the first time and
-  setting a Git remote show a **native** confirmation that page code cannot answer;
-- `permissions.json`, `community-plugins.json` and the plugin folders and code are
-  written only by sk_notes itself;
-- files outside the vault (imports, static site output) are only those the user picked
-  in a native file dialog; symlinks are judged by their real target.
+- every API call carries a secret. The page gets an *app key* from a one-time boot secret
+  that Python injects before any script runs, and keeps it in a module-private variable;
+  each plugin gets its own *token*, held only by that plugin's `require()` modules. A call
+  with neither is refused, so a note's `<img>`/`<iframe>`/form or a plugin's raw `fetch`
+  cannot use the API;
+- what plugins may do is stored on this computer (`<config>/sk_notes/vault-trust/`), never
+  in the vault: restricted mode, which plugins are trusted, permission answers and the
+  folders you picked. A shared or downloaded vault cannot arrive with plugins allowed;
+- turning plugins on, granting a permission, installing, uninstalling and enabling a
+  plugin for the first time show a **native** confirmation that page code cannot answer;
+- the main window can only show the app itself; `window.open()` opens nothing;
+- `.git`, the plugin and permission files and the trust store are never written by page
+  code, judged by their real path (symlinks included); the vault folder cannot be
+  deleted, renamed or copied;
+- files outside the vault (imports, static site output) are only those you picked in a
+  native file dialog; symlinks are judged by their real target for Node `fs`;
+- only the configured Ollama server, and only for asking models, is reachable without the
+  `network` permission; scripted link clicks do not open the browser.
 
-Limit: a plugin can still use sk_notes' own JavaScript objects (`app.vault`,
-`app.workspace`…) like any other plugin, so it can read and change notes inside the vault.
-Install only plugins you trust; restricted mode (on by default) runs none.
+Known limits (accepted, logged): a plugin can still use sk_notes' own JavaScript objects
+(`app.vault`, `app.workspace`, `app.plugins`…) like any other plugin, so it can read and
+change notes inside the vault, write other plugins' `data.json`, write through a symlinked
+folder that points outside the vault, enable a plugin you already trusted, and open files
+with the system's default program. WebRTC (STUN) is not covered by the network guard.
+Install only plugins you trust; restricted mode (the default) runs none.
 
 ## Native API (`require('sknotes')`)
 

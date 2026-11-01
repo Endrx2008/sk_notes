@@ -132,3 +132,14 @@ Next: QA cycle 2 (both agents from scratch).
 Note: about 600 MB of leftover `/tmp/skn-home-*` folders from earlier test runs fill the
 RAM-backed /tmp; deleting them was blocked by the permission check. `qa/cdp.py` now removes
 its own.
+
+
+## QA cycles 2 and 3 (2026-11-01) – agents on Sonnet 5.5
+
+Reports: `qa/reports/cycle-2-agent-A.md` (7 bugs), `cycle-2-agent-B.md` (20), `cycle-3-agent-B.md` (6).
+Fixed with tests: B2-1…B2-9 (commit 4a55500), B2-10, B2-11, B2-13, B2-16, B2-20, A2-1, A2-3,
+A2-4, A2-5, B3-1 (every API call authenticated), B3-2 (real-path protection), B3-4, B3-5.
+Accepted and documented (docs/api.md "Known limits"): B2-12, B2-19, B3-3, B3-6/B2-9 WebRTC.
+Open (low/medium, not security): A2-2 (Templater frontmatter), A2-6 (narrow panes),
+A2-7 (links in canvas text cards on rename), B2-14, B2-15 (SKAI robustness), B2-17 (40 MB
+notes), B2-18 (12k-note vaults), B-22.
