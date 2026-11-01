@@ -14,6 +14,7 @@ from typing import Iterator
 from ..app.config import read_suite_ollama
 
 LIST_TIMEOUT = 4
+MAX_LINE = 4 * 1024 * 1024  # one streamed JSON line
 INACTIVITY_TIMEOUT = 600  # seconds without a streamed token before giving up
 
 
@@ -163,7 +164,16 @@ class Ollama:
                 raise OllamaError("cancelled")
         got_any = False
         try:
-            for raw in resp:
+            def lines():
+                while True:
+                    raw = resp.readline(MAX_LINE + 1)  # bounded: a reply line without an end exhausted memory (B2-14)
+                    if not raw:
+                        return
+                    if len(raw) > MAX_LINE:
+                        raise OllamaError("invalid", "reply line too long")
+                    yield raw
+
+            for raw in lines():
                 if cancel is not None and cancel.is_set():
                     raise OllamaError("cancelled")
                 line = raw.strip()

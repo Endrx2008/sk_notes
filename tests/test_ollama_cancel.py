@@ -23,7 +23,34 @@ class Stall(http.server.BaseHTTPRequestHandler):
         pass
 
 
+class Flood(http.server.BaseHTTPRequestHandler):
+    def do_POST(self):  # noqa: N802 - one endless line
+        self.send_response(200)
+        self.end_headers()
+        try:
+            for _ in range(200):
+                self.wfile.write(b"A" * 1_000_000)
+        except OSError:
+            pass
+
+    def log_message(self, *a):
+        pass
+
+
 class CancelTests(unittest.TestCase):
+    def test_endless_reply_line_is_refused(self):  # B2-14
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Flood)
+        srv.daemon_threads = True
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            client = ol.Ollama()
+            client.config = lambda: (f"http://127.0.0.1:{srv.server_port}", "m")
+            with self.assertRaises(ol.OllamaError) as cm:
+                list(client.chat_stream([{"role": "user", "content": "x"}], model="m"))
+            self.assertEqual(cm.exception.kind, "invalid")
+        finally:
+            srv.shutdown()
+
     def test_abort_ends_a_stalled_stream_at_once(self):
         srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Stall)
         srv.daemon_threads = True
