@@ -3,7 +3,7 @@
 import { EditorView } from '@codemirror/view';
 import { Transaction } from '@codemirror/state';
 import { setIcon } from '../core/icons.js';
-import { t } from '../core/i18n.js';
+import { t, errorText } from '../core/i18n.js';
 import { debounce, wordCount } from '../core/util.js';
 import { Component } from '../model/component.js';
 import { Keymap } from '../model/keymap.js';
@@ -203,7 +203,7 @@ export class MarkdownView extends TextFileView {
     try {
       await this.app.fileManager.renameFile(this.file, `${parent}${name}.${this.file.extension}`);
     } catch (e) {
-      this.app.notice(t('notice.rename-failed', { error: e.code || e.message }));
+      this.app.notice(t('notice.rename-failed', { error: errorText(e) }));
       this.inlineTitleEl.setText(this.file.basename);
     }
   }

@@ -24,6 +24,14 @@ export function t(key, vars) {
   return s;
 }
 
+/** User-facing text for an error: a translated message for known error codes
+ * (`error.<code>`), otherwise the error's own message. */
+export function errorText(e) {
+  const code = e?.code;
+  if (code && strings[`error.${code}`] !== undefined) return t(`error.${code}`);
+  return String(e?.message || e);
+}
+
 /** Plural helper: keys "<key>.one" and "<key>.other" (count in {n}). */
 export function tn(key, n, vars = {}) {
   const rule = new Intl.PluralRules(language).select(n);

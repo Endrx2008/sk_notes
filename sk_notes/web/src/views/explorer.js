@@ -2,7 +2,7 @@
 
 import { call } from '../core/api.js';
 import { setIcon } from '../core/icons.js';
-import { t } from '../core/i18n.js';
+import { t, errorText } from '../core/i18n.js';
 import { debounce } from '../core/util.js';
 import { Keymap } from '../model/keymap.js';
 import { TFile, TFolder } from '../model/vault.js';
@@ -308,7 +308,7 @@ export class FileExplorerView extends ItemView {
       const target = file instanceof TFile ? `${parent}${name}.${file.extension}` : `${parent}${name}`;
       try { await this.app.fileManager.renameFile(file, target); } catch (e) {
         inner.setText(old);
-        this.app.notice(t('notice.rename-failed', { error: e.code || e.message }));
+        this.app.notice(t('notice.rename-failed', { error: errorText(e) }));
       }
     };
     const onKey = (e) => {

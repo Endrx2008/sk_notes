@@ -5,7 +5,7 @@ import { Scope } from '../model/keymap.js';
 import { TFile } from '../model/vault.js';
 import { setIcon } from '../core/icons.js';
 import { setTooltip, Menu } from '../ui/kit.js';
-import { t } from '../core/i18n.js';
+import { t, errorText } from '../core/i18n.js';
 import { debounce } from '../core/util.js';
 
 export class View extends Component {
@@ -184,7 +184,7 @@ export class TextFileView extends EditableFileView {
         this.setViewData('', true);
         this.lastSavedData = this.getViewData();
         this.onReadOnlyChange();
-        this.app.notice(t('notice.read-failed', { name: file.basename, error: e.code || e.message }));
+        this.app.notice(t('notice.read-failed', { name: file.basename, error: errorText(e) }));
         return;
       }
       if (this.file !== file) return; // another file was opened meanwhile
@@ -228,7 +228,7 @@ export class TextFileView extends EditableFileView {
         this.dirty = false;
       } catch (e) {
         console.error('save failed', e);
-        this.app.notice(t('notice.save-failed', { name: file.basename, error: e.code || e.message }));
+        this.app.notice(t('notice.save-failed', { name: file.basename, error: errorText(e) }));
       }
     })();
     this._saving = job;

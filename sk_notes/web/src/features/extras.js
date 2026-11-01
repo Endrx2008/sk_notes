@@ -1,7 +1,7 @@
 // Import, migration, Git/Syncthing sync and static site publishing (UI side).
 
 import { call, resourceUrl } from '../core/api.js';
-import { t, tn } from '../core/i18n.js';
+import { t, tn, errorText } from '../core/i18n.js';
 import { isImage } from '../core/util.js';
 import { Component } from '../model/component.js';
 import { TFile } from '../model/vault.js';
@@ -218,7 +218,7 @@ class PublishModal extends Modal {
         const r = await generateSite(this.app, { folder, onlyMarked, siteName, progress: (n, total) => out.setText(t('publish.progress', { n, total })) });
         out.setText(t('publish.done', { n: r.pages, folder: r.folder }));
         new ButtonComponent(row).setButtonText(t('publish.open')).onClick(() => call('publish.open', { folder: r.folder }));
-      } catch (e) { out.setText(t('publish.failed', { error: e.detail || e.code || e.message })); }
+      } catch (e) { out.setText(t('publish.failed', { error: e.detail || errorText(e) })); }
       go.setDisabled(false);
     });
     new ButtonComponent(row).setButtonText(t('common.close')).onClick(() => this.close());

@@ -786,5 +786,17 @@
  "skai.memory": "SKAI 共享记忆",
  "skai.memory-on": "已连接。",
  "skai.memory-off": "此系统上尚不可用。SKAI 提供后，sk_notes 会自动使用。",
- "skai.model-note": "SKAI 绝不会在未经你确认的情况下修改笔记，并且总会先显示修改内容。"
+ "skai.model-note": "SKAI 绝不会在未经你确认的情况下修改笔记，并且总会先显示修改内容。",
+ "error.permission-denied": "权限被拒绝：sk_notes 无法在此读取或写入。",
+ "error.read-only": "此文件或文件夹是只读的。",
+ "error.not-utf8": "此笔记不是有效的 UTF-8 文本，保持只读以免损坏其内容。",
+ "error.name-too-long": "名称过长。",
+ "error.already-exists": "已存在同名的文件或文件夹。",
+ "error.not-found": "该文件已不存在。",
+ "error.outside-vault": "该路径在仓库之外。",
+ "error.into-itself": "文件夹不能移动到其自身之中。",
+ "error.invalid-characters": "名称包含不允许的字符。",
+ "error.empty-name": "名称不能为空。",
+ "error.is-a-folder": "已有同名的文件夹。",
+ "error.disk-full": "磁盘已满。"
 }

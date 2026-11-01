@@ -786,5 +786,17 @@
  "skai.memory": "SKAI 共有メモリ",
  "skai.memory-on": "接続済み。",
  "skai.memory-off": "このシステムではまだ利用できません。SKAI が提供し次第、sk_notes が自動で使います。",
- "skai.model-note": "SKAI はあなたの確認なしにノートを変更することはなく、必ず先に変更内容を表示します。"
+ "skai.model-note": "SKAI はあなたの確認なしにノートを変更することはなく、必ず先に変更内容を表示します。",
+ "error.permission-denied": "アクセスが拒否されました。sk_notes はそこを読み書きできません。",
+ "error.read-only": "このファイルまたはフォルダーは読み取り専用です。",
+ "error.not-utf8": "このノートは有効な UTF-8 テキストではないため、内容を壊さないよう読み取り専用にしています。",
+ "error.name-too-long": "名前が長すぎます。",
+ "error.already-exists": "同じ名前のファイルまたはフォルダーが既にあります。",
+ "error.not-found": "ファイルはもう存在しません。",
+ "error.outside-vault": "パスが保管庫の外にあります。",
+ "error.into-itself": "フォルダーをそれ自身の中に移動することはできません。",
+ "error.invalid-characters": "名前に使用できない文字が含まれています。",
+ "error.empty-name": "名前を空にすることはできません。",
+ "error.is-a-folder": "同じ名前のフォルダーがあります。",
+ "error.disk-full": "ディスクがいっぱいです。"
 }

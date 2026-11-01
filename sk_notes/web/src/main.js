@@ -2,7 +2,7 @@
 import moment from 'moment';
 import { installDomHelpers } from './core/dom.js';
 import { call, onBackend } from './core/api.js';
-import { setStrings, t } from './core/i18n.js';
+import { setStrings, t, errorText } from './core/i18n.js';
 import { applyTheme } from './core/theme.js';
 import { installTooltips } from './ui/kit.js';
 
@@ -49,5 +49,5 @@ async function boot() {
 
 boot().catch((e) => {
   console.error(e);
-  document.body.textContent = 'sk_notes failed to start: ' + (e && (e.code || e.message) || e);
+  document.body.textContent = 'sk_notes failed to start: ' + (e && (errorText(e)) || e);
 });

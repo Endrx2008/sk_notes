@@ -2,7 +2,7 @@
 
 import { call } from '../core/api.js';
 import { setIcon } from '../core/icons.js';
-import { t } from '../core/i18n.js';
+import { t, errorText } from '../core/i18n.js';
 import { ButtonComponent, Modal, TextComponent } from './kit.js';
 
 export function renderVaultManager(container, { onOpened, app } = {}) {
@@ -20,7 +20,7 @@ export function renderVaultManager(container, { onOpened, app } = {}) {
       const r = await call('vaults.open', { path });
       if (r.opened === 'here') { if (onOpened) onOpened(); else location.hash = ''; location.reload(); }
       else if (r.opened === 'new-window') notify(t('vaults.opening-window'));
-    } catch (e) { notify(t('vaults.open-failed', { error: e.code || e.message })); }
+    } catch (e) { notify(t('vaults.open-failed', { error: errorText(e) })); }
   };
 
   const renderList = async () => {
@@ -63,7 +63,7 @@ export function renderVaultManager(container, { onOpened, app } = {}) {
         const r = await call('vaults.create', { parent, name: name.getValue().trim() });
         if (r.opened === 'here') { if (onOpened) onOpened(); else { location.hash = ''; location.reload(); } }
         else notify(t('vaults.opening-window'));
-      } catch (e) { notify(t('vaults.open-failed', { error: e.code || e.message })); }
+      } catch (e) { notify(t('vaults.open-failed', { error: errorText(e) })); }
     });
     name.inputEl.focus();
   });

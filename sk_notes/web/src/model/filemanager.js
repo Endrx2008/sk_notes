@@ -2,7 +2,7 @@
 
 import YAML from 'yaml';
 import { call } from '../core/api.js';
-import { t } from '../core/i18n.js';
+import { t, errorText } from '../core/i18n.js';
 import { TFile, TFolder, normalizePath } from './vault.js';
 import { confirmDialog } from '../ui/kit.js';
 
@@ -142,7 +142,7 @@ export class FileManager {
     if (!name || name === (file instanceof TFile ? file.basename : file.name)) return;
     const parent = file.parent && file.parent.path !== '/' ? file.parent.path + '/' : '';
     const target = file instanceof TFile ? `${parent}${name}.${file.extension}` : `${parent}${name}`;
-    try { await this.renameFile(file, target); } catch (e) { this.app.notice(t('notice.rename-failed', { error: e.code || e.message })); }
+    try { await this.renameFile(file, target); } catch (e) { this.app.notice(t('notice.rename-failed', { error: errorText(e) })); }
   }
 }
 

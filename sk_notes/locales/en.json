@@ -786,5 +786,17 @@
  "skai.memory": "Shared SKAI memory",
  "skai.memory-on": "Connected.",
  "skai.memory-off": "Not available yet on this system. sk_notes will use it automatically when SKAI provides it.",
- "skai.model-note": "SKAI never changes a note without your confirmation, and always shows the changes first."
+ "skai.model-note": "SKAI never changes a note without your confirmation, and always shows the changes first.",
+ "error.permission-denied": "Permission denied: sk_notes cannot write or read there.",
+ "error.read-only": "This file or folder is read-only.",
+ "error.not-utf8": "This note is not valid UTF-8 text and is kept read-only so its content is not damaged.",
+ "error.name-too-long": "The name is too long.",
+ "error.already-exists": "A file or folder with this name already exists.",
+ "error.not-found": "The file no longer exists.",
+ "error.outside-vault": "The path is outside the vault.",
+ "error.into-itself": "A folder cannot be moved into itself.",
+ "error.invalid-characters": "The name contains characters that are not allowed.",
+ "error.empty-name": "The name cannot be empty.",
+ "error.is-a-folder": "There is a folder with this name.",
+ "error.disk-full": "The disk is full."
 }

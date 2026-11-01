@@ -5,7 +5,7 @@
 import { call } from '../core/api.js';
 import { diffLines, diffStats, renderDiff } from '../core/diff.js';
 import { setIcon } from '../core/icons.js';
-import { t, tn } from '../core/i18n.js';
+import { t, tn, errorText } from '../core/i18n.js';
 import { debounce } from '../core/util.js';
 import { commands as fmt } from '../editor/editor.js';
 import { Component } from '../model/component.js';
@@ -195,7 +195,7 @@ export function registerCoreFeatures(app) {
   } });
   app.commands._moveFile = (file) => new FolderSuggestModal(app, async (folder) => {
     const target = (folder.path === '/' ? '' : folder.path + '/') + file.name;
-    try { await app.fileManager.renameFile(file, target); } catch (e) { app.notice(t('notice.move-failed', { error: e.code || e.message })); }
+    try { await app.fileManager.renameFile(file, target); } catch (e) { app.notice(t('notice.move-failed', { error: errorText(e) })); }
   }).open();
   app.commands._newFolderIn = async (folder) => {
     const v = app.workspace.getLeavesOfType('file-explorer')[0]?.view;
@@ -590,7 +590,7 @@ async function exportPdf(app, file) {
   try {
     const out = await call('export.pdf', { html: box.outerHTML, css, name: file.basename });
     if (out) app.notice(t('export.done', { path: out }));
-  } catch (e) { app.notice(t('export.failed', { error: e.code || e.message })); }
+  } catch (e) { app.notice(t('export.failed', { error: errorText(e) })); }
 }
 
 export async function openVaultManager(app) {

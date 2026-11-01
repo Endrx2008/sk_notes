@@ -786,5 +786,17 @@
  "skai.memory": "Gemeinsames SKAI-Gedächtnis",
  "skai.memory-on": "Verbunden.",
  "skai.memory-off": "Auf diesem System noch nicht verfügbar. sk_notes nutzt es automatisch, sobald SKAI es bereitstellt.",
- "skai.model-note": "SKAI ändert eine Notiz nie ohne Ihre Bestätigung und zeigt die Änderungen immer vorher an."
+ "skai.model-note": "SKAI ändert eine Notiz nie ohne Ihre Bestätigung und zeigt die Änderungen immer vorher an.",
+ "error.permission-denied": "Zugriff verweigert: sk_notes kann dort nicht lesen oder schreiben.",
+ "error.read-only": "Diese Datei oder dieser Ordner ist schreibgeschützt.",
+ "error.not-utf8": "Diese Notiz ist kein gültiger UTF-8-Text und bleibt schreibgeschützt, damit ihr Inhalt nicht beschädigt wird.",
+ "error.name-too-long": "Der Name ist zu lang.",
+ "error.already-exists": "Eine Datei oder ein Ordner mit diesem Namen existiert bereits.",
+ "error.not-found": "Die Datei existiert nicht mehr.",
+ "error.outside-vault": "Der Pfad liegt außerhalb des Tresors.",
+ "error.into-itself": "Ein Ordner kann nicht in sich selbst verschoben werden.",
+ "error.invalid-characters": "Der Name enthält unzulässige Zeichen.",
+ "error.empty-name": "Der Name darf nicht leer sein.",
+ "error.is-a-folder": "Es gibt einen Ordner mit diesem Namen.",
+ "error.disk-full": "Der Datenträger ist voll."
 }

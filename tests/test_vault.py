@@ -220,6 +220,28 @@ class SymlinkScanTests(unittest.TestCase):
                 tmp.cleanup()
 
 
+class ReadOnlyVaultTests(unittest.TestCase):
+    def test_read_only_vault_opens(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "v"
+            (root / ".sk_notes").mkdir(parents=True)
+            (root / "a.md").write_text("[[b]]")
+            paths = [root / "a.md", root / ".sk_notes", root]
+            for x in paths:
+                x.chmod(0o555 if x.is_dir() else 0o444)
+            try:
+                svc = VaultService(str(root))
+                svc.open()
+                self.assertIn("a.md", svc.index.files)
+                self.assertEqual(svc.read("a.md")["readOnly"], "read-only")
+                with self.assertRaises((VaultError, OSError)):
+                    svc.write("a.md", "x")
+                svc.close()
+            finally:
+                for x in paths:
+                    x.chmod(0o755 if x.is_dir() else 0o644)
+
+
 class WriteDeleteHistoryTests(unittest.TestCase):
     def setUp(self):
         self.tmp, self.svc = make_vault({"A.md": "one"})
@@ -255,6 +277,19 @@ class WriteDeleteHistoryTests(unittest.TestCase):
         self.svc.index.update("latin.md")
         self.svc.rename("A.md", "B.md")  # its link is not rewritten, the bytes stay
         self.assertEqual(p.read_bytes(), raw)
+
+    def test_long_names_can_be_saved(self):
+        name = "L" * 250 + ".md"  # 253 bytes: legal
+        self.svc.write(name, "first")
+        self.svc.write(name, "second")
+        self.assertEqual((Path(self.tmp.name) / name).read_text(), "second")
+        self.assertEqual([f.name for f in Path(self.tmp.name).iterdir() if "skn-tmp" in f.name], [])
+
+    def test_folder_into_itself_refused(self):
+        self.svc.mkdir("G/sub")
+        with self.assertRaises(VaultError) as cm:
+            self.svc.rename("G", "G/sub/G")
+        self.assertEqual(str(cm.exception), "into-itself")
 
     def test_read_only_note_not_overwritten(self):
         p = Path(self.tmp.name) / "A.md"

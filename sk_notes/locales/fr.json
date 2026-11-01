@@ -786,5 +786,17 @@
  "skai.memory": "Mémoire partagée de SKAI",
  "skai.memory-on": "Connectée.",
  "skai.memory-off": "Pas encore disponible sur ce système. sk_notes l'utilisera automatiquement quand SKAI la proposera.",
- "skai.model-note": "SKAI ne modifie jamais une note sans votre confirmation, et montre toujours les modifications avant."
+ "skai.model-note": "SKAI ne modifie jamais une note sans votre confirmation, et montre toujours les modifications avant.",
+ "error.permission-denied": "Permission refusée : sk_notes ne peut ni lire ni écrire à cet endroit.",
+ "error.read-only": "Ce fichier ou dossier est en lecture seule.",
+ "error.not-utf8": "Cette note n'est pas du texte UTF-8 valide : elle reste en lecture seule pour ne pas abîmer son contenu.",
+ "error.name-too-long": "Le nom est trop long.",
+ "error.already-exists": "Un fichier ou dossier porte déjà ce nom.",
+ "error.not-found": "Le fichier n'existe plus.",
+ "error.outside-vault": "Le chemin est en dehors du coffre.",
+ "error.into-itself": "Un dossier ne peut pas être déplacé dans lui-même.",
+ "error.invalid-characters": "Le nom contient des caractères interdits.",
+ "error.empty-name": "Le nom ne peut pas être vide.",
+ "error.is-a-folder": "Un dossier porte ce nom.",
+ "error.disk-full": "Le disque est plein."
 }

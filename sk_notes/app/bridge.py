@@ -134,6 +134,12 @@ class Api:
                 code = "permission-denied"
             elif isinstance(exc, IsADirectoryError):
                 code = "is-a-folder"
+            elif isinstance(exc, OSError) and exc.errno == 36:
+                code = "name-too-long"
+            elif isinstance(exc, OSError) and exc.errno in (28, 122):
+                code = "disk-full"
+            elif isinstance(exc, OSError) and exc.errno == 30:
+                code = "read-only"
             else:
                 log.error("API %s failed:\n%s", name, traceback.format_exc())
             return _json({"ok": False, "error": code, "detail": str(exc)})

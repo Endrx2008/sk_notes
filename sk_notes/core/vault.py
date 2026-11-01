@@ -4,6 +4,7 @@ POSIX paths ("Folder/Note.md"); every access is checked to stay inside the vault
 from __future__ import annotations
 
 import os
+import threading
 import shutil
 import stat as statmod
 import time
@@ -80,7 +81,10 @@ class Vault:
     @property
     def config_dir(self) -> Path:
         d = self.root / CONFIG_DIR
-        d.mkdir(exist_ok=True)
+        try:
+            d.mkdir(exist_ok=True)
+        except OSError:
+            pass  # read-only vault: callers handle the missing folder
         return d
 
     def abs(self, rel: str) -> Path:
@@ -215,7 +219,8 @@ class Vault:
             raise VaultError("read-only")  # the atomic replace below would ignore the mode
         p.parent.mkdir(parents=True, exist_ok=True)
         # atomic replace: a crash never leaves a half-written note
-        tmp = p.with_name(f".{p.name}.skn-tmp-{os.getpid()}")
+        # short temp name: '.<name>.skn-tmp' would exceed 255 bytes for long note names
+        tmp = p.with_name(f".skn-tmp-{os.getpid()}-{threading.get_ident() % 100000}-{len(p.name)}")
         try:
             with open(tmp, "wb") as fh:
                 fh.write(data)
@@ -250,6 +255,8 @@ class Vault:
             raise VaultError("not-found")
         for part in normalize_path(new).split("/"):
             check_name(part)
+        if src.is_dir() and (dst == src or src in dst.parents):
+            raise VaultError("into-itself")
         same_file = src.resolve() == dst.resolve() if dst.exists() else False
         if dst.exists() and not same_file:
             raise VaultError("already-exists")

@@ -1,6 +1,7 @@
 // Command registry with default and custom hotkeys (stored in .sk_notes/hotkeys.json).
 
 import { hotkeyMatches } from './keymap.js';
+import { errorText } from '../core/i18n.js';
 
 export class Commands {
   constructor(app) {
@@ -56,27 +57,32 @@ export class Commands {
   }
 
   executeCommand(cmd) {
+    const fail = (e) => {
+      console.error('command failed', cmd.id, e);
+      this.app.notice?.(errorText(e));
+    };
+    // async callbacks: a rejected promise is reported like a thrown error
+    const watch = (r) => { if (r && typeof r.then === 'function') r.then(null, fail); };
     try {
       if (cmd.checkCallback) {
         if (!cmd.checkCallback(true)) return false;
-        cmd.checkCallback(false);
+        watch(cmd.checkCallback(false));
       } else if (cmd.editorCheckCallback || cmd.editorCallback) {
         const ctx = this.app.workspace.activeEditor;
         if (!ctx?.editor) return false;
         if (cmd.editorCheckCallback) {
           if (!cmd.editorCheckCallback(true, ctx.editor, ctx)) return false;
-          cmd.editorCheckCallback(false, ctx.editor, ctx);
+          watch(cmd.editorCheckCallback(false, ctx.editor, ctx));
         } else {
-          cmd.editorCallback(ctx.editor, ctx);
+          watch(cmd.editorCallback(ctx.editor, ctx));
         }
       } else if (cmd.callback) {
-        cmd.callback();
+        watch(cmd.callback());
       } else {
         return false;
       }
     } catch (e) {
-      console.error('command failed', cmd.id, e);
-      this.app.notice?.(String(e?.message || e));
+      fail(e);
       return false;
     }
     this.recent = [cmd.id, ...this.recent.filter((x) => x !== cmd.id)].slice(0, 20);

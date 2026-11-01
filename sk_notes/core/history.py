@@ -10,9 +10,12 @@ from __future__ import annotations
 
 import hashlib
 import sqlite3
+import logging
 import threading
 import time
 import zlib
+
+log = logging.getLogger(__name__)
 
 
 class History:
@@ -23,8 +26,13 @@ class History:
             self.db = self._open(db_path)
         except sqlite3.DatabaseError:
             import os
-            os.replace(db_path, db_path + ".corrupt")
-            self.db = self._open(db_path)
+            try:
+                os.replace(db_path, db_path + ".corrupt")
+                self.db = self._open(db_path)
+            except (OSError, sqlite3.DatabaseError) as exc:
+                # read-only vault: versions of this session only
+                log.warning("history %s cannot be written (%s): keeping it in memory", db_path, exc)
+                self.db = self._open(":memory:")
 
     @staticmethod
     def _open(path: str) -> sqlite3.Connection:

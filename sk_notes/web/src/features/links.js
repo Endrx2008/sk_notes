@@ -3,7 +3,7 @@
 // by a plugin (registerObsidianProtocolHandler), with the same parameters.
 
 import { onBackend } from '../core/api.js';
-import { t } from '../core/i18n.js';
+import { t, errorText } from '../core/i18n.js';
 import { TFile } from '../model/vault.js';
 
 const truthy = (v) => v !== undefined && v !== 'false' && v !== '0';
@@ -57,7 +57,7 @@ export function installLinkHandler(app) {
       else console.warn('no handler for sknotes:// action', action);
     } catch (e) {
       console.error('sknotes:// link failed', action, e);
-      app.notice(String(e.code || e.message || e));
+      app.notice(errorText(e));
     }
   });
 }

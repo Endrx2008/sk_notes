@@ -105,7 +105,13 @@ class VaultIndex:
                     os.unlink(path + suffix)
                 except OSError:
                     pass
-            return connect()
+            try:
+                return connect()
+            except sqlite3.DatabaseError as exc2:
+                # read-only vault or disk: index in memory, rebuilt at every start
+                log.warning("cache %s cannot be written (%s): keeping it in memory", path, exc2)
+                path = ":memory:"
+                return connect()
 
     def close(self) -> None:
         with self.lock:

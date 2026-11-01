@@ -33,7 +33,10 @@ def register(app) -> None:
 
     def plugins_dir() -> Path:
         d = svc().vault.config_dir / "plugins"
-        d.mkdir(exist_ok=True)
+        try:
+            d.mkdir(exist_ok=True)
+        except OSError:
+            pass  # read-only vault: listing finds nothing, installing reports the error
         return d
 
     def enabled() -> list[str]:
@@ -43,7 +46,8 @@ def register(app) -> None:
     @r("plugins.list")
     def plugins_list(p, ctx):
         out = []
-        for d in sorted(plugins_dir().iterdir()):
+        pdir = plugins_dir()
+        for d in sorted(pdir.iterdir()) if pdir.is_dir() else []:
             mf = d / "manifest.json"
             if not mf.is_file():
                 continue
