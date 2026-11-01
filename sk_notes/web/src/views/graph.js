@@ -166,6 +166,7 @@ export class GraphView extends ItemView {
     this.links = [];
     this.pos = null;
     this.view = { x: 0, y: 0, k: 1 };
+    this.autoFit = true; // follow the layout until the user pans or zooms
     this.hover = -1;
     this.dirty = true;
     this.rebuild = debounce(() => this.build(true), 400, true);
@@ -188,7 +189,11 @@ export class GraphView extends ItemView {
   async onOpen() {
     this.worker = new Worker(workerUrl);
     this.worker.onmessage = (e) => {
-      if (e.data.type === 'pos') { this.pos = e.data.pos; this.dirty = true; }
+      if (e.data.type === 'pos') {
+        this.pos = e.data.pos;
+        if (this.autoFit) this._fit();
+        this.dirty = true;
+      }
     };
     this.register(() => this.worker.terminate());
     const draw = () => {
@@ -354,6 +359,24 @@ export class GraphView extends ItemView {
       text: v('--text-normal'), tag: v('--color-green'), unresolved: v('--text-faint'), attachment: v('--color-yellow'), hl: v('--sk-accent2') };
   }
 
+  /** Fit all nodes in the view; big graphs end up zoomed out, where labels fade. */
+  _fit() {
+    const pos = this.pos;
+    const n = pos ? pos.length / 2 : 0;
+    const w = this.canvas.width / this.dpr;
+    const h = this.canvas.height / this.dpr;
+    if (!n || w < 10 || h < 10) return;
+    let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
+    for (let i = 0; i < n; i++) {
+      const x = pos[i * 2]; const y = pos[i * 2 + 1];
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+    }
+    const pad = 40;
+    const k = Math.clamp(Math.min((w - pad * 2) / Math.max(1, maxX - minX), (h - pad * 2) / Math.max(1, maxY - minY)), 0.05, 1.5);
+    this.view = { x: (minX + maxX) / 2, y: (minY + maxY) / 2, k };
+  }
+
   toScreen(px, py) {
     const w = this.canvas.width / this.dpr;
     const h = this.canvas.height / this.dpr;
@@ -483,6 +506,7 @@ export class GraphView extends ItemView {
           const [wx, wy] = this.toWorld(sx, sy);
           this.worker.postMessage({ type: 'drag', i: drag.node, x: wx, y: wy, fix: true });
         } else {
+          this.autoFit = false;
           this.view.x = drag.vx - (sx - drag.sx) / this.view.k;
           this.view.y = drag.vy - (sy - drag.sy) / this.view.k;
         }
@@ -506,6 +530,7 @@ export class GraphView extends ItemView {
     };
     cv.addEventListener('wheel', (e) => {
       e.preventDefault();
+      this.autoFit = false;
       const [sx, sy] = local(e);
       const [wx, wy] = this.toWorld(sx, sy);
       const k = Math.clamp(this.view.k * Math.exp(-e.deltaY * 0.0015), 0.05, 8);
