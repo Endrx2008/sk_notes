@@ -142,6 +142,12 @@ export class MarkdownView extends TextFileView {
   // ---------------------------------------------------------------- data
   getViewData() { return this.cm.state.doc.toString(); }
 
+  onReadOnlyChange() {
+    this.cmHandle.setReadOnly(!!this.readOnlyReason);
+    this.inlineTitleEl.setAttr('contenteditable', this.readOnlyReason ? 'false' : 'true');
+    this.containerEl.toggleClass('is-readonly', !!this.readOnlyReason);
+  }
+
   setViewData(data, clear) {
     if (data !== this.getViewData()) {
       this._settingData = true;

@@ -386,6 +386,7 @@ export function createEditor({ parent, doc, info, livePreview = true, onChange, 
   const pluginComp = new Compartment();
   const settingsComp = new Compartment();
   const historyComp = new Compartment();
+  const readOnlyComp = new Compartment();
   let currentInfo = info;
   const getInfo = () => currentInfo;
   const settingsExt = (s) => [
@@ -399,6 +400,7 @@ export function createEditor({ parent, doc, info, livePreview = true, onChange, 
     doc,
     extensions: [
       historyComp.of(history()),
+      readOnlyComp.of([]),
       drawSelection(),
       dropCursor(),
       EditorState.allowMultipleSelections.of(true),
@@ -451,6 +453,7 @@ export function createEditor({ parent, doc, info, livePreview = true, onChange, 
     setPluginExtensions(exts) { view.dispatch({ effects: pluginComp.reconfigure(exts) }); },
     setSettings(s) { view.dispatch({ effects: settingsComp.reconfigure(settingsExt(s)) }); },
     refresh() { view.dispatch({ effects: refreshLP.of(null) }); },
+    setReadOnly(ro) { view.dispatch({ effects: readOnlyComp.reconfigure(ro ? [EditorState.readOnly.of(true), EditorView.editable.of(false)] : []) }); },
     /** Forget undo/redo (another file was loaded into this editor). */
     resetHistory() {
       view.dispatch({ effects: historyComp.reconfigure([]) });

@@ -110,6 +110,7 @@ export class Vault extends Events {
   constructor(app, info) {
     super();
     this.app = app;
+    this._readOnly = new Map();
     this._name = info.name;
     this._basePath = info.path;
     this.fileMap = Object.create(null);
@@ -253,8 +254,12 @@ export class Vault extends Events {
   async read(file) {
     const r = await call('vault.read', { path: file.path });
     this._cache.set(file.path, { text: r.text, mtime: r.mtime });
+    if (r.readOnly) this._readOnly.set(file.path, r.readOnly); else this._readOnly.delete(file.path);
     return r.text;
   }
+
+  /** Why a text file must not be saved back ('not-utf8', 'read-only'), from its last read. */
+  getReadOnlyReason(file) { return this._readOnly.get(file.path) || null; }
 
   async cachedRead(file) {
     const c = this._cache.get(file.path);

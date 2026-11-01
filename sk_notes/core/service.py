@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 import time
 from pathlib import Path
@@ -81,7 +82,12 @@ class VaultService:
         st = self.vault.stat(path)
         if st is None or st.is_dir:
             raise VaultError("not-found")
-        return {"text": self.vault.read_text(path), "mtime": int(st.mtime * 1000), "size": st.size}
+        out = {"text": self.vault.read_text(path), "mtime": int(st.mtime * 1000), "size": st.size}
+        if ext_of(path) in TEXT_EXT:
+            info = self.vault.text_info(path)
+            # an editor must not save these back: the text is lossy, or the file read-only
+            out["readOnly"] = "not-utf8" if not info["utf8"] else (None if info["writable"] else "read-only")
+        return out
 
     def write(self, path: str, text: str, *, expected_mtime: int | None = None, reason: str = "edit",
               mtime: float | None = None) -> dict:
@@ -96,6 +102,10 @@ class VaultService:
                     self.history.snapshot(path, disk, reason="external", force=True)
                     return {"conflict": True, "text": disk, "mtime": int(st.mtime * 1000)}
             is_new = st is None
+            if st is not None and ext_of(path) in TEXT_EXT and not self.vault.text_info(path)["utf8"]:
+                # its text was decoded with replacement characters: writing it back would
+                # destroy the original bytes (Latin-1 notes, binaries named .md)
+                raise VaultError("not-utf8")
             if st is not None and ext_of(path) in TEXT_EXT:
                 if reason != "edit":
                     try:
@@ -103,7 +113,7 @@ class VaultService:
                     except OSError:
                         pass
             self._mark_own(path)
-            entry = self.vault.write_text(path, text, mtime=mtime)
+            entry = self.vault.write_text_keep_eol(path, text, mtime=mtime)
             if ext_of(path) in TEXT_EXT:
                 self.history.snapshot(path, text, reason="edit")
             meta = self.index.update(path, text)
@@ -167,36 +177,28 @@ class VaultService:
             # a moved note keeps its own relative markdown links working
             for a, b in moved.items():
                 if ext_of(b) == "md":
-                    text = self.vault.read_text(b)
+                    text = self._editable_text(b)
+                    if text is None:
+                        continue
                     fixed = links.relink_moved_note(text, a, b, self.index)
-                    if fixed != text:
-                        self._mark_own(b)
-                        self.vault.write_text(b, fixed)
+                    if fixed != text and self._rewrite(b, text, fixed, snapshot=False):
                         self.index.update(b, fixed)
             for src, items in refs.items():
                 src_now = moved.get(src, src)
-                try:
-                    text = self.vault.read_text(src_now)
-                except OSError:
+                text = self._editable_text(src_now)
+                if text is None:
                     continue
                 new_text = links.apply_rewrites(text, items, self.index, src_now)
-                if new_text != text:
-                    self.history.snapshot(src_now, text, reason="link-update", force=True)
-                    self._mark_own(src_now)
-                    self.vault.write_text(src_now, new_text)
+                if new_text != text and self._rewrite(src_now, text, new_text):
                     self.index.update(src_now, new_text)
                     updated.append(src_now)
             if update_links:
                 for src in [p for p in self.index.files if ext_of(p) == "canvas"]:
-                    try:
-                        text = self.vault.read_text(src)
-                    except OSError:
+                    text = self._editable_text(src)
+                    if text is None:
                         continue
                     new_text = links.relink_canvas(text, moved)
-                    if new_text is not None:
-                        self.history.snapshot(src, text, reason="link-update", force=True)
-                        self._mark_own(src)
-                        self.vault.write_text(src, new_text)
+                    if new_text is not None and self._rewrite(src, text, new_text):
                         self.index.update(src, new_text)
                         updated.append(src)
             payload = {"oldPath": old, "file": {"path": new, "folder": src_is_dir} if src_is_dir else self._entry(new),
@@ -206,6 +208,29 @@ class VaultService:
             payload.update(self._links_payload(None))
             self.emit("rename", payload)
             return {"path": new, "updated": updated}
+
+    def _editable_text(self, path: str) -> str | None:
+        """Text of a file that may be rewritten automatically (link updates): None for
+        unreadable, read-only or non-UTF-8 files, which are left alone."""
+        try:
+            data = self.vault.read_bytes(path)
+            if not os.access(self.vault.abs(path), os.W_OK):
+                return None
+            return data.decode("utf-8")
+        except (OSError, UnicodeDecodeError, VaultError):
+            return None
+
+    def _rewrite(self, path: str, old_text: str, new_text: str, *, snapshot: bool = True) -> bool:
+        """Automatic rewrite of one file; a failure skips that file instead of aborting."""
+        try:
+            if snapshot:
+                self.history.snapshot(path, old_text, reason="link-update", force=True)
+            self._mark_own(path)
+            self.vault.write_text(path, new_text)
+            return True
+        except (OSError, VaultError) as exc:
+            log.warning("could not update links in %s: %s", path, exc)
+            return False
 
     def copy(self, old: str, new: str) -> dict:
         old, new = normalize_path(old), normalize_path(new)

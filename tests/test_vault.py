@@ -201,6 +201,45 @@ class WriteDeleteHistoryTests(unittest.TestCase):
         self.tmp.cleanup()
         os.environ.pop("XDG_DATA_HOME", None)
 
+    def test_line_endings_kept(self):
+        p = Path(self.tmp.name)
+        (p / "crlf.md").write_bytes(b"a\r\nb\r\n")
+        (p / "cr.md").write_bytes(b"a\rb\r")
+        self.svc.index.update("crlf.md")
+        self.assertEqual(self.svc.read("crlf.md")["text"], "a\r\nb\r\n")
+        self.svc.write("crlf.md", "a\nb\nc\n")  # what the editor sends back
+        self.assertEqual((p / "crlf.md").read_bytes(), b"a\r\nb\r\nc\r\n")
+        self.svc.write("cr.md", "a\nb\n")
+        self.assertEqual((p / "cr.md").read_bytes(), b"a\rb\r")
+        self.svc.write("A.md", "x\ny")
+        self.assertEqual((p / "A.md").read_bytes(), b"x\ny")
+
+    def test_not_utf8_note_is_never_rewritten(self):
+        p = Path(self.tmp.name) / "latin.md"
+        raw = "caf\xe9 [[A]]".encode("latin-1") + bytes(range(256))
+        p.write_bytes(raw)
+        r = self.svc.read("latin.md")
+        self.assertEqual(r["readOnly"], "not-utf8")
+        with self.assertRaises(VaultError) as cm:
+            self.svc.write("latin.md", r["text"])
+        self.assertEqual(str(cm.exception), "not-utf8")
+        self.svc.index.update("latin.md")
+        self.svc.rename("A.md", "B.md")  # its link is not rewritten, the bytes stay
+        self.assertEqual(p.read_bytes(), raw)
+
+    def test_read_only_note_not_overwritten(self):
+        p = Path(self.tmp.name) / "A.md"
+        p.chmod(0o444)
+        try:
+            self.assertEqual(self.svc.read("A.md")["readOnly"], "read-only")
+            with self.assertRaises(VaultError) as cm:
+                self.svc.write("A.md", "changed")
+            self.assertEqual(str(cm.exception), "read-only")
+            self.assertEqual(p.read_text(), "one")
+        finally:
+            p.chmod(0o644)
+        self.assertIsNone(self.svc.read("A.md")["readOnly"])
+
     def test_conflict_detected_not_overwritten(self):
         r = self.svc.read("A.md")
         time.sleep(0.02)

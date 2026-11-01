@@ -16,6 +16,18 @@ IGNORED_DIRS = {".git", ".trash", "node_modules", ".obsidian", CONFIG_DIR}
 MAX_NAME_BYTES = 255
 
 
+def eol_of(data: bytes) -> str:
+    """Line ending used by a file: '\\r\\n', '\\r' or '\\n' (default)."""
+    crlf = data.count(b"\r\n")
+    lf = data.count(b"\n") - crlf
+    cr = data.count(b"\r") - crlf
+    if crlf and crlf >= lf:
+        return "\r\n"
+    if cr and not lf and not crlf:
+        return "\r"
+    return "\n"
+
+
 class VaultError(Exception):
     """User-facing error (bad name, missing file, outside vault, ...)."""
 
@@ -148,6 +160,31 @@ class Vault:
         except UnicodeDecodeError:
             return data.decode("utf-8", errors="replace")
 
+    def text_info(self, rel: str) -> dict:
+        """What a text editor must know to save a file back without damaging it."""
+        p = self.abs(rel)
+        data = p.read_bytes()
+        try:
+            data.decode("utf-8")
+            utf8 = True
+        except UnicodeDecodeError:
+            utf8 = False
+        return {"utf8": utf8, "eol": eol_of(data), "writable": os.access(p, os.W_OK)}
+
+    def write_text_keep_eol(self, rel: str, text: str, *, mtime: float | None = None) -> FileEntry:
+        """Write text with the line endings the file already has on disk (CRLF/CR vaults)."""
+        p = self.abs(rel)
+        eol = "\n"
+        if p.is_file():
+            try:
+                with open(p, "rb") as fh:
+                    eol = eol_of(fh.read(65536))
+            except OSError:
+                pass
+        if eol != "\n":
+            text = text.replace("\r\n", "\n").replace("\n", eol)
+        return self.write_text(rel, text, mtime=mtime)
+
     def read_bytes(self, rel: str) -> bytes:
         return self.abs(rel).read_bytes()
 
@@ -158,6 +195,8 @@ class Vault:
         p = self.abs(rel)
         for part in normalize_path(rel).split("/"):
             check_name(part)
+        if p.exists() and not p.is_dir() and not os.access(p, os.W_OK):
+            raise VaultError("read-only")  # the atomic replace below would ignore the mode
         p.parent.mkdir(parents=True, exist_ok=True)
         # atomic replace: a crash never leaves a half-written note
         tmp = p.with_name(f".{p.name}.skn-tmp-{os.getpid()}")

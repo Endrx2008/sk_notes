@@ -173,16 +173,37 @@ export class TextFileView extends EditableFileView {
     // would write that text into `file`.
     this._loadingFile = file;
     try {
-      const text = await this.app.vault.read(file);
+      let text;
+      try {
+        text = await this.app.vault.read(file);
+      } catch (e) {
+        if (this.file !== file) return;
+        // never leave the previous note's text in a view that now belongs to `file`
+        this.readOnlyReason = 'read-failed';
+        this.data = '';
+        this.setViewData('', true);
+        this.lastSavedData = this.getViewData();
+        this.onReadOnlyChange();
+        this.app.notice(t('notice.read-failed', { name: file.basename, error: e.code || e.message }));
+        return;
+      }
       if (this.file !== file) return; // another file was opened meanwhile
       this._mtime = file.stat.mtime;
       this.data = text;
-      this.lastSavedData = text;
       this.setViewData(text, true);
+      // compare later saves with the text as the view holds it (CRLF becomes LF in the
+      // editor): a note that was only looked at is never written back
+      this.lastSavedData = this.getViewData();
+      this.readOnlyReason = this.app.vault.getReadOnlyReason?.(file) || null;
+      this.onReadOnlyChange();
+      if (this.readOnlyReason) this.app.notice(t(`notice.opened-${this.readOnlyReason}`, { name: file.basename }), 8000);
     } finally {
       if (this._loadingFile === file) this._loadingFile = null;
     }
   }
+
+  /** Views that edit text make themselves read-only here (see readOnlyReason). */
+  onReadOnlyChange() {}
 
   /** True while a file is being read into the view. */
   get isLoading() { return !!this._loadingFile; }
@@ -193,7 +214,7 @@ export class TextFileView extends EditableFileView {
   }
 
   async save(clear) {
-    if (!this.file || this._loadingFile) return;
+    if (!this.file || this._loadingFile || this.readOnlyReason) return;
     const data = this.getViewData();
     if (data === this.lastSavedData) return;
     this.data = data;
@@ -228,11 +249,13 @@ export class TextFileView extends EditableFileView {
     if (file !== this.file) return;
     const text = await this.app.vault.read(file);
     const current = this.getViewData();
-    if (text === current) { this.lastSavedData = text; return; }
+    if (text === current) { this.lastSavedData = current; return; }
     if (current === this.lastSavedData) {
-      this.lastSavedData = text;
       this.data = text;
       this.setViewData(text, false);
+      this.lastSavedData = this.getViewData();
+      const reason = this.app.vault.getReadOnlyReason?.(file) || null;
+      if (reason !== this.readOnlyReason) { this.readOnlyReason = reason; this.onReadOnlyChange(); }
     } else {
       this.app.notice(t('notice.external-change', { name: file.basename }));
     }
