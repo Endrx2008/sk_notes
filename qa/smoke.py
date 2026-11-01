@@ -43,6 +43,14 @@ def make_vault(base: Path) -> Path:
     # a large attachment: the PDF export page then exceeds Qt's 2 MB setHtml() limit
     (v / "Pic.md").write_text("# Pic\n\n![[big.png]]\n", encoding="utf-8")
     (v / "big.png").write_bytes(os.urandom(2_200_000))
+    # notes an editor must never write back by itself (B-6, B-7, B-17)
+    (v / "Odd").mkdir()
+    (v / "Odd/crlf.md").write_bytes(b"# CRLF\r\nline two\r\n")
+    (v / "Odd/latin.md").write_bytes("# Latin caf\xe9\n".encode("latin-1") + bytes(range(128, 256)))
+    (v / "Odd/ro.md").write_text("# Read only\n", encoding="utf-8")
+    (v / "Odd/ro.md").chmod(0o444)
+    (v / "Odd/unreadable.md").write_text("# Secret\n", encoding="utf-8")
+    (v / "Odd/unreadable.md").chmod(0o000)
     return v
 
 
@@ -330,6 +338,52 @@ class Smoke:
         assert out == 0, f"{out} nodes outside the view"
         self.page.key("w", "ctrl")
 
+    def _open(self, path: str):
+        self.page.js(f"(async () => {{ await app.workspace.getLeaf(false).openFile(app.vault.getAbstractFileByPath({json.dumps(path)})); return 1; }})()")
+        self.page.wait(f"(() => {{ const v = app.workspace.activeLeaf?.view; return v?.file?.path === {json.dumps(path)} && !v.isLoading; }})()")
+
+    def odd_notes_not_rewritten(self):
+        """Regression: looking at a CRLF or non-UTF-8 note rewrote it (B-6); an unreadable
+        note showed the previous text and autosave wrote it over the note (B-7); read-only
+        notes were overwritten (B-17)."""
+        odd = self.vault / "Odd"
+        before = {f.name: f.read_bytes() for f in odd.iterdir() if f.name != "unreadable.md"}
+        for name in ("crlf.md", "latin.md", "ro.md"):
+            self._open(f"Odd/{name}")
+            self.page.key("e", "ctrl")
+            self.page.key("e", "ctrl")
+        self._open("Odd/latin.md")
+        assert self.page.js("app.workspace.activeLeaf.view.readOnlyReason") == "not-utf8"
+        self._open("Home.md")
+        self._open("Odd/unreadable.md")
+        assert self.page.js("app.workspace.activeLeaf.view.getViewData()") == "", "previous note's text shown"
+        for name in ("ro.md", "unreadable.md"):
+            self._open(f"Odd/{name}")
+            self.page.js("(() => { app.workspace.activeLeaf.view.editor.focus(); return 1; })()")
+            self.page.type("TYPED ")
+            time.sleep(1.5)
+        self._open("Home.md")
+        time.sleep(2)
+        after = {f.name: f.read_bytes() for f in odd.iterdir() if f.name != "unreadable.md"}
+        assert after == before, [n for n in before if before[n] != after.get(n)]
+        (odd / "unreadable.md").chmod(0o644)
+        assert (odd / "unreadable.md").read_text(encoding="utf-8") == "# Secret\n"
+
+    def reload_after_conflict(self):
+        """Regression: after one edit conflict, open notes stopped reloading outside changes (B-8)."""
+        self._open("Odd/crlf.md")
+        self._open("Home.md")
+        self.page.js("(() => { app.workspace.activeLeaf.view.editor.replaceRange('x', { line: 0, ch: 0 }); return 1; })()")
+        home = self.vault / "Home.md"
+        home.write_text("changed outside\n" + home.read_text(encoding="utf-8"), encoding="utf-8")
+        os.utime(home, (time.time() + 3, time.time() + 3))
+        time.sleep(3)  # autosave meets the conflict and keeps the user's version
+        self._open("Ideas.md")
+        time.sleep(1)
+        ideas = self.vault / "Ideas.md"
+        ideas.write_text(ideas.read_text(encoding="utf-8") + "\nADDED BY SYNC\n", encoding="utf-8")
+        self.page.wait("app.workspace.activeLeaf.view.editor.getValue().includes('ADDED BY SYNC')", timeout=10)
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -363,7 +417,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:
