@@ -397,6 +397,21 @@ class Smoke:
                 break
         assert "w w w" in (self.vault / "Ideas.md").read_text(encoding="utf-8"), "nothing saved while typing"
 
+    def folder_setting_suggests(self):
+        """Regression: folder fields in Settings had no folder suggestions (A-21)."""
+        self.page.key(",", "ctrl")
+        self.page.wait("!!document.querySelector('.modal.mod-settings')")
+        self.page.js("(() => { app.setting.openTabById('files'); return 1; })()")
+        ok = self.page.js("""(async () => {
+          const inputs = [...document.querySelectorAll('.modal.mod-settings input[type=text]')];
+          const inp = inputs.find((i) => i.placeholder === 'Inbox');
+          if (!inp) return 'no folder field';
+          inp.focus(); inp.value = 'Proj'; inp.dispatchEvent(new Event('input'));
+          await new Promise((r) => setTimeout(r, 400));
+          return [...document.querySelectorAll('.suggestion-item')].map((x) => x.textContent).join('|'); })()""")
+        self.page.js("(() => { app.setting.close(); return 1; })()")
+        assert "Projects" in ok, ok
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -430,7 +445,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "folder_setting_suggests", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:

@@ -4,7 +4,7 @@ import { call } from '../core/api.js';
 import { setIcon } from '../core/icons.js';
 import { getLanguage, t } from '../core/i18n.js';
 import { hotkeyToString, keyOf, modifiersOf } from '../model/keymap.js';
-import { Modal, Setting, SearchComponent, confirmDialog } from './kit.js';
+import { AbstractInputSuggest, Modal, Setting, SearchComponent, confirmDialog } from './kit.js';
 
 export class PluginSettingTab {
   constructor(app, plugin) {
@@ -135,6 +135,14 @@ class SettingsModal extends Modal {
     return new Setting(el).setName(name).setDesc(desc || '').addText((x) => x.setPlaceholder(placeholder || '').setValue(this.app.settings.get(key) || '').onChange((v) => this.app.settings.set(key, v)));
   }
 
+  /** Text setting holding a vault folder, with folder suggestions (A-21). */
+  folder(el, key, name, desc, placeholder) {
+    return new Setting(el).setName(name).setDesc(desc || '').addText((x) => {
+      x.setPlaceholder(placeholder || '').setValue(this.app.settings.get(key) || '').onChange((v) => this.app.settings.set(key, v));
+      new FolderSuggest(this.app, x.inputEl).onSelect((v) => { x.setValue(v); this.app.settings.set(key, v); });
+    });
+  }
+
   heading(el, text) { new Setting(el).setName(text).setHeading(); }
 
   // ---------------------------------------------------------------- sections
@@ -178,8 +186,8 @@ class SettingsModal extends Modal {
   files(el) {
     const a = this.app;
     this.dropdown(el, 'newFileLocation', t('settings.new-file-location'), t('settings.new-file-location-desc'), { root: t('settings.vault-root'), current: t('settings.same-folder'), folder: t('settings.in-folder') });
-    this.text(el, 'newFileFolderPath', t('settings.new-file-folder'), t('settings.new-file-folder-desc'), 'Inbox');
-    this.text(el, 'attachmentFolderPath', t('settings.attachments'), t('settings.attachments-desc'), '/');
+    this.folder(el, 'newFileFolderPath', t('settings.new-file-folder'), t('settings.new-file-folder-desc'), 'Inbox');
+    this.folder(el, 'attachmentFolderPath', t('settings.attachments'), t('settings.attachments-desc'), '/');
     this.toggle(el, 'alwaysUpdateLinks', t('settings.update-links'), t('settings.update-links-desc'));
     this.toggle(el, 'useMarkdownLinks', t('settings.md-links'), t('settings.md-links-desc'));
     this.dropdown(el, 'trashOption', t('settings.deleted-files'), t('settings.deleted-files-desc'), { system: t('settings.trash-system'), local: t('settings.trash-local'), none: t('settings.trash-none') });
@@ -271,16 +279,16 @@ class SettingsModal extends Modal {
 
   core(el) {
     this.heading(el, t('settings.daily'));
-    this.text(el, 'dailyNoteFolder', t('settings.daily-folder'), t('settings.daily-folder-desc'), 'Journal');
+    this.folder(el, 'dailyNoteFolder', t('settings.daily-folder'), t('settings.daily-folder-desc'), 'Journal');
     this.text(el, 'dailyNoteFormat', t('settings.daily-format'), t('settings.daily-format-desc'), 'YYYY-MM-DD');
     this.text(el, 'dailyNoteTemplate', t('settings.daily-template'), t('settings.daily-template-desc'), 'Templates/Daily');
     this.heading(el, t('settings.templates'));
-    this.text(el, 'templatesFolder', t('settings.templates-folder'), t('settings.templates-folder-desc'), 'Templates');
+    this.folder(el, 'templatesFolder', t('settings.templates-folder'), t('settings.templates-folder-desc'), 'Templates');
     this.text(el, 'templateDateFormat', t('settings.template-date'), '', 'YYYY-MM-DD');
     this.text(el, 'templateTimeFormat', t('settings.template-time'), '', 'HH:mm');
     this.heading(el, t('settings.unique'));
     this.text(el, 'uniqueNotePrefix', t('settings.unique-format'), '', 'YYYYMMDDHHmm');
-    this.text(el, 'uniqueNoteFolder', t('settings.unique-folder'), '', '');
+    this.folder(el, 'uniqueNoteFolder', t('settings.unique-folder'), '', '');
     this.heading(el, t('settings.preview'));
     this.toggle(el, 'pagePreviewRequireMod', t('settings.preview-mod'), t('settings.preview-mod-desc'));
     this.heading(el, t('settings.sync-publish'));
@@ -288,4 +296,13 @@ class SettingsModal extends Modal {
     new Setting(el).setName(t('settings.publish')).setDesc(t('settings.publish-desc')).addButton((b) => b.setButtonText(t('settings.open')).onClick(() => { this.close(); this.app.commands.executeCommandById('publish:open'); }));
     void getLanguage;
   }
+}
+
+class FolderSuggest extends AbstractInputSuggest {
+  getSuggestions(q) {
+    const low = q.toLowerCase();
+    return this.app.vault.getAllFolders(false).map((f) => f.path).filter((p) => p.toLowerCase().includes(low) && p !== q)
+      .sort((a, b) => a.localeCompare(b)).slice(0, 50);
+  }
+  renderSuggestion(v, el) { el.setText(v); }
 }
