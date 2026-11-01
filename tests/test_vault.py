@@ -271,6 +271,27 @@ class RenameJournalTests(unittest.TestCase):
         del real
 
 
+class ExternalRenameTests(unittest.TestCase):
+    def test_external_rename_is_reported_as_a_rename(self):
+        events = []
+        tmp, svc = make_vault({"Ren.md": "# Ren", "Other.md": "[[Ren]]"})
+        try:
+            svc.emit = lambda name, payload: events.append((name, payload))
+            root = Path(tmp.name)
+            os.rename(root / "Ren.md", root / "Ren-moved.md")
+            svc.external_rename("Ren.md", "Ren-moved.md")
+            self.assertIn("Ren-moved.md", svc.index.files)
+            self.assertNotIn("Ren.md", svc.index.files)
+            name, payload = events[-1]
+            self.assertEqual(name, "rename")
+            self.assertEqual(payload["oldPath"], "Ren.md")
+            self.assertEqual(payload["file"]["path"], "Ren-moved.md")
+            self.assertEqual((root / "Other.md").read_text(), "[[Ren]]")  # links are not rewritten
+        finally:
+            svc.close()
+            tmp.cleanup()
+
+
 class CanvasSearchTests(unittest.TestCase):
     def test_canvas_found_by_card_text_not_json(self):
         board = json.dumps({"nodes": [{"id": "a", "type": "text", "text": "quantum garden", "x": 0, "y": 0, "width": 1, "height": 1},

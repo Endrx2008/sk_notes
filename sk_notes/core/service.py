@@ -383,6 +383,28 @@ class VaultService:
                       {"file": st.to_json(), "metadata": meta, "external": True,
                        **self._links_payload([path] if known else None)})
 
+    def external_rename(self, old: str, new: str) -> None:
+        """Another program renamed or moved a file or folder inside the vault: update the
+        index and tell the page, so open tabs follow it (links are not rewritten)."""
+        old, new = normalize_path(old), normalize_path(new)
+        if self.is_own_echo(old) or self.is_own_echo(new):
+            return
+        with self.lock:
+            known = old in self.index.files or old in self.index.folders
+            if not known or not self.vault.exists(new) or new in self.index.files:
+                self.external_change(old)
+                self.external_change(new)
+                return
+            is_dir = old in self.index.folders
+            moved = {p: new + p[len(old):] for p in self.index.files if p == old or p.startswith(old + "/")}
+            self.index.rename(old, new)
+            self.history.rename(old, new)
+            payload = {"oldPath": old, "file": {"path": new, "folder": True} if is_dir else self._entry(new),
+                       "moved": [[a, b] for a, b in moved.items()], "updated": [], "external": True,
+                       "metadata": {p: self.index.meta.get(p) for p in moved.values() if p in self.index.meta}}
+            payload.update(self._links_payload(None))
+            self.emit("rename", payload)
+
     def rescan(self) -> None:
         with self.lock:
             stats = self.index.sync()

@@ -29,6 +29,7 @@ SKIP = {".git", ".trash", "node_modules", ".obsidian", ".sk_notes"}
 class VaultWatcher(QObject):
     changed = pyqtSignal(str)  # vault-relative path of a file or folder
     rescan = pyqtSignal()  # too many events / overflow: do a full rescan
+    moved = pyqtSignal(str, str)  # a file or folder renamed inside the vault by another program
 
     def __init__(self, root: Path, parent=None):
         super().__init__(parent)
@@ -36,6 +37,8 @@ class VaultWatcher(QObject):
         self.wd_to_dir: dict[int, str] = {}
         self.dir_to_wd: dict[str, int] = {}
         self.pending: set[str] = set()
+        self.move_from: dict[int, str] = {}  # inotify cookie -> old path, until its MOVED_TO
+        self.moves: list[tuple[str, str]] = []
         self.flush_timer = QTimer(self, singleShot=True, interval=250)
         self.flush_timer.timeout.connect(self._flush)
         self.fd = -1
@@ -93,7 +96,7 @@ class VaultWatcher(QObject):
             return
         i = 0
         while i + 16 <= len(data):
-            wd, mask, _cookie, length = struct.unpack_from("iIII", data, i)
+            wd, mask, _cookie, length = struct.unpack_from("iIII", data, i)  # noqa: RUF100
             name = data[i + 16:i + 16 + length].rstrip(b"\0").decode("utf-8", "surrogateescape")
             i += 16 + length
             if mask & IN_Q_OVERFLOW:
@@ -112,6 +115,16 @@ class VaultWatcher(QObject):
             rel = f"{folder}/{name}" if folder else name
             if mask & IN_ISDIR and mask & (IN_CREATE | IN_MOVED_TO):
                 self._add_tree(rel)
+            # a move inside the vault arrives as MOVED_FROM + MOVED_TO with one cookie: report
+            # it as a rename so open tabs follow the file (B-16)
+            if mask & IN_MOVED_FROM and _cookie:
+                self.move_from[_cookie] = rel
+                self.flush_timer.start()
+                continue
+            if mask & IN_MOVED_TO and _cookie in self.move_from:
+                self.moves.append((self.move_from.pop(_cookie), rel))
+                self.flush_timer.start()
+                continue
             self.pending.add(rel)
         if self.pending:
             if len(self.pending) > 500:
@@ -121,6 +134,12 @@ class VaultWatcher(QObject):
                 self.flush_timer.start()
 
     def _flush(self) -> None:
+        moves, self.moves = self.moves, []
+        for a, b in moves:
+            self.moved.emit(a, b)
+        # moved out of the vault (no MOVED_TO seen): that is a delete
+        self.pending.update(self.move_from.values())
+        self.move_from.clear()
         items, self.pending = sorted(self.pending), set()
         for rel in items:
             self.changed.emit(rel)

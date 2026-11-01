@@ -245,6 +245,7 @@ class SkNotesApp(QObject):
         log.info("vault ready in %.2fs (%s)", time.perf_counter() - t0, stats)
         self.watcher = VaultWatcher(self.service.vault.root, self)
         self.watcher.changed.connect(self.service.external_change)
+        self.watcher.moved.connect(self.service.external_rename)
         self.watcher.rescan.connect(self.service.rescan)
         self.settings.vaults[path] = {"ts": int(time.time() * 1000)}
         self.settings.last_vault = path

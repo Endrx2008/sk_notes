@@ -412,6 +412,19 @@ class Smoke:
         self.page.js("(() => { app.setting.close(); return 1; })()")
         assert "Projects" in ok, ok
 
+    def external_rename_follows(self):
+        """Regression: renaming an open note with unsaved typing from outside the app closed
+        the tab and saved the text into a re-created old file (two copies, B-16)."""
+        (self.vault / "Ren.md").write_text("# Ren\n", encoding="utf-8")
+        self.page.wait("!!app.vault.getAbstractFileByPath('Ren.md')", timeout=10)
+        self._open("Ren.md")
+        self.page.js("(() => { app.workspace.activeLeaf.view.editor.replaceRange('TYPED ', { line: 1, ch: 0 }); return 1; })()")
+        os.rename(self.vault / "Ren.md", self.vault / "Ren-moved.md")
+        self.page.wait("app.workspace.activeLeaf?.view?.file?.path === 'Ren-moved.md'", timeout=10)
+        self._wait_file("Ren-moved.md", lambda t: "TYPED" in t, "typed text not saved to the moved file")
+        time.sleep(1.5)
+        assert not (self.vault / "Ren.md").exists(), "old file re-created"
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -445,7 +458,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "folder_setting_suggests", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "folder_setting_suggests", "external_rename_follows", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:
