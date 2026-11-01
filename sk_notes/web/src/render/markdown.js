@@ -31,10 +31,18 @@ function wikilinkRule(md) {
     const embed = src.charCodeAt(pos) === 0x21; // !
     if (embed) pos++;
     if (src.charCodeAt(pos) !== 0x5b || src.charCodeAt(pos + 1) !== 0x5b) return false;
-    const end = src.indexOf(']]', pos + 2);
+    // the link ends on the same line, before any other "[[": scanning to the end of the
+    // note from every "[[" made notes full of brackets take seconds to render (B-23)
+    let end = -1;
+    for (let i = pos + 2; i < src.length - 1; i++) {
+      const c = src.charCodeAt(i);
+      if (c === 0x0a) return false;
+      if (c === 0x5b && src.charCodeAt(i + 1) === 0x5b) return false;
+      if (c === 0x5d && src.charCodeAt(i + 1) === 0x5d) { end = i; break; }
+    }
     if (end === -1) return false;
     const inner = src.slice(pos + 2, end);
-    if (!inner.trim() || inner.includes('\n') || inner.includes('[[')) return false;
+    if (!inner.trim()) return false;
     if (!silent) {
       const bar = inner.indexOf('|');
       const target = (bar === -1 ? inner : inner.slice(0, bar)).trim();

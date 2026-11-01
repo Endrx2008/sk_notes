@@ -23,6 +23,24 @@ const PCT = 37; // %
 const DOLLAR = 36; // $
 const CARET = 94; // ^
 
+// Long runs of brackets ("[[[[[[…" or "…]]]]]]") are plain text: in the Markdown parser
+// every "]" looks back over all open "[", so a note full of them took seconds to parse
+// (B-23). No link starts or ends with four brackets in a row.
+const BracketRun = {
+  defineNodes: [{ name: 'BracketRun' }],
+  parseInline: [{
+    name: 'BracketRun',
+    before: 'WikiLink',
+    parse(cx, next, pos) {
+      if (next !== BRACKET && next !== CLOSE) return -1;
+      let end = pos;
+      while (end < cx.end && cx.char(end) === next) end++;
+      if (end - pos < 4) return -1;
+      return cx.addElement(cx.elt('BracketRun', pos, end));
+    },
+  }],
+};
+
 const WikiLink = {
   defineNodes: [
     { name: 'WikiLink', style: skTags.wikilink },
@@ -199,5 +217,5 @@ const BlockId = {
   }],
 };
 
-export const skMarkdownExtensions = [WikiLink, Hashtag, Highlight, Comment, InlineMath, BlockMath, CommentBlock, BlockId,
+export const skMarkdownExtensions = [WikiLink, BracketRun, Hashtag, Highlight, Comment, InlineMath, BlockMath, CommentBlock, BlockId,
   { props: [styleTags({ WikiLinkTarget: skTags.wikilink, WikiLinkAlias: skTags.wikilink })] }];

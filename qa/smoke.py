@@ -264,10 +264,15 @@ class Smoke:
         self.open_with_switcher("roadmap", "Projects/Roadmap.md")
         before = self.page.js("(() => { const e = app.workspace.activeEditor.editor; e.setCursor(e.lastLine(), 0); e.focus(); return e.getValue(); })()")
         self.page.type_keys("see [[Idea")
-        self.page.wait("!!document.querySelector('.cm-tooltip-autocomplete li[aria-selected]')")
+        # Enter only once the popup shows the suggestions for the whole typed text
+        self.page.wait("/Ideas/.test(document.querySelector('.cm-tooltip-autocomplete li[aria-selected]')?.textContent || '')")
         self.page.key("Enter")
         try:
-            self.page.wait("/see \\[\\[Ideas\\]\\](?!\\])/.test(app.workspace.activeEditor.editor.getValue())", timeout=5)
+            try:
+                self.page.wait("/see \\[\\[Ideas\\]\\](?!\\])/.test(app.workspace.activeEditor.editor.getValue())", timeout=5)
+            except Exception:
+                line = self.page.js("app.workspace.activeEditor.editor.getValue().split('\\n').find((l) => l.includes('see')) || null")
+                raise AssertionError(f"line after Enter: {line!r}") from None
         finally:
             self.page.js(f"(() => {{ app.workspace.activeEditor.editor.setValue({json.dumps(before)}); return 1; }})()")
 
