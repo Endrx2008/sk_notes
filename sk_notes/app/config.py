@@ -13,8 +13,10 @@ APP_ID = "skorpion-sk-notes"  # Wayland app_id / X11 class, matches the .desktop
 VERSION = "0.1.0"
 
 # Shared Skorpion files (see docs/research/skorpion-apps.md)
-SKAI_THEME_FILE = Path.home() / ".config" / "pylauncher_settings" / "theme_config.json"
-SUITE_SETTINGS_FILE = Path.home() / ".config" / "skorpion-suite" / "settings.json"
+# shared with the other Skorpion apps; resolved through XDG like every suite config (B-24)
+_XDG_CONFIG = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+SKAI_THEME_FILE = _XDG_CONFIG / "pylauncher_settings" / "theme_config.json"
+SUITE_SETTINGS_FILE = _XDG_CONFIG / "skorpion-suite" / "settings.json"
 DEFAULT_OLLAMA_HOST = "http://localhost:11434"
 
 
