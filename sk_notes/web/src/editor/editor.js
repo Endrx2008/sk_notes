@@ -303,8 +303,13 @@ function linkCompletionSource(getInfo) {
           options.push({ label: String(a), detail: '→ ' + text, apply: `${linktext}|${a}${close}`, type: 'alias' });
         }
       }
-      if (query.trim() && !app.metadataCache.getFirstLinkpathDest(query.trim(), info.file?.path || '')) {
-        options.push({ label: query.trim(), detail: tr('editor.create-note'), apply: query.trim() + close, type: 'new', boost: -99 });
+      // "create note" only when nothing existing matches: an exact label outranks a
+      // prefix match in CodeMirror's scoring whatever the boost, so Enter would link to
+      // a new note instead of the existing "Note 0042 python" (A-10)
+      const q = query.trim();
+      if (q && !app.metadataCache.getFirstLinkpathDest(q, info.file?.path || '')
+          && !options.some((o) => o.label.toLowerCase().includes(q.toLowerCase()))) {
+        options.push({ label: q, detail: tr('editor.create-note'), apply: q + close, type: 'new', boost: -99 });
       }
       return { from, options, validFor: /^[^#|\[\]\n]*$/ };
     }

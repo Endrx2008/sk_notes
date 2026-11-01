@@ -238,6 +238,18 @@ class Smoke:
         assert self.page.js("app.workspace.activeEditor === app.workspace.activeLeaf.view"), "activeEditor not set"
         assert self.page.js("app.workspace.activeEditor.editor.getValue().startsWith('# Ideas')")
 
+    def link_suggest_prefers_existing(self):
+        """Regression: Enter in the [[ popup picked "create note" over an existing match."""
+        self.open_with_switcher("plan", "Projects/Plan.md")
+        before = self.page.js("(() => { const e = app.workspace.activeEditor.editor; e.setCursor(e.lastLine(), 0); e.focus(); return e.getValue(); })()")
+        self.page.type_keys("see [[Idea")
+        self.page.wait("!!document.querySelector('.cm-tooltip-autocomplete li[aria-selected]')")
+        self.page.key("Enter")
+        try:
+            self.page.wait("/see \\[\\[Ideas\\]\\](?!\\])/.test(app.workspace.activeEditor.editor.getValue())", timeout=5)
+        finally:
+            self.page.js(f"(() => {{ app.workspace.activeEditor.editor.setValue({json.dumps(before)}); return 1; }})()")
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -271,7 +283,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:
