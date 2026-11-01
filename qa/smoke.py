@@ -384,6 +384,19 @@ class Smoke:
         ideas.write_text(ideas.read_text(encoding="utf-8") + "\nADDED BY SYNC\n", encoding="utf-8")
         self.page.wait("app.workspace.activeLeaf.view.editor.getValue().includes('ADDED BY SYNC')", timeout=10)
 
+    def autosave_while_typing(self):
+        """Regression: the 1 s autosave restarted on every key, so nothing was saved while the
+        user kept typing (B-12)."""
+        self._open("Ideas.md")
+        self.page.js("(() => { const e = app.workspace.activeEditor.editor; e.setCursor(e.lastLine(), 0); e.focus(); return 1; })()")
+        end = time.time() + 7
+        while time.time() < end:
+            self.page.type("w ")
+            time.sleep(0.25)
+            if (self.vault / "Ideas.md").read_text(encoding="utf-8").count("w w w") and time.time() < end - 1:
+                break
+        assert "w w w" in (self.vault / "Ideas.md").read_text(encoding="utf-8"), "nothing saved while typing"
+
     def export_pdf(self):
         """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
         out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
@@ -417,7 +430,7 @@ def main() -> int:
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "export_pdf", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "active_editor_after_open", "link_suggest_prefers_existing", "external_change_after_save", "template_keeps_properties", "skai_rewrite_replaces_selection", "graph_fits_view", "odd_notes_not_rewritten", "reload_after_conflict", "autosave_while_typing", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:

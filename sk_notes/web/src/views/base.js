@@ -165,7 +165,13 @@ export class TextFileView extends EditableFileView {
     this.lastSavedData = null;
     this.dirty = false;
     this._saving = null;
-    this.requestSave = debounce(() => this.save(), 1000, true);
+    // save 1 s after the last change, and at least every 4 s while the user keeps
+    // typing (a crash must not lose a whole session of uninterrupted typing)
+    const later = debounce(() => this.save(), 1000, true);
+    this.requestSave = () => {
+      later();
+      if (!this._maxWait) this._maxWait = setTimeout(() => { this._maxWait = null; this.save(); }, 4000);
+    };
   }
 
   async onLoadFile(file) {
@@ -214,6 +220,7 @@ export class TextFileView extends EditableFileView {
   }
 
   async save(clear) {
+    if (this._maxWait) { clearTimeout(this._maxWait); this._maxWait = null; }
     if (!this.file || this._loadingFile || this.readOnlyReason) return;
     const data = this.getViewData();
     if (data === this.lastSavedData) return;
