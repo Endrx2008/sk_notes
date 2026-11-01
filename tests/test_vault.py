@@ -220,6 +220,31 @@ class SymlinkScanTests(unittest.TestCase):
                 tmp.cleanup()
 
 
+class UnicodeNameTests(unittest.TestCase):
+    def test_nfd_names_are_reachable_by_nfc_path(self):
+        import unicodedata
+        nfd = unicodedata.normalize("NFD", "Café résumé.md")
+        folder = unicodedata.normalize("NFD", "École")
+        tmp, svc = make_vault({"Index.md": "[[Café résumé]]"})
+        try:
+            root = Path(tmp.name)
+            (root / nfd).write_text("hello", encoding="utf-8")
+            (root / folder).mkdir()
+            (root / folder / "n.md").write_text("in folder", encoding="utf-8")
+            svc.open()
+            self.assertIn("Café résumé.md", svc.index.files)  # NFC everywhere
+            self.assertIn("École/n.md", svc.index.files)
+            self.assertEqual(svc.read("Café résumé.md")["text"], "hello")
+            self.assertEqual(svc.read("École/n.md")["text"], "in folder")
+            svc.write("Café résumé.md", "changed")
+            self.assertEqual((root / nfd).read_text(encoding="utf-8"), "changed")  # same file, no twin
+            self.assertEqual(len([f for f in root.iterdir() if f.suffix == ".md"]), 2)
+            self.assertEqual(svc.index.unresolved["Index.md"], {})
+        finally:
+            svc.close()
+            tmp.cleanup()
+
+
 class ReadOnlyVaultTests(unittest.TestCase):
     def test_read_only_vault_opens(self):
         with tempfile.TemporaryDirectory() as d:

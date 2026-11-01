@@ -219,6 +219,12 @@ class SchemeHandler(QWebEngineUrlSchemeHandler):
 
     def _serve_file(self, job, base: Path, rel: str, vault: bool = False) -> None:
         base = base.resolve()
+        if vault and rel and not (base / rel).exists():
+            import unicodedata
+            from ..core.vault import on_disk
+            real = on_disk(base, unicodedata.normalize("NFC", rel))  # NFD names on disk
+            if real is not None:
+                rel = real.relative_to(base).as_posix()
         target = (base / rel).resolve() if rel else base
         if base != target and base not in target.parents:
             if not (vault and (base / rel).parent.resolve().is_relative_to(base)):  # symlink inside vault

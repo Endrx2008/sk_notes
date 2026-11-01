@@ -57,6 +57,25 @@ def normalize_path(path: str) -> str:
     return unicodedata.normalize("NFC", out) if out else "/"
 
 
+def on_disk(root: Path, rel: str) -> Path | None:
+    """Paths are NFC everywhere in sk_notes; find the real name of a file stored in another
+    Unicode form (NFD names from macOS and sync tools). None if there is no such file."""
+    cur = Path(root)
+    for part in rel.split("/"):
+        nxt = cur / part
+        if not os.path.lexists(nxt):
+            try:
+                with os.scandir(cur) as it:
+                    match = next((e.name for e in it if unicodedata.normalize("NFC", e.name) == part), None)
+            except OSError:
+                return None
+            if match is None:
+                return None
+            nxt = cur / match
+        cur = nxt
+    return cur
+
+
 def check_name(name: str) -> None:
     if not name or name in (".", ".."):
         raise VaultError("empty-name")
@@ -94,6 +113,8 @@ class Vault:
         if any(part == ".." for part in rel.split("/")):
             raise VaultError("outside-vault")
         p = self.root / rel
+        if not os.path.lexists(p):
+            p = self._on_disk(rel) or p
         # Resolve parent only (the file itself may not exist yet); symlinks inside the
         # vault pointing outside are allowed for reading, as on other note apps.
         try:
@@ -104,8 +125,11 @@ class Vault:
             raise VaultError("outside-vault")
         return p
 
+    def _on_disk(self, rel: str) -> Path | None:
+        return on_disk(self.root, rel)
+
     def rel(self, path: Path) -> str:
-        return path.relative_to(self.root).as_posix()
+        return unicodedata.normalize("NFC", path.relative_to(self.root).as_posix())
 
     # ------------------------------------------------------------- listing
     def scan(self) -> list[FileEntry]:
@@ -131,7 +155,7 @@ class Vault:
                     name = e.name
                     if name.startswith(".") or name in IGNORED_DIRS:
                         continue
-                    rel = e.path[root_len:].replace(os.sep, "/")
+                    rel = unicodedata.normalize("NFC", e.path[root_len:].replace(os.sep, "/"))
                     try:
                         st = e.stat()
                     except OSError:
