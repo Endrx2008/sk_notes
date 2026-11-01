@@ -10,20 +10,10 @@ import { TFile } from '../model/vault.js';
 import { BDate, Context, Link, SUMMARIES, cmp, compileFilter, evaluate, parse, str, testFilter, toDate } from '../bases/expr.js';
 import { Menu, Modal, ButtonComponent, promptDialog } from '../ui/kit.js';
 import { TextFileView } from './base.js';
+import { propLabel } from '../bases/labels.js';
 
 const VIEW_TYPES = ['table', 'cards', 'list', 'kanban', 'map'];
 const VIEW_ICONS = { table: 'table', cards: 'grid', list: 'list', kanban: 'kanban', map: 'map-pin' };
-
-function propLabel(cfg, id) {
-  const dn = cfg.properties?.[id]?.displayName;
-  if (dn) return dn;
-  if (id.startsWith('note.')) return id.slice(5);
-  if (id.startsWith('formula.')) return id.slice(8);
-  if (id.startsWith('file.')) return { 'file.name': t('bases.file-name'), 'file.path': t('bases.file-path'), 'file.ext': t('bases.file-ext'), 'file.size': t('bases.file-size'),
-    'file.ctime': t('bases.file-ctime'), 'file.mtime': t('bases.file-mtime'), 'file.tags': t('bases.file-tags'), 'file.folder': t('bases.file-folder'),
-    'file.links': t('bases.file-links'), 'file.backlinks': t('bases.file-backlinks') }[id] || id;
-  return id;
-}
 
 function normId(id) {
   return /^(note|file|formula)\./.test(id) ? id : `note.${id}`;
