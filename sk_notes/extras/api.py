@@ -6,17 +6,18 @@ import base64
 import logging
 import os
 import re
+import secrets
 import shutil
 import subprocess
 from pathlib import Path
 from xml.etree import ElementTree
 
-from PyQt6.QtCore import QEventLoop, QMarginsF, QTimer, QUrl
+from PyQt6.QtCore import QMarginsF, QStandardPaths, QTimer, QUrl
 from PyQt6.QtGui import QPageLayout, QPageSize
 from PyQt6.QtWebEngineCore import QWebEnginePage
 from PyQt6.QtWidgets import QFileDialog
 
-from ..app.bridge import ApiError
+from ..app.bridge import ApiError, Deferred
 
 log = logging.getLogger(__name__)
 
@@ -242,26 +243,54 @@ def register(app) -> None:
     @r("export.pdf")
     def export_pdf(p, ctx):
         name = re.sub(r'[\\/:*?"<>|]+', "-", p.get("name") or "note")
-        default = str((Path.home() / "Documents" if (Path.home() / "Documents").is_dir() else Path.home()) / f"{name}.pdf")
-        target, _ = QFileDialog.getSaveFileName(parent(), "PDF", default, "PDF (*.pdf)")
+        docs = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation)
+        default = str((Path(docs) if docs and Path(docs).is_dir() else Path.home()) / f"{name}.pdf")
+        target = os.environ.get("SKN_TEST_SAVE_PATH")  # UI tests: no native dialog
+        if not target:
+            target, _ = QFileDialog.getSaveFileName(parent(), "PDF", default, "PDF (*.pdf)")
         if not target:
             return None
-        html = ("<!doctype html><html><head><meta charset='utf-8'><style>" + p.get("css", "") +
+        html = ("<!doctype html><html><head><meta charset='utf-8'><base href='skn://app/'><style>" + p.get("css", "") +
                 "\nbody{background:#fff;color:#111;margin:0;padding:0 8px;font-family:sans-serif}"
                 ".copy-code-button{display:none}</style></head><body class='theme-light'>" + p.get("html", "") + "</body></html>")
-        page = QWebEnginePage(app.profile)
-        loop = QEventLoop()
-        page.loadFinished.connect(lambda ok: loop.quit())
-        page.setHtml(html, QUrl("skn://app/"))
-        QTimer.singleShot(20000, loop.quit)
-        loop.exec()
-        done = {"ok": False}
-        page.pdfPrintingFinished.connect(lambda path, ok: (done.update(ok=ok), loop.quit()))
-        layout = QPageLayout(QPageSize(QPageSize.PageSizeId.A4), QPageLayout.Orientation.Portrait, QMarginsF(15, 15, 15, 15))
-        QTimer.singleShot(500, lambda: page.printToPdf(target, layout))
-        QTimer.singleShot(60000, loop.quit)
-        loop.exec()
+        return _print_pdf(app.profile, app.scheme, html, target)
+
+
+_printing: set = set()  # pages kept alive until their PDF is written
+
+
+def _print_pdf(profile, scheme, html: str, target: str, timeout_ms: int = 60000) -> Deferred:
+    """Render `html` in an off-screen page and write it to `target` as A4 PDF, without
+    blocking the UI: the API reply is sent when Qt reports the result. The page is served
+    through skn://print/ because setHtml() silently fails above 2 MB (app CSS + inlined
+    images are usually bigger)."""
+    d = Deferred()
+    page = QWebEnginePage(profile)
+    _printing.add(page)
+    token = secrets.token_hex(8)
+    scheme.print_pages[token] = html.encode("utf-8")
+
+    def finish(ok: bool, code: str = "pdf-failed") -> None:
+        if d.settled:
+            return
+        _printing.discard(page)
+        scheme.print_pages.pop(token, None)
         page.deleteLater()
-        if not done["ok"]:
-            raise ApiError("pdf-failed")
-        return target
+        if ok:
+            d.resolve(target)
+        else:
+            log.warning("PDF export to %s failed (%s)", target, code)
+            d.reject(code)
+
+    def loaded(ok: bool) -> None:
+        if not ok:
+            finish(False, "pdf-load-failed")
+            return
+        layout = QPageLayout(QPageSize(QPageSize.PageSizeId.A4), QPageLayout.Orientation.Portrait, QMarginsF(15, 15, 15, 15))
+        page.printToPdf(target, layout)
+
+    page.loadFinished.connect(loaded)
+    page.pdfPrintingFinished.connect(lambda _path, ok: finish(ok and Path(target).is_file()))
+    QTimer.singleShot(timeout_ms, lambda: finish(False, "pdf-timeout"))
+    page.load(QUrl(f"skn://print/{token}.html"))
+    return d

@@ -39,6 +39,9 @@ def make_vault(base: Path) -> Path:
         p = v / rel
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(text, encoding="utf-8")
+    # a large attachment: the PDF export page then exceeds Qt's 2 MB setHtml() limit
+    (v / "Pic.md").write_text("# Pic\n\n![[big.png]]\n", encoding="utf-8")
+    (v / "big.png").write_bytes(os.urandom(2_200_000))
     return v
 
 
@@ -226,6 +229,21 @@ class Smoke:
         assert {n["id"] for n in data["nodes"]} >= {"t1", "f1"}
         assert self.page.js("document.querySelectorAll('.canvas-node').length") == 3
 
+    def export_pdf(self):
+        """Regression: export never wrote a file and froze the window (nested event loop, setHtml limit)."""
+        out = Path(self.app.env["SKN_TEST_SAVE_PATH"])
+        self.open_with_switcher("pic", "Pic.md")
+        t0 = time.time()
+        self.page.js("(() => { app.commands.executeCommandById('workspace:export-pdf'); return 1; })()")
+        time.sleep(0.5)
+        assert self.page.js("1 + 1", timeout=5) == 2, "window frozen during export"
+        end = time.time() + 60
+        while not (out.is_file() and out.stat().st_size > 1000):
+            assert time.time() < end, "no PDF written"
+            time.sleep(0.3)
+        assert out.read_bytes()[:5] == b"%PDF-"
+        return f"{time.time() - t0:.1f}s"
+
     def no_uncaught_errors(self):
         bad = [c for c in self.page.console if c.startswith("exception")]
         assert not bad, bad[:3]
@@ -239,12 +257,12 @@ def main() -> int:
         args.screenshots.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="skn-smoke-") as tmp:
         vault = make_vault(Path(tmp))
-        with App(vault, port=9411) as app:
+        with App(vault, port=9411, env={"SKN_TEST_SAVE_PATH": str(Path(tmp) / "export.pdf")}) as app:
             time.sleep(1)
             s = Smoke(app, vault, args.screenshots)
             for name in ("startup", "switcher", "edit_and_save", "backlinks", "follow_link", "new_note", "command_palette",
                          "search", "rename_updates_links", "reading_view", "settings_languages", "history",
-                         "typing_during_file_switch", "canvas_typing", "sknotes_links", "no_uncaught_errors"):
+                         "typing_during_file_switch", "canvas_typing", "export_pdf", "sknotes_links", "no_uncaught_errors"):
                 s.check(name.replace("_", " "), getattr(s, name))
     failed = 0
     for name, ok, detail in s.results:

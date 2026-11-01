@@ -2,6 +2,7 @@
 
   skn://app/<file>              files of sk_notes/web/dist
   skn://vault/<path>            files of the open vault (images, PDFs, media)
+  skn://print/<token>.html      one-off pages handed to an off-screen print page
   skn://api/<method>[?plugin=x] POST JSON → JSON {"ok": true, "result": ...} or
                                 {"ok": false, "error": "<code>", "detail": "..."}
 
@@ -9,6 +10,9 @@ Handlers are plain functions ``fn(params: dict, ctx: Ctx) -> JSON``. Handlers
 registered with ``slow=True`` run in a worker thread; the HTTP reply is sent when
 they finish, so ``await fetch()`` simply waits. Everything else runs on the UI thread
 (fast, and safe to show native dialogs from – needed for plugin permission prompts).
+A UI-thread handler that has to wait for Qt signals returns a ``Deferred`` and settles it
+later; it must never spin a nested event loop inside the request (that froze the window
+and the page it waited for never loaded).
 """
 
 from __future__ import annotations
@@ -65,6 +69,36 @@ class Ctx:
 Handler = Callable[[dict, Ctx], Any]
 
 
+class Deferred:
+    """Result of a UI-thread handler that finishes later: call resolve() or reject() once."""
+
+    def __init__(self):
+        self._body: bytes | None = None
+        self._cb: Callable[[bytes], None] | None = None
+
+    def resolve(self, value: Any = None) -> None:
+        self._settle(_json({"ok": True, "result": value}))
+
+    def reject(self, code: str, detail: str = "") -> None:
+        self._settle(_json({"ok": False, "error": code, "detail": detail}))
+
+    @property
+    def settled(self) -> bool:
+        return self._body is not None
+
+    def _settle(self, body: bytes) -> None:
+        if self._body is not None:
+            return
+        self._body = body
+        if self._cb:
+            self._cb(body)
+
+    def on_settled(self, cb: Callable[[bytes], None]) -> None:
+        self._cb = cb
+        if self._body is not None:
+            cb(self._body)
+
+
 class Api:
     def __init__(self):
         self.handlers: dict[str, tuple[Handler, bool]] = {}
@@ -78,12 +112,15 @@ class Api:
             return fn
         return deco
 
-    def call(self, name: str, params: dict, ctx: Ctx) -> bytes:
+    def call(self, name: str, params: dict, ctx: Ctx) -> bytes | Deferred:
         entry = self.handlers.get(name)
         if entry is None:
             return _json({"ok": False, "error": "unknown-method", "detail": name})
         try:
-            return _json({"ok": True, "result": entry[0](params, ctx)})
+            result = entry[0](params, ctx)
+            if isinstance(result, Deferred):
+                return result
+            return _json({"ok": True, "result": result})
         except ApiError as exc:
             return _json({"ok": False, "error": exc.code, "detail": exc.detail})
         except Exception as exc:  # noqa: BLE001 - every failure becomes a JSON error
@@ -126,6 +163,7 @@ class SchemeHandler(QWebEngineUrlSchemeHandler):
         self.pool.setMaxThreadCount(4)
         self._jobs: dict[int, QWebEngineUrlRequestJob] = {}
         self._uploads: dict[str, dict] = {}
+        self.print_pages: dict[str, bytes] = {}  # token -> HTML, removed by the printer
         self._next = 0
         self._lock = threading.Lock()
         self._done.connect(self._finish)
@@ -161,6 +199,12 @@ class SchemeHandler(QWebEngineUrlSchemeHandler):
                     self._serve_file(job, root, path.lstrip("/"), vault=True)
             elif host == "api":
                 self._api(job, path.lstrip("/"), url.query())
+            elif host == "print":
+                body = self.print_pages.get(path.strip("/").removesuffix(".html"))
+                if body is None:
+                    job.fail(QWebEngineUrlRequestJob.Error.UrlNotFound)
+                else:
+                    self._reply(job, b"text/html", body)
             else:
                 job.fail(QWebEngineUrlRequestJob.Error.UrlInvalid)
         except Exception:  # noqa: BLE001
@@ -236,7 +280,16 @@ class SchemeHandler(QWebEngineUrlSchemeHandler):
             self.pool.start(_Task(lambda: self._done.emit(key, b"application/json",
                                                            self.api.call(method, params, ctx))))
             return
-        self._reply(job, b"application/json", self.api.call(method, params, ctx))
+        res = self.api.call(method, params, ctx)
+        if isinstance(res, Deferred):
+            with self._lock:
+                key = self._next
+                self._next += 1
+            self._jobs[key] = job
+            job.destroyed.connect(lambda *_a, k=key: self._jobs.pop(k, None))
+            res.on_settled(lambda body, k=key: self._finish(k, b"application/json", body))
+            return
+        self._reply(job, b"application/json", res)
 
 
 MAX_BODY = 64 * 1024 * 1024
