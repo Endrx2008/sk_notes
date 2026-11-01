@@ -76,6 +76,21 @@ def read_skai_theme() -> str:
     return theme if theme in ("dark", "light") else "dark"
 
 
+_LOCAL = {"localhost", "127.0.0.1", "::1", "[::1]"}
+
+
+def is_ollama_url(url: str) -> bool:
+    """True if `url` points at the configured Ollama server: the one local service the
+    page and plugins may reach without the network permission."""
+    from urllib.parse import urlsplit
+    try:
+        u, o = urlsplit(url), urlsplit(read_suite_ollama()[0])
+        same_host = u.hostname == o.hostname or {u.hostname, o.hostname} <= _LOCAL
+        return u.scheme in ("http", "https") and same_host and (u.port or 80) == (o.port or 80)
+    except ValueError:
+        return False
+
+
 def read_suite_ollama() -> tuple[str, str]:
     """(host, model) from the Skorpion suite settings; model "" = automatic."""
     try:

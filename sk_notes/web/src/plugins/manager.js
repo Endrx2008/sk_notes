@@ -14,7 +14,7 @@ import * as lezerLr from '@lezer/lr';
 import * as cmLint from '@codemirror/lint';
 import * as cmLangMarkdown from '@codemirror/lang-markdown';
 import moment from 'moment';
-import { call } from '../core/api.js';
+import { call, takeBootSecret } from '../core/api.js';
 import { setIcon } from '../core/icons.js';
 import { getLanguage, t } from '../core/i18n.js';
 import { Buffer, nodeModules, process as nodeProcess } from '../compat/node.js';
@@ -22,6 +22,60 @@ import { notifyPluginError } from '../compat/plugin.js';
 import { installInternals } from '../compat/internals.js';
 import { installNativeApi, makeNativeApi } from './native.js';
 import { ButtonComponent, Modal, Setting, confirmDialog, promptDialog } from '../ui/kit.js';
+
+// Caller tokens (see app/callers.py): kept in this module's private variables and
+// handed only to each plugin's own shims, never to the manager object plugins can reach.
+const tokens = new Map();
+let pageKey = null;
+let exchange = null;
+
+function ensureTokens() {
+  exchange ||= (async () => {
+    const boot = takeBootSecret();
+    if (!boot) return; // pages opened by window.open(): plugins run without identity
+    try {
+      const r = await call('plugins.tokens', { boot });
+      pageKey = r.key;
+      for (const [id, tok] of Object.entries(r.tokens)) tokens.set(id, tok);
+    } catch (e) { console.error('plugin tokens', e); }
+  })();
+  return exchange;
+}
+
+async function tokenFor(id) {
+  await ensureTokens();
+  if (!tokens.has(id) && pageKey) {
+    try { tokens.set(id, await call('plugins.token', { key: pageKey, id })); } catch (e) { console.warn('plugin without identity', id, e); }
+  }
+  return tokens.get(id) || null;
+}
+
+function makeRequire(mgr, token) {
+  const node = nodeModules(token);
+  return async () => {
+    const O = await obsidianModule(mgr);
+    const obs = Object.assign({}, O, { requestUrl: O.makeRequestUrl(token), request: O.makeRequest(token) });
+    let native = null;
+    const req = (name) => {
+      if (name === 'obsidian') return obs;
+      if (name === 'sknotes') return (native ||= makeNativeApi(mgr.app, token));
+      if (SHARED[name]) return SHARED[name];
+      const clean = name.replace(/^node:/, '');
+      if (node[clean] !== undefined) return node[clean];
+      if (clean.startsWith('buffer')) return node.buffer;
+      throw new Error(t('plugins.missing-module', { name }));
+    };
+    req.resolve = (n) => n;
+    return req;
+  };
+}
+
+let compatModule = null;
+async function obsidianModule(mgr) {
+  if (!compatModule) compatModule = await import('../compat/obsidian.js');
+  mgr.compat = compatModule;
+  return compatModule;
+}
 
 const SHARED = {
   '@codemirror/state': cmState, '@codemirror/view': cmView, '@codemirror/language': cmLanguage, '@codemirror/commands': cmCommands,
@@ -57,7 +111,7 @@ export function installPluginManager(app) {
     if (!sharedRequire) throw new Error('modules are not ready yet');
     return sharedRequire(name);
   };
-  mgr.makeRequire(null)().then((r) => { sharedRequire = r; });
+  makeRequire(mgr, null)().then((r) => { sharedRequire = r; });
   app.commands.addCommand({ id: 'plugins:reload', name: t('plugins.reload'), callback: () => mgr.reloadAll() });
   installInternals(app);
   installNativeApi(app);
@@ -76,10 +130,7 @@ class PluginManager {
 
   get restricted() { return this.app.settings.get('restrictedMode') !== false; }
 
-  async obsidianModule() {
-    if (!this.compat) this.compat = await import('../compat/obsidian.js');
-    return this.compat;
-  }
+  async obsidianModule() { return obsidianModule(this); }
 
   async refresh() {
     const r = await call('plugins.list');
@@ -92,29 +143,10 @@ class PluginManager {
   }
 
   async loadAll() {
+    await ensureTokens(); // before any plugin code runs
     await this.refresh();
     if (this.restricted) return;
     for (const id of this.enabledList) await this.loadPlugin(id);
-  }
-
-  makeRequire(id) {
-    const node = nodeModules(id);
-    return async () => {
-      const O = await this.obsidianModule();
-      const obs = Object.assign({}, O, { requestUrl: O.makeRequestUrl(id), request: O.makeRequest(id) });
-      let native = null;
-      const req = (name) => {
-        if (name === 'obsidian') return obs;
-        if (name === 'sknotes') return (native ||= makeNativeApi(this.app, id));
-        if (SHARED[name]) return SHARED[name];
-        const clean = name.replace(/^node:/, '');
-        if (node[clean] !== undefined) return node[clean];
-        if (clean.startsWith('buffer')) return node.buffer;
-        throw new Error(t('plugins.missing-module', { name }));
-      };
-      req.resolve = (n) => n;
-      return req;
-    };
   }
 
   async loadPlugin(id) {
@@ -123,7 +155,7 @@ class PluginManager {
     if (!manifest || manifest.broken) return null;
     let src;
     try { src = await call('plugins.source', { id }); } catch (e) { this.errors[id] = String(e.code || e); return null; }
-    const req = await (this.makeRequire(id))();
+    const req = await (makeRequire(this, await tokenFor(id)))();
     const module = { exports: {} };
     let PluginClass;
     try {

@@ -798,5 +798,15 @@
  "error.invalid-characters": "The name contains characters that are not allowed.",
  "error.empty-name": "The name cannot be empty.",
  "error.is-a-folder": "There is a folder with this name.",
- "error.disk-full": "The disk is full."
+ "error.disk-full": "The disk is full.",
+ "perm.cancel": "Cancel",
+ "plugins.trust-title": "Enable community plugin",
+ "plugins.trust-question": "Enable {plugin}? Community plugins are code written by third parties; it will run every time this vault opens.",
+ "plugins.trust-ok": "Enable",
+ "plugins.install-title": "Install community plugin",
+ "plugins.install-question": "Install {plugin}?",
+ "plugins.install-ok": "Install",
+ "git.remote-title": "Git remote",
+ "git.remote-question": "Send the notes of this vault to {url} when you push?",
+ "git.remote-ok": "Use this remote"
 }

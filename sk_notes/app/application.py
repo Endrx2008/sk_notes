@@ -6,6 +6,7 @@ import base64
 import json
 import logging
 import os
+import secrets
 import subprocess
 import sys
 import threading
@@ -16,7 +17,7 @@ from PyQt6.QtCore import QFileSystemWatcher, QObject, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices, QIcon, QKeySequence, QShortcut
 from PyQt6.QtNetwork import QLocalServer
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox
-from PyQt6.QtWebEngineCore import (QWebEnginePage, QWebEngineProfile, QWebEngineSettings,
+from PyQt6.QtWebEngineCore import (QWebEnginePage, QWebEngineProfile, QWebEngineScript, QWebEngineSettings,
                                    QWebEngineUrlRequestInterceptor)
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 
@@ -48,8 +49,7 @@ class NetworkGuard(QWebEngineUrlRequestInterceptor):
         if scheme in ("skn", "data", "blob", "devtools", "chrome-devtools", "qrc", "about"):
             return
         if scheme in ("http", "https", "ws", "wss"):
-            host = url.host()
-            if host in ("localhost", "127.0.0.1", "::1"):
+            if config.is_ollama_url(url.toString()):  # other local services need the permission too (B-21)
                 return
             if self.app.remote_network_allowed():
                 return
@@ -57,9 +57,31 @@ class NetworkGuard(QWebEngineUrlRequestInterceptor):
 
 
 class Page(QWebEnginePage):
-    def __init__(self, profile, app: "SkNotesApp", parent=None):
+    def __init__(self, profile, app: "SkNotesApp", parent=None, *, boot: bool = True):
         super().__init__(profile, parent)
         self.app = app
+        self._page_id = secrets.token_hex(8)
+        if boot:  # not for window.open() pages: their opener could read the secret
+            self.loadStarted.connect(self._new_boot)
+            self._new_boot()
+        callers = app.scheme.callers
+        page_id = self._page_id
+        self.destroyed.connect(lambda *_: callers.drop_page(page_id))
+
+    def _new_boot(self) -> None:
+        """One-time secret for this page load, set before any page script runs; the plugin
+        manager trades it for the plugin tokens (see callers.py)."""
+        boot = self.app.scheme.callers.new_page(self._page_id)
+        scripts = self.scripts()
+        for old in scripts.find("skn-boot"):
+            scripts.remove(old)
+        sc = QWebEngineScript()
+        sc.setName("skn-boot")
+        sc.setSourceCode(f"window.__sknBoot = {{ token: {json.dumps(boot)} }};")
+        sc.setInjectionPoint(QWebEngineScript.InjectionPoint.DocumentCreation)
+        sc.setWorldId(QWebEngineScript.ScriptWorldId.MainWorld)
+        sc.setRunsOnSubFrames(False)
+        scripts.insert(sc)
 
     def acceptNavigationRequest(self, url, nav_type, is_main):  # noqa: N802 - Qt API
         if url.scheme() == "skn":
@@ -70,7 +92,7 @@ class Page(QWebEnginePage):
         return url.scheme() in ("data", "blob", "about") or not is_main
 
     def createWindow(self, _type):  # noqa: N802 - window.open → pop-out window
-        win = self.app.new_window(popout=True)
+        win = self.app.new_window(popout=True, boot=False)
         return win.view.page()
 
     def javaScriptConsoleMessage(self, level, message, line, source):  # noqa: N802
@@ -79,12 +101,12 @@ class Page(QWebEnginePage):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, app: "SkNotesApp", popout: bool = False):
+    def __init__(self, app: "SkNotesApp", popout: bool = False, boot: bool = True):
         super().__init__()
         self.app = app
         self.popout = popout
         self.view = QWebEngineView(self)
-        self.view.setPage(Page(app.profile, app, self.view))
+        self.view.setPage(Page(app.profile, app, self.view, boot=boot))
         self.view.page().setBackgroundColor(Qt_color(app.theme))
         self.setCentralWidget(self.view)
         self.setWindowTitle("sk_notes")
@@ -284,8 +306,8 @@ class SkNotesApp(QObject):
         return bool(self.network_plugins)
 
     # ------------------------------------------------------------------ windows
-    def new_window(self, popout: bool = False) -> MainWindow:
-        w = MainWindow(self, popout=popout)
+    def new_window(self, popout: bool = False, boot: bool = True) -> MainWindow:
+        w = MainWindow(self, popout=popout, boot=boot)
         self.windows.append(w)
         w.destroyed.connect(lambda *_: self.windows.remove(w) if w in self.windows else None)
         if self.service:

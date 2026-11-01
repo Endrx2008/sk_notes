@@ -798,5 +798,15 @@
  "error.invalid-characters": "名称包含不允许的字符。",
  "error.empty-name": "名称不能为空。",
  "error.is-a-folder": "已有同名的文件夹。",
- "error.disk-full": "磁盘已满。"
+ "error.disk-full": "磁盘已满。",
+ "perm.cancel": "取消",
+ "plugins.trust-title": "启用社区插件",
+ "plugins.trust-question": "启用 {plugin}？社区插件是第三方编写的代码，每次打开此仓库时都会运行。",
+ "plugins.trust-ok": "启用",
+ "plugins.install-title": "安装社区插件",
+ "plugins.install-question": "安装 {plugin}？",
+ "plugins.install-ok": "安装",
+ "git.remote-title": "Git 远程仓库",
+ "git.remote-question": "推送时将此仓库的笔记发送到 {url}？",
+ "git.remote-ok": "使用此远程仓库"
 }

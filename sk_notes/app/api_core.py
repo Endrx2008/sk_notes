@@ -35,6 +35,18 @@ CONFIG_NAME_RE = re.compile(r"^(?:[A-Za-z0-9_.-]+\.json|plugins/[A-Za-z0-9_.-]+/
                             r"snippets/[^/]+\.css|themes/[^/]+/theme\.css)$")
 
 
+# Written only by Python (plugin install, enable, permission dialogs): page code, plugins
+# included, can never change what plugins may do or replace a plugin's code.
+_PROTECTED = re.compile(r"^(permissions\.json|community-plugins\.json|plugins(/[^/]+(/(main\.js|manifest\.json|styles\.css))?)?)$")
+
+
+def protected(config_name: str) -> bool:
+    """config_name: path inside .sk_notes/ (e.g. 'plugins/x/main.js')."""
+    # a plugin's folder is its identity: moving another folder there would hand it that
+    # plugin's permissions
+    return bool(_PROTECTED.match(config_name.strip("/"))) or config_name.strip("/") == ""
+
+
 def register(app) -> None:
     api = app.api
     r = api.route
@@ -46,9 +58,12 @@ def register(app) -> None:
 
     def check_plugin_write(ctx: Ctx, path: str) -> None:
         """Community plugins may write inside the vault (default permission) but never
-        into sk_notes' own configuration folder except their own data."""
-        if ctx.plugin and (path == CONFIG_DIR or path.startswith(CONFIG_DIR + "/")):
-            if not path.startswith(f"{CONFIG_DIR}/plugins/{ctx.plugin}/"):
+        into sk_notes' own configuration folder except their own data. Nobody writes the
+        files that decide what plugins may do through these routes (see protected())."""
+        if path == CONFIG_DIR or path.startswith(CONFIG_DIR + "/"):
+            if path == CONFIG_DIR or protected(path[len(CONFIG_DIR) + 1:]):
+                raise ApiError("permission-denied", path)
+            if ctx.plugin and not path.startswith(f"{CONFIG_DIR}/plugins/{ctx.plugin}/"):
                 raise ApiError("permission-denied", path)
 
     # ------------------------------------------------------------- app
@@ -209,6 +224,7 @@ def register(app) -> None:
 
     @r("vault.rename")
     def vault_rename(p, ctx):
+        check_plugin_write(ctx, normalize_path(p["path"]))
         check_plugin_write(ctx, normalize_path(p["newPath"]))
         return svc().rename(p["path"], p["newPath"], update_links=p.get("updateLinks"))
 
@@ -262,6 +278,8 @@ def register(app) -> None:
         name = p["name"]
         if not CONFIG_NAME_RE.match(name) or ".." in name or name.endswith(".css"):
             raise ApiError("bad-name", name)
+        if protected(name):
+            raise ApiError("permission-denied", name)
         if ctx.plugin and not name.startswith(f"plugins/{ctx.plugin}/"):
             raise ApiError("permission-denied", name)
         svc().config_write(name, p.get("data"))
@@ -337,6 +355,13 @@ def register(app) -> None:
     @r("system.openPath")
     def open_path(p, ctx):
         target = svc().vault.abs(p["path"])
+        if target.is_file() and (os.access(target, os.X_OK) or target.suffix.lower() in (".desktop", ".sh", ".exe", ".bat", ".py", ".appimage")):
+            # opening a program or launcher with the default app would run it
+            from ..plugins.permissions import require
+            if ctx.plugin:
+                require(app, ctx, "exec", str(target))
+            else:
+                raise ApiError("permission-denied", str(target))
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(target)))
         return True
 
@@ -351,11 +376,15 @@ def register(app) -> None:
     def pick_files(p, ctx):
         parent = app.windows[0] if app.windows else None
         files, _ = QFileDialog.getOpenFileNames(parent, p.get("title", ""), str(Path.home()), p.get("filter", ""))
+        from ..plugins.permissions import remember_path
+        for f in files:
+            remember_path(app, f)
         return files
 
     @r("system.importFiles")
     def import_files(p, ctx):
         """Copy external files (drag & drop, picker) into the vault."""
+        from ..plugins.permissions import chosen, require
         s = svc()
         folder = p.get("folder", "")
         out = []
@@ -363,6 +392,8 @@ def register(app) -> None:
             src_p = Path(src)
             if not src_p.is_file():
                 continue
+            if not chosen(app, src):  # only files the user picked, unless a plugin may read outside
+                require(app, ctx, "fs-outside-vault", src)
             stem, dot, ext = src_p.name.rpartition(".")
             dest = s.vault.available_path(folder, stem if dot else src_p.name, ext if dot else "")
             s.write_binary(dest, src_p.read_bytes())

@@ -798,5 +798,15 @@
  "error.invalid-characters": "Le nom contient des caractères interdits.",
  "error.empty-name": "Le nom ne peut pas être vide.",
  "error.is-a-folder": "Un dossier porte ce nom.",
- "error.disk-full": "Le disque est plein."
+ "error.disk-full": "Le disque est plein.",
+ "perm.cancel": "Annuler",
+ "plugins.trust-title": "Activer un module de la communauté",
+ "plugins.trust-question": "Activer {plugin} ? Les modules de la communauté sont du code écrit par des tiers ; il s'exécutera à chaque ouverture de ce coffre.",
+ "plugins.trust-ok": "Activer",
+ "plugins.install-title": "Installer un module de la communauté",
+ "plugins.install-question": "Installer {plugin} ?",
+ "plugins.install-ok": "Installer",
+ "git.remote-title": "Dépôt distant Git",
+ "git.remote-question": "Envoyer les notes de ce coffre vers {url} lors d'un push ?",
+ "git.remote-ok": "Utiliser ce dépôt"
 }

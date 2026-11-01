@@ -798,5 +798,15 @@
  "error.invalid-characters": "Il nome contiene caratteri non consentiti.",
  "error.empty-name": "Il nome non può essere vuoto.",
  "error.is-a-folder": "Esiste una cartella con questo nome.",
- "error.disk-full": "Il disco è pieno."
+ "error.disk-full": "Il disco è pieno.",
+ "perm.cancel": "Annulla",
+ "plugins.trust-title": "Attiva plugin della community",
+ "plugins.trust-question": "Attivare {plugin}? I plugin della community sono codice scritto da terzi; verrà eseguito ogni volta che apri questo vault.",
+ "plugins.trust-ok": "Attiva",
+ "plugins.install-title": "Installa plugin della community",
+ "plugins.install-question": "Installare {plugin}?",
+ "plugins.install-ok": "Installa",
+ "git.remote-title": "Remote Git",
+ "git.remote-question": "Inviare le note di questo vault a {url} quando fai push?",
+ "git.remote-ok": "Usa questo remote"
 }

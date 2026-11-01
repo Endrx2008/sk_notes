@@ -14,9 +14,31 @@ export class ApiError extends Error {
 const PART = 60000;
 const enc = new TextEncoder();
 
-function url(method, plugin, sync, extra = {}) {
+// Plugins share this page. They must not see the caller tokens of other plugins (see
+// app/callers.py), so the browser functions used here are taken now, before any plugin
+// runs, and called without going through anything a plugin could replace.
+const apply = Reflect.apply;
+const nativeFetch = globalThis.fetch;
+const responseJson = globalThis.Response?.prototype.json;
+const XHR = globalThis.XMLHttpRequest; // absent in Node (unit tests)
+const xhrOpen = XHR?.prototype.open;
+const xhrSend = XHR?.prototype.send;
+const xhrText = XHR && Object.getOwnPropertyDescriptor(XHR.prototype, 'responseText').get;
+const fetchJson = async (u, init) => apply(responseJson, await apply(nativeFetch, globalThis, [u, init]), []);
+
+let boot = globalThis.__sknBoot?.token || null;
+try { delete globalThis.__sknBoot; } catch { globalThis.__sknBoot = undefined; }
+
+/** The page's one-time boot secret (first call only; the plugin manager takes it). */
+export function takeBootSecret() {
+  const b = boot;
+  boot = null;
+  return b;
+}
+
+function url(method, caller, sync, extra = {}) {
   const q = [];
-  if (plugin) q.push('plugin=' + encodeURIComponent(plugin));
+  if (caller) q.push('c=' + encodeURIComponent(caller));
   if (sync) q.push('sync=1');
   for (const [k, v] of Object.entries(extra)) q.push(`${k}=${encodeURIComponent(v)}`);
   return 'skn://api/' + method + (q.length ? '?' + q.join('&') : '');
@@ -33,38 +55,36 @@ function partsOf(bytes) {
   return out;
 }
 
-/** Asynchronous call: `await call('vault.read', {path})`. */
-export async function call(method, params = {}, plugin = null) {
+/** Asynchronous call: `await call('vault.read', {path})`. `caller` is a plugin's token
+ * (only its own shims have it); without one the call is the app's. */
+export async function call(method, params = {}, caller = null) {
   const bytes = enc.encode(JSON.stringify(params));
   if (bytes.length <= PART) {
-    const res = await fetch(url(method, plugin, false, { len: bytes.length }), { method: 'POST', body: bytes });
-    return unwrap(await res.json());
+    return unwrap(await fetchJson(url(method, caller, false, { len: bytes.length }), { method: 'POST', body: bytes }));
   }
   const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
   const parts = partsOf(bytes);
   for (let i = 0; i < parts.length; i++) {
-    const r = await fetch(url('_upload', null, false, { id, i, len: parts[i].length }), { method: 'POST', body: parts[i] });
-    unwrap(await r.json());
+    unwrap(await fetchJson(url('_upload', null, false, { id, i, len: parts[i].length }), { method: 'POST', body: parts[i] }));
   }
-  const res = await fetch(url(method, plugin, false, { upload: id, parts: parts.length, len: 0 }), { method: 'POST' });
-  return unwrap(await res.json());
+  return unwrap(await fetchJson(url(method, caller, false, { upload: id, parts: parts.length, len: 0 }), { method: 'POST' }));
 }
 
 function syncPost(u, body) {
-  const xhr = new XMLHttpRequest();
-  xhr.open('POST', u, false);
-  xhr.send(body);
-  return JSON.parse(xhr.responseText);
+  const xhr = new XHR();
+  apply(xhrOpen, xhr, ['POST', u, false]);
+  apply(xhrSend, xhr, [body]);
+  return JSON.parse(apply(xhrText, xhr, []));
 }
 
 /** Synchronous call (blocks the page): only for plugin APIs that must be synchronous. */
-export function callSync(method, params = {}, plugin = null) {
+export function callSync(method, params = {}, caller = null) {
   const bytes = enc.encode(JSON.stringify(params));
-  if (bytes.length <= PART) return unwrap(syncPost(url(method, plugin, true, { len: bytes.length }), bytes));
+  if (bytes.length <= PART) return unwrap(syncPost(url(method, caller, true, { len: bytes.length }), bytes));
   const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
   const parts = partsOf(bytes);
   parts.forEach((p, i) => unwrap(syncPost(url('_upload', null, true, { id, i, len: p.length }), p)));
-  return unwrap(syncPost(url(method, plugin, true, { upload: id, parts: parts.length, len: 0 }), null));
+  return unwrap(syncPost(url(method, caller, true, { upload: id, parts: parts.length, len: 0 }), null));
 }
 
 /** URL of a vault file usable in <img>, <video>, CSS. */

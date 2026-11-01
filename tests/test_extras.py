@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import os
 import hashlib
 import json
 import tempfile
@@ -187,6 +188,7 @@ class PermissionTests(unittest.TestCase):
         self.outside = tempfile.TemporaryDirectory()
         (Path(self.outside.name) / "secret.txt").write_text("s")
         permissions._session.clear()
+        permissions._chosen.clear()
 
     def tearDown(self):
         self.svc.close()
@@ -245,6 +247,63 @@ class PermissionTests(unittest.TestCase):
             self.assertEqual(cm.exception.code, "permission-denied")
         self.fs({"op": "writeFile", "path": ".sk_notes/plugins/demo/data.json", "b64": base64.b64encode(b"{}").decode()}, self.ctx())
         self.assertTrue((cfg / "plugins" / "demo" / "data.json").exists())
+
+    def test_unidentified_caller_never_gets_a_permission(self):
+        # B-1: a call without a plugin token (e.g. a plugin calling the API itself) is not
+        # allowed to use plugin permissions, and no dialog is shown for it
+        permissions.set_status(self.app, "unknown-plugin", "fs-outside-vault", "allow")
+        with self.assertRaises(ApiError) as cm:
+            self.fs({"op": "readFile", "path": str(Path(self.outside.name) / "secret.txt")}, Ctx(plugin=None, sync=False))
+        self.assertEqual(cm.exception.code, "permission-denied")
+
+    def test_symlink_inside_vault_counts_as_outside(self):
+        # B-4
+        os.symlink(self.outside.name, self.root / "outlink")
+        os.symlink(Path(self.outside.name) / "secret.txt", self.root / "secretlink.md")
+        permissions.set_status(self.app, "demo", "fs-outside-vault", "deny")
+        for op, path in (("readFile", "outlink/secret.txt"), ("writeFile", "outlink/pwned.txt"), ("readFile", "secretlink.md")):
+            with self.assertRaises(ApiError, msg=path):
+                self.fs({"op": op, "path": path, "b64": ""}, self.ctx())
+        self.assertFalse((Path(self.outside.name) / "pwned.txt").exists())
+
+    def test_granting_a_permission_needs_the_native_confirmation(self):
+        os.environ["SKN_TEST_CONFIRM"] = "no"
+        try:
+            self.app.api.routes["plugins.permissions"]({"id": "demo", "set": {"exec": "allow"}}, Ctx(plugin=None, sync=False))
+            self.assertIsNone(permissions.status(self.app, "demo", "exec"))
+            os.environ["SKN_TEST_CONFIRM"] = "yes"
+            self.app.api.routes["plugins.permissions"]({"id": "demo", "set": {"exec": "allow"}}, Ctx(plugin=None, sync=False))
+            self.assertEqual(permissions.status(self.app, "demo", "exec"), "allow")
+        finally:
+            os.environ.pop("SKN_TEST_CONFIRM", None)
+
+    def test_enabling_a_new_plugin_needs_the_native_confirmation(self):
+        os.environ["SKN_TEST_CONFIRM"] = "no"
+        try:
+            with self.assertRaises(ApiError):
+                self.app.api.routes["plugins.setEnabled"]({"id": "dropper", "enabled": True}, Ctx(plugin=None, sync=False))
+            self.assertNotIn("dropper", self.svc.config_read("community-plugins.json", []) or [])
+        finally:
+            os.environ.pop("SKN_TEST_CONFIRM", None)
+
+    def test_paths_the_user_did_not_pick(self):
+        # B-3: only locations picked in a native dialog
+        secret = str(Path(self.outside.name) / "secret.txt")
+        self.assertFalse(permissions.chosen(self.app, secret))
+        permissions.remember_path(self.app, self.outside.name)
+        self.assertTrue(permissions.chosen(self.app, secret))
+        self.assertFalse(permissions.chosen(self.app, self.outside.name + "-other/x"))
+
+
+class ProtectedConfigTests(unittest.TestCase):
+    def test_protected_names(self):
+        # B-5: what decides plugin rights is written by Python only
+        from sk_notes.app.api_core import protected
+        for name in ("permissions.json", "community-plugins.json", "plugins", "plugins/x", "plugins/x/main.js",
+                     "plugins/x/manifest.json", "plugins/x/styles.css", "/plugins/x/"):
+            self.assertTrue(protected(name), name)
+        for name in ("plugins/x/data.json", "app.json", "workspace.json", "snippets/a.css"):
+            self.assertFalse(protected(name), name)
 
 
 if __name__ == "__main__":

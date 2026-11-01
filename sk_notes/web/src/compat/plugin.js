@@ -65,11 +65,11 @@ export class Plugin extends Component {
   }
 
   async loadData() {
-    return call('config.read', { name: `plugins/${this.manifest.id}/data.json` }, this.manifest.id);
+    return call('config.read', { name: `plugins/${this.manifest.id}/data.json` });
   }
 
   async saveData(data) {
-    await call('config.write', { name: `plugins/${this.manifest.id}/data.json`, data }, this.manifest.id);
+    await call('config.write', { name: `plugins/${this.manifest.id}/data.json`, data });
   }
 
   addRibbonIcon(icon, title, callback) {

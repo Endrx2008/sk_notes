@@ -798,5 +798,15 @@
  "error.invalid-characters": "Имя содержит недопустимые символы.",
  "error.empty-name": "Имя не может быть пустым.",
  "error.is-a-folder": "Существует папка с таким именем.",
- "error.disk-full": "Диск заполнен."
+ "error.disk-full": "Диск заполнен.",
+ "perm.cancel": "Отмена",
+ "plugins.trust-title": "Включить плагин сообщества",
+ "plugins.trust-question": "Включить {plugin}? Плагины сообщества — это код сторонних авторов; он будет выполняться при каждом открытии этого хранилища.",
+ "plugins.trust-ok": "Включить",
+ "plugins.install-title": "Установить плагин сообщества",
+ "plugins.install-question": "Установить {plugin}?",
+ "plugins.install-ok": "Установить",
+ "git.remote-title": "Удалённый репозиторий Git",
+ "git.remote-question": "Отправлять заметки этого хранилища на {url} при push?",
+ "git.remote-ok": "Использовать этот репозиторий"
 }

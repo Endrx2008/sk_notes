@@ -81,7 +81,8 @@ def main() -> int:
     for n, pid in enumerate(ids):
         vault = make_vault(base, [pid])
         try:
-            with App(vault, port=9399 - (n % 2)) as app:
+            # the native "enable this plugin?" confirmation is answered yes (the user enables it)
+            with App(vault, port=9399 - (n % 2), env={"SKN_TEST_CONFIRM": "yes"}) as app:
                 page = app.page
                 time.sleep(2)
                 page.console.clear()

@@ -3,7 +3,7 @@
   skn://app/<file>              files of sk_notes/web/dist
   skn://vault/<path>            files of the open vault (images, PDFs, media)
   skn://print/<token>.html      one-off pages handed to an off-screen print page
-  skn://api/<method>[?plugin=x] POST JSON → JSON {"ok": true, "result": ...} or
+  skn://api/<method>[?c=token]  POST JSON (c: plugin caller token, see callers.py) → JSON {"ok": true, "result": ...} or
                                 {"ok": false, "error": "<code>", "detail": "..."}
 
 Handlers are plain functions ``fn(params: dict, ctx: Ctx) -> JSON``. Handlers
@@ -29,6 +29,8 @@ from urllib.parse import parse_qs
 
 from PyQt6.QtCore import QBuffer, QByteArray, QFile, QIODevice, QObject, QRunnable, QThreadPool, pyqtSignal
 from PyQt6.QtWebEngineCore import QWebEngineUrlRequestJob, QWebEngineUrlScheme, QWebEngineUrlSchemeHandler
+
+from .callers import Callers
 
 log = logging.getLogger(__name__)
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
@@ -170,6 +172,7 @@ class SchemeHandler(QWebEngineUrlSchemeHandler):
         self._jobs: dict[int, QWebEngineUrlRequestJob] = {}
         self._uploads: dict[str, dict] = {}
         self.print_pages: dict[str, bytes] = {}  # token -> HTML, removed by the printer
+        self.callers = Callers()
         self._next = 0
         self._lock = threading.Lock()
         self._done.connect(self._finish)
@@ -281,7 +284,8 @@ class SchemeHandler(QWebEngineUrlSchemeHandler):
         except ValueError:
             self._reply(job, b"application/json", _json({"ok": False, "error": "bad-request"}))
             return
-        ctx = Ctx(plugin=(q.get("plugin") or [None])[0], sync=(q.get("sync") or ["0"])[0] == "1")
+        # the caller is known only from its token (c=); a "plugin=" in the URL proves nothing
+        ctx = Ctx(plugin=self.callers.plugin_for((q.get("c") or [None])[0]), sync=(q.get("sync") or ["0"])[0] == "1")
         entry = self.api.handlers.get(method)
         if entry is not None and entry[1] and not ctx.sync:
             with self._lock:

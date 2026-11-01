@@ -798,5 +798,15 @@
  "error.invalid-characters": "Der Name enthält unzulässige Zeichen.",
  "error.empty-name": "Der Name darf nicht leer sein.",
  "error.is-a-folder": "Es gibt einen Ordner mit diesem Namen.",
- "error.disk-full": "Der Datenträger ist voll."
+ "error.disk-full": "Der Datenträger ist voll.",
+ "perm.cancel": "Abbrechen",
+ "plugins.trust-title": "Community-Plugin aktivieren",
+ "plugins.trust-question": "{plugin} aktivieren? Community-Plugins sind Code von Dritten; er wird bei jedem Öffnen dieses Tresors ausgeführt.",
+ "plugins.trust-ok": "Aktivieren",
+ "plugins.install-title": "Community-Plugin installieren",
+ "plugins.install-question": "{plugin} installieren?",
+ "plugins.install-ok": "Installieren",
+ "git.remote-title": "Git-Remote",
+ "git.remote-question": "Die Notizen dieses Tresors beim Push an {url} senden?",
+ "git.remote-ok": "Dieses Remote verwenden"
 }

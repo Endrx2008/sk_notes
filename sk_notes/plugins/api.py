@@ -14,13 +14,14 @@ import subprocess
 from pathlib import Path
 
 from ..app.bridge import ApiError, Ctx
+from ..app.config import is_ollama_url
+from ..core import i18n
 from . import permissions
 
 log = logging.getLogger(__name__)
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,80}$", re.I)
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 MAX_DOWNLOAD = 40 * 1024 * 1024
-LOCAL_HOSTS = ("localhost", "127.0.0.1", "[::1]")
 
 
 def register(app) -> None:
@@ -60,8 +61,27 @@ def register(app) -> None:
             m["hasStyles"] = (d / "styles.css").is_file()
             m["hasMain"] = (d / "main.js").is_file()
             out.append(m)
-        perms = svc().config_read("permissions.json", {}) or {}
+        perms = {k: v for k, v in (svc().config_read("permissions.json", {}) or {}).items() if isinstance(v, dict)}
         return {"plugins": out, "enabled": enabled(), "permissions": perms}
+
+    def installed_ids() -> list[str]:
+        d = plugins_dir()
+        return sorted(x.name for x in d.iterdir() if ID_RE.match(x.name) and x.is_dir()) if d.is_dir() else []
+
+    # ------------------------------------------------------------- caller tokens (see app/callers.py)
+    @r("plugins.tokens")
+    def plugins_tokens(p, ctx):
+        res = app.scheme.callers.exchange(p.get("boot") or "", installed_ids())
+        if res is None:
+            raise ApiError("permission-denied", "boot secret already used or unknown")
+        return res
+
+    @r("plugins.token")
+    def plugins_token(p, ctx):
+        tok = app.scheme.callers.token(p.get("key") or "", _safe_id(p.get("id", "")))
+        if tok is None:
+            raise ApiError("permission-denied", "no token")
+        return tok
 
     @r("plugins.source")
     def plugins_source(p, ctx):
@@ -80,6 +100,14 @@ def register(app) -> None:
         pid = _safe_id(p["id"])
         lst = [x for x in enabled() if x != pid]
         if p.get("enabled"):
+            if not permissions.is_trusted(app, pid):
+                strings = i18n.strings(app.language)
+                name = permissions._plugin_name(app, pid)
+                if not permissions.confirm(app, strings.get("plugins.trust-title", "Enable plugin"),
+                                           strings.get("plugins.trust-question", "Enable {plugin}?").replace("{plugin}", name),
+                                           ok=strings.get("plugins.trust-ok", "Enable")):
+                    raise ApiError("cancelled")
+                permissions.trust(app, pid)
             lst.append(pid)
         svc().config_write("community-plugins.json", lst)
         permissions.refresh_network(app)
@@ -109,6 +137,7 @@ def register(app) -> None:
             raise ApiError("not-a-plugin", str(src))
         m = json.loads(mf.read_text(encoding="utf-8"))
         pid = _safe_id(m.get("id", ""))
+        _confirm_install(app, m.get("name") or pid, str(src))
         dest = plugins_dir() / pid
         dest.mkdir(exist_ok=True)
         for name in ("manifest.json", "main.js", "styles.css"):
@@ -142,6 +171,7 @@ def register(app) -> None:
         except ValueError as exc:
             raise ApiError("not-a-plugin", "manifest") from exc
         pid = _safe_id(m.get("id", ""))
+        _confirm_install(app, m.get("name") or pid, f"https://github.com/{repo}")
         dest = plugins_dir() / pid
         dest.mkdir(exist_ok=True)
         for name, data in files.items():
@@ -154,9 +184,18 @@ def register(app) -> None:
         if ctx.plugin:
             raise ApiError("permission-denied")
         if "set" in p:
+            pid = _safe_id(p["id"])
             for perm, value in p["set"].items():
-                if perm in permissions.PERMISSIONS:
-                    permissions.set_status(app, _safe_id(p["id"]), perm, value)
+                if perm not in permissions.PERMISSIONS or value not in ("allow", "deny", None):
+                    continue
+                if value == "allow" and permissions.status(app, pid, perm) != "allow":
+                    strings = i18n.strings(app.language)
+                    q = strings.get("perm.question", "{plugin} wants to: {what}")
+                    if not permissions.confirm(app, strings.get("perm.title", "Permission request"),
+                                               q.replace("{plugin}", permissions._plugin_name(app, pid))
+                                               .replace("{what}", strings.get(f"perm.{perm}", perm))):
+                        continue
+                permissions.set_status(app, pid, perm, value)
         return (svc().config_read("permissions.json", {}) or {}).get(p["id"], {})
 
     # ------------------------------------------------------------- Node shims
@@ -169,6 +208,11 @@ def register(app) -> None:
         path = Path(os.path.normpath(path))
         inside = path == root or root in path.parents
         if inside:
+            # a symlink inside the vault may lead outside it: judge the real target (B-4)
+            real, real_root = Path(os.path.realpath(path)), Path(os.path.realpath(root))
+            if real != real_root and real_root not in real.parents:
+                permissions.require(app, ctx, "fs-outside-vault", f"{path} -> {real}")
+                return path
             rel = path.relative_to(root).as_posix() if path != root else ""
             cfg = ".sk_notes"
             if rel == cfg or rel.startswith(cfg + "/"):
@@ -271,7 +315,7 @@ def register(app) -> None:
         m = re.match(r"^(https?)://([^/:]+|\[[^\]]+\])", url)
         if not m:
             raise ApiError("bad-url", url)
-        if m.group(2) not in LOCAL_HOSTS:
+        if not is_ollama_url(url):
             permissions.require(app, ctx, "network", url)
         body = base64.b64decode(p["body"]) if p.get("body") else None
         headers = {k: v for k, v in (p.get("headers") or {}).items() if k.lower() not in ("host", "content-length")}
@@ -302,6 +346,14 @@ def register(app) -> None:
     def shim_env(p, ctx):
         return {"home": str(Path.home()), "tmp": "/tmp", "user": os.environ.get("USER", ""), "hostname": os.uname().nodename,
                 "vault": str(svc().vault.root)}
+
+
+def _confirm_install(app, name: str, source: str) -> None:
+    strings = i18n.strings(app.language)
+    if not permissions.confirm(app, strings.get("plugins.install-title", "Install plugin"),
+                               strings.get("plugins.install-question", "Install {plugin}?").replace("{plugin}", name),
+                               detail=source, ok=strings.get("plugins.install-ok", "Install")):
+        raise ApiError("cancelled")
 
 
 def _safe_id(pid: str) -> str:

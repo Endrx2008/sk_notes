@@ -798,5 +798,15 @@
  "error.invalid-characters": "O nome contém caracteres não permitidos.",
  "error.empty-name": "O nome não pode estar vazio.",
  "error.is-a-folder": "Existe uma pasta com este nome.",
- "error.disk-full": "O disco está cheio."
+ "error.disk-full": "O disco está cheio.",
+ "perm.cancel": "Cancelar",
+ "plugins.trust-title": "Ativar plugin da comunidade",
+ "plugins.trust-question": "Ativar {plugin}? Os plugins da comunidade são código escrito por terceiros; será executado sempre que este cofre abrir.",
+ "plugins.trust-ok": "Ativar",
+ "plugins.install-title": "Instalar plugin da comunidade",
+ "plugins.install-question": "Instalar {plugin}?",
+ "plugins.install-ok": "Instalar",
+ "git.remote-title": "Remoto Git",
+ "git.remote-question": "Enviar as notas deste cofre para {url} ao fazer push?",
+ "git.remote-ok": "Usar este remoto"
 }

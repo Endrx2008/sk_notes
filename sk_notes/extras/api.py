@@ -18,6 +18,8 @@ from PyQt6.QtWebEngineCore import QWebEnginePage
 from PyQt6.QtWidgets import QFileDialog
 
 from ..app.bridge import ApiError, Deferred
+from ..core import i18n
+from ..plugins import permissions
 
 log = logging.getLogger(__name__)
 
@@ -37,8 +39,11 @@ def register(app) -> None:
     @r("import.pick")
     def import_pick(p, ctx):
         if p.get("folder"):
-            return QFileDialog.getExistingDirectory(parent(), p.get("title", "")) or None
-        f, _ = QFileDialog.getOpenFileName(parent(), p.get("title", ""), str(Path.home()), p.get("filter", ""))
+            f = QFileDialog.getExistingDirectory(parent(), p.get("title", "")) or None
+        else:
+            f, _ = QFileDialog.getOpenFileName(parent(), p.get("title", ""), str(Path.home()), p.get("filter", ""))
+        if f:
+            permissions.remember_path(app, f)
         return f or None
 
     @r("import.run", slow=True)
@@ -53,6 +58,8 @@ def register(app) -> None:
         src = Path(p["source"]).expanduser()
         if not src.exists():
             raise ApiError("not-found", str(src))
+        if not permissions.chosen(app, str(src)):  # only what the user picked (B-3)
+            raise ApiError("permission-denied", str(src))
         s = svc()
         target = (p.get("folder") or "").strip("/")
         root = s.vault.root.resolve()
@@ -161,6 +168,13 @@ def register(app) -> None:
         url = p.get("url", "").strip()
         if not url or re.search(r"\s", url):
             raise ApiError("bad-url")
+        if ctx.plugin:
+            raise ApiError("permission-denied")
+        strings = i18n.strings(app.language)
+        if not permissions.confirm(app, strings.get("git.remote-title", "Git remote"),
+                                   strings.get("git.remote-question", "Send this vault to {url}?").replace("{url}", url[:200]),
+                                   ok=strings.get("git.remote-ok", "Use this remote")):
+            raise ApiError("cancelled")
         if "origin" in git("remote").stdout.split():
             git("remote", "set-url", "origin", url, check=True)
         else:
@@ -208,7 +222,10 @@ def register(app) -> None:
     # ------------------------------------------------------------- static site
     @r("publish.pickFolder")
     def publish_pick(p, ctx):
-        return QFileDialog.getExistingDirectory(parent(), p.get("title", "")) or None
+        f = QFileDialog.getExistingDirectory(parent(), p.get("title", "")) or None
+        if f:
+            permissions.remember_path(app, f, persist=True)
+        return f
 
     @r("publish.write")
     def publish_write(p, ctx):
@@ -218,6 +235,8 @@ def register(app) -> None:
         root = svc().vault.root.resolve()
         if out == root or root in out.parents:
             raise ApiError("output-inside-vault")
+        if not permissions.chosen(app, str(out)):  # a folder the user picked, never one the page names
+            raise ApiError("permission-denied", str(out))
         out.mkdir(parents=True, exist_ok=True)
         for f in p.get("files", []):
             rel = Path(f["path"])

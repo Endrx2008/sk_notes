@@ -798,5 +798,15 @@
  "error.invalid-characters": "El nombre contiene caracteres no permitidos.",
  "error.empty-name": "El nombre no puede estar vacío.",
  "error.is-a-folder": "Hay una carpeta con este nombre.",
- "error.disk-full": "El disco está lleno."
+ "error.disk-full": "El disco está lleno.",
+ "perm.cancel": "Cancelar",
+ "plugins.trust-title": "Activar complemento de la comunidad",
+ "plugins.trust-question": "¿Activar {plugin}? Los complementos de la comunidad son código escrito por terceros; se ejecutará cada vez que se abra esta bóveda.",
+ "plugins.trust-ok": "Activar",
+ "plugins.install-title": "Instalar complemento de la comunidad",
+ "plugins.install-question": "¿Instalar {plugin}?",
+ "plugins.install-ok": "Instalar",
+ "git.remote-title": "Remoto de Git",
+ "git.remote-question": "¿Enviar las notas de esta bóveda a {url} al hacer push?",
+ "git.remote-ok": "Usar este remoto"
 }

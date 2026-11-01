@@ -798,5 +798,15 @@
  "error.invalid-characters": "名前に使用できない文字が含まれています。",
  "error.empty-name": "名前を空にすることはできません。",
  "error.is-a-folder": "同じ名前のフォルダーがあります。",
- "error.disk-full": "ディスクがいっぱいです。"
+ "error.disk-full": "ディスクがいっぱいです。",
+ "perm.cancel": "キャンセル",
+ "plugins.trust-title": "コミュニティプラグインを有効にする",
+ "plugins.trust-question": "{plugin} を有効にしますか？コミュニティプラグインは第三者が書いたコードで、この保管庫を開くたびに実行されます。",
+ "plugins.trust-ok": "有効にする",
+ "plugins.install-title": "コミュニティプラグインをインストール",
+ "plugins.install-question": "{plugin} をインストールしますか？",
+ "plugins.install-ok": "インストール",
+ "git.remote-title": "Git リモート",
+ "git.remote-question": "プッシュ時にこの保管庫のノートを {url} に送信しますか？",
+ "git.remote-ok": "このリモートを使う"
 }
