@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import tempfile
@@ -120,6 +121,10 @@ class RenameTests(unittest.TestCase):
             "Folder/Target2.md": "x",
             "Folder/Rel.md": "[sib](Target2.md)",
             "Prop.md": "---\nup: \"[[Target]]\"\n---\nbody 😀 [[Target]]",
+            "Board.canvas": '{"nodes":[{"id":"a","type":"file","file":"Target.md","x":0,"y":0,"width":1,"height":1},'
+                            '{"id":"b","type":"file","file":"Folder/Target2.md","x":0,"y":0,"width":1,"height":1},'
+                            '{"id":"c","type":"text","text":"Target.md","x":0,"y":0,"width":1,"height":1}],"edges":[]}',
+            "Broken.canvas": "not json Target.md",
         })
 
     def tearDown(self):
@@ -134,8 +139,20 @@ class RenameTests(unittest.TestCase):
         self.assertEqual(self.read("Index.md"),
                          "See [[Renamed]], [[Renamed#Sec|alias]], ![[Renamed]], [md](Renamed.md) and [[Folder/Target2]].")
         self.assertEqual(self.read("Prop.md"), "---\nup: \"[[Renamed]]\"\n---\nbody 😀 [[Renamed]]")
-        self.assertCountEqual(res["updated"], ["Index.md", "Prop.md"])
+        self.assertCountEqual(res["updated"], ["Index.md", "Prop.md", "Board.canvas"])
         self.assertEqual(self.svc.index.unresolved["Index.md"], {})
+
+    def test_rename_updates_canvas_file_cards(self):
+        res = self.svc.rename("Target.md", "Renamed.md")
+        nodes = {n["id"]: n for n in json.loads(self.read("Board.canvas"))["nodes"]}
+        self.assertEqual(nodes["a"]["file"], "Renamed.md")
+        self.assertEqual(nodes["b"]["file"], "Folder/Target2.md")
+        self.assertEqual(nodes["c"]["text"], "Target.md")  # text cards are not touched
+        self.assertIn("Board.canvas", res["updated"])
+        self.assertEqual(self.read("Broken.canvas"), "not json Target.md")
+        self.svc.rename("Folder", "Moved")
+        nodes = {n["id"]: n for n in json.loads(self.read("Board.canvas"))["nodes"]}
+        self.assertEqual(nodes["b"]["file"], "Moved/Target2.md")
 
     def test_move_note_keeps_full_paths_and_relative_links(self):
         self.svc.rename("Folder/Target2.md", "Deep/Sub/Target2.md")

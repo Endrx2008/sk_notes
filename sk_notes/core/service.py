@@ -186,6 +186,19 @@ class VaultService:
                     self.vault.write_text(src_now, new_text)
                     self.index.update(src_now, new_text)
                     updated.append(src_now)
+            if update_links:
+                for src in [p for p in self.index.files if ext_of(p) == "canvas"]:
+                    try:
+                        text = self.vault.read_text(src)
+                    except OSError:
+                        continue
+                    new_text = links.relink_canvas(text, moved)
+                    if new_text is not None:
+                        self.history.snapshot(src, text, reason="link-update", force=True)
+                        self._mark_own(src)
+                        self.vault.write_text(src, new_text)
+                        self.index.update(src, new_text)
+                        updated.append(src)
             payload = {"oldPath": old, "file": {"path": new, "folder": src_is_dir} if src_is_dir else self._entry(new),
                        "moved": [[a, b] for a, b in moved.items()], "updated": updated,
                        "metadata": {p: self.index.meta.get(p) for p in set(updated) | set(moved.values())

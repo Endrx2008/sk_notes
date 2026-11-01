@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import posixpath
 import re
 from urllib.parse import quote
@@ -156,3 +157,23 @@ def relink_moved_note(text: str, old_path: str, new_path: str, index: VaultIndex
         if old_abs in index.files:
             refs.append((ref, old_abs))
     return apply_rewrites(text, refs, index, new_path) if refs else text
+
+
+def relink_canvas(text: str, moved: dict[str, str]) -> str | None:
+    """Point the file cards of a JSON Canvas at their new paths. None when nothing changed
+    (or the file is not valid canvas JSON, which is left alone)."""
+    try:
+        data = json.loads(text)
+    except ValueError:
+        return None
+    if not isinstance(data, dict) or not isinstance(data.get("nodes"), list):
+        return None
+    changed = False
+    for node in data["nodes"]:
+        if isinstance(node, dict) and node.get("type") == "file" and isinstance(node.get("file"), str):
+            new = moved.get(node["file"])
+            if new:
+                node["file"] = new
+                changed = True
+    # same layout the canvas view writes (JSON.stringify(data, null, '\t'))
+    return json.dumps(data, indent="\t", ensure_ascii=False) if changed else None

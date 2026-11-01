@@ -11,6 +11,7 @@ import base64
 import itertools
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -145,6 +146,8 @@ class App:
     def __init__(self, vault: str | os.PathLike, port: int = 9340, home: str | None = None, env: dict | None = None,
                  size: str = "1366x800"):
         self.vault, self.port, self.size = str(vault), port, size
+        # a home made here is removed on exit (set SKN_KEEP_HOME=1 to keep logs and config)
+        self._own_home = home is None
         self.home = home or tempfile.mkdtemp(prefix="skn-home-")
         self.env = env or {}
         self.proc = None
@@ -196,4 +199,7 @@ class App:
                 self.proc.wait(10)
             except subprocess.TimeoutExpired:
                 os.killpg(self.proc.pid, signal.SIGKILL)
-        self.log.close()
+        if getattr(self, "log", None):
+            self.log.close()
+        if self._own_home and not os.environ.get("SKN_KEEP_HOME"):
+            shutil.rmtree(self.home, ignore_errors=True)
