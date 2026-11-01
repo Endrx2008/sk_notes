@@ -263,9 +263,10 @@ export class MetadataCache extends Events {
       for (const [a, b] of d.moved || []) {
         if (this.meta[a]) { this.meta[b] = this.meta[a]; delete this.meta[a]; }
       }
-      Object.assign(this.meta, d.metadata || {});
+      // here `metadata` maps path -> metadata for every moved or relinked file
+      for (const [p, m] of Object.entries(d.metadata || {})) if (m) this.meta[p] = m;
       this._invalidateNames();
-      this._apply(d);
+      this._apply({ ...d, metadata: undefined });
       for (const p of d.updated || []) {
         const f = this.vault.getFileByPath(p);
         if (f && this.meta[p]) this.trigger('changed', f, '', this.meta[p]);
