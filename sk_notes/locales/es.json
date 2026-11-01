@@ -816,5 +816,7 @@
  "plugins.slow-load": "aún cargando",
  "plugins.slow-load-notice": "\"{name}\" tarda mucho en cargar; los demás complementos siguen cargándose.",
  "skai.found-keywords-no-index": "{n} notas encontradas por palabras clave: el índice de la bóveda aún no se ha creado (comando \"{cmd}\").",
- "skai.found-keywords-plain": "{n} notas encontradas por palabras clave."
+ "skai.found-keywords-plain": "{n} notas encontradas por palabras clave.",
+ "rename.recovered-undone": "La última vez se interrumpió un cambio de nombre al cerrarse sk_notes; se deshizo para que ningún enlace quede roto.",
+ "rename.recovered-completed": "La última vez se interrumpió un cambio de nombre al cerrarse sk_notes; la actualización de los enlaces se completó ahora."
 }

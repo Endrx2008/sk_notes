@@ -816,5 +816,7 @@
  "plugins.slow-load": "toujours en chargement",
  "plugins.slow-load-notice": "« {name} » met longtemps à se charger ; les autres modules continuent de se charger.",
  "skai.found-keywords-no-index": "{n} notes trouvées par mots-clés : l'index du coffre n'est pas encore construit (commande « {cmd} »).",
- "skai.found-keywords-plain": "{n} notes trouvées par mots-clés."
+ "skai.found-keywords-plain": "{n} notes trouvées par mots-clés.",
+ "rename.recovered-undone": "Un renommage a été interrompu à la dernière fermeture de sk_notes ; il a été annulé pour qu'aucun lien ne soit cassé.",
+ "rename.recovered-completed": "Un renommage a été interrompu à la dernière fermeture de sk_notes ; la mise à jour des liens vient d'être terminée."
 }

@@ -816,5 +816,7 @@
  "plugins.slow-load": "仍在加载",
  "plugins.slow-load-notice": "“{name}”加载时间过长；其他插件继续加载。",
  "skai.found-keywords-no-index": "通过关键词找到 {n} 条笔记：仓库索引尚未建立（命令“{cmd}”）。",
- "skai.found-keywords-plain": "通过关键词找到 {n} 条笔记。"
+ "skai.found-keywords-plain": "通过关键词找到 {n} 条笔记。",
+ "rename.recovered-undone": "上次关闭 sk_notes 时有一次重命名被中断；已撤销，以免链接失效。",
+ "rename.recovered-completed": "上次关闭 sk_notes 时有一次重命名被中断；现已完成链接更新。"
 }

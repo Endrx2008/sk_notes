@@ -816,5 +816,7 @@
  "plugins.slow-load": "ainda a carregar",
  "plugins.slow-load-notice": "\"{name}\" está a demorar a carregar; os outros plugins continuam a carregar.",
  "skai.found-keywords-no-index": "{n} notas encontradas por palavras-chave: o índice do cofre ainda não foi criado (comando \"{cmd}\").",
- "skai.found-keywords-plain": "{n} notas encontradas por palavras-chave."
+ "skai.found-keywords-plain": "{n} notas encontradas por palavras-chave.",
+ "rename.recovered-undone": "Uma mudança de nome foi interrompida da última vez que o sk_notes fechou; foi desfeita para que nenhum link fique partido.",
+ "rename.recovered-completed": "Uma mudança de nome foi interrompida da última vez que o sk_notes fechou; a atualização dos links foi concluída agora."
 }

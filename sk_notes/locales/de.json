@@ -816,5 +816,7 @@
  "plugins.slow-load": "lädt noch",
  "plugins.slow-load-notice": "„{name}“ braucht lange zum Laden; die anderen Plugins werden weiter geladen.",
  "skai.found-keywords-no-index": "{n} Notizen per Stichwort gefunden: Der Tresor-Index ist noch nicht erstellt (Befehl „{cmd}“).",
- "skai.found-keywords-plain": "{n} Notizen per Stichwort gefunden."
+ "skai.found-keywords-plain": "{n} Notizen per Stichwort gefunden.",
+ "rename.recovered-undone": "Eine Umbenennung wurde beim letzten Schließen von sk_notes unterbrochen; sie wurde rückgängig gemacht, damit kein Link kaputt ist.",
+ "rename.recovered-completed": "Eine Umbenennung wurde beim letzten Schließen von sk_notes unterbrochen; die Aktualisierung der Links wurde jetzt abgeschlossen."
 }

@@ -816,5 +816,7 @@
  "plugins.slow-load": "still loading",
  "plugins.slow-load-notice": "\"{name}\" is taking a long time to load; the other plugins go on loading.",
  "skai.found-keywords-no-index": "{n} notes found by keywords: the vault index is not built yet (command \"{cmd}\").",
- "skai.found-keywords-plain": "{n} notes found by keywords."
+ "skai.found-keywords-plain": "{n} notes found by keywords.",
+ "rename.recovered-undone": "A rename was interrupted last time sk_notes closed; it was undone so that no link is broken.",
+ "rename.recovered-completed": "A rename was interrupted last time sk_notes closed; its link updates were finished now."
 }

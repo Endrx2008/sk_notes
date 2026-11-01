@@ -816,5 +816,7 @@
  "plugins.slow-load": "読み込み中",
  "plugins.slow-load-notice": "「{name}」の読み込みに時間がかかっています。他のプラグインは引き続き読み込まれます。",
  "skai.found-keywords-no-index": "キーワードで {n} 件のノートが見つかりました。保管庫のインデックスはまだ作成されていません（コマンド「{cmd}」）。",
- "skai.found-keywords-plain": "キーワードで {n} 件のノートが見つかりました。"
+ "skai.found-keywords-plain": "キーワードで {n} 件のノートが見つかりました。",
+ "rename.recovered-undone": "前回 sk_notes の終了時に名前の変更が中断されました。リンクが壊れないよう取り消しました。",
+ "rename.recovered-completed": "前回 sk_notes の終了時に名前の変更が中断されました。リンクの更新を今完了しました。"
 }

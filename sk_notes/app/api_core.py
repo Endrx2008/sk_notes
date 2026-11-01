@@ -80,6 +80,7 @@ def register(app) -> None:
             "home": str(Path.home()),
             "zoom": app.settings.zoom,
             "safeMode": app.safe_mode,
+            "renameRecovered": getattr(s, "recovered_rename", None) if s else None,
         }
 
     @r("app.setLanguage")

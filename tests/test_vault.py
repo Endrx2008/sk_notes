@@ -191,6 +191,86 @@ class RenameTests(unittest.TestCase):
         self.assertIn(name[:-3].split("/")[-1], self.read("Index.md"))
 
 
+class _Crash(BaseException):
+    pass
+
+
+class RenameJournalTests(unittest.TestCase):
+    """B-13: a crash in the middle of a big rename leaves no broken links."""
+
+    def setUp(self):
+        files = {f"F/n{i}.md": f"note {i}" for i in range(20)}
+        files.update({f"refs/r{i}.md": f"see [[F/n{i}]] and [[F/n{(i + 1) % 20}]]" for i in range(20)})
+        self.tmp, self.svc = make_vault(files)
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def reopen(self) -> VaultService:
+        svc = VaultService(str(self.root))
+        svc.open()
+        return svc
+
+    def broken(self, svc) -> int:
+        return sum(len(v) for v in svc.index.unresolved.values())
+
+    def test_crash_during_link_updates_is_completed_on_restart(self):
+        calls = {"n": 0}
+        real = self.svc._rewrite
+
+        def crash_after_five(*a, **kw):
+            calls["n"] += 1
+            if calls["n"] > 5:
+                raise _Crash
+            return real(*a, **kw)
+
+        self.svc._rewrite = crash_after_five
+        with self.assertRaises(_Crash):
+            self.svc.rename("F", "G")
+        self.svc.close()
+        svc = self.reopen()
+        try:
+            self.assertEqual(svc.recovered_rename, "completed")
+            self.assertEqual(self.broken(svc), 0)
+            self.assertIn("[[G/n3]]", (self.root / "refs/r3.md").read_text())
+            self.assertFalse((self.root / ".sk_notes/rename-journal.json").exists())
+        finally:
+            svc.close()
+
+    def test_crash_right_after_the_move_is_undone(self):
+        def crash(*a, **kw):
+            raise _Crash
+
+        self.svc.index.rename = crash
+        with self.assertRaises(_Crash):
+            self.svc.rename("F", "G")
+        self.assertTrue((self.root / "G").is_dir())
+        self.svc.close()
+        svc = self.reopen()
+        try:
+            self.assertEqual(svc.recovered_rename, "undone")
+            self.assertTrue((self.root / "F/n1.md").exists())
+            self.assertEqual(self.broken(svc), 0)
+        finally:
+            svc.close()
+
+    def test_recovery_does_not_overwrite_later_changes(self):
+        real = self.svc._rewrite
+        self.svc._rewrite = lambda *a, **kw: (_ for _ in ()).throw(_Crash())
+        with self.assertRaises(_Crash):
+            self.svc.rename("F", "G")
+        self.svc.close()
+        (self.root / "refs/r4.md").write_text("changed by sync")
+        svc = self.reopen()
+        try:
+            self.assertEqual((self.root / "refs/r4.md").read_text(), "changed by sync")
+            self.assertIn("[[G/n5]]", (self.root / "refs/r5.md").read_text())
+        finally:
+            svc.close()
+        del real
+
+
 class CanvasSearchTests(unittest.TestCase):
     def test_canvas_found_by_card_text_not_json(self):
         board = json.dumps({"nodes": [{"id": "a", "type": "text", "text": "quantum garden", "x": 0, "y": 0, "width": 1, "height": 1},

@@ -21,6 +21,11 @@ from .index import TEXT_EXT, VaultIndex, ext_of
 from .vault import CONFIG_DIR, Vault, VaultError, normalize_path
 
 log = logging.getLogger(__name__)
+
+
+def _sha(text: str) -> str:
+    import hashlib
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()
 Emit = Callable[[str, dict], None]
 
 
@@ -33,9 +38,11 @@ class VaultService:
         self.lock = threading.RLock()
         # paths written by us recently: the watcher ignores their own echo
         self._own_writes: dict[str, float] = {}
+        self.recovered_rename: str | None = None
 
     # ------------------------------------------------------------- lifecycle
     def open(self) -> dict:
+        self.recovered_rename = self._recover_rename()
         stats = self.index.sync()
         log.info("vault %s opened: %s", self.vault.root, stats)
         return stats
@@ -169,38 +176,57 @@ class VaultService:
                         self.history.snapshot(p, self.vault.read_text(p), reason="rename", force=True)
                     except OSError:
                         pass
+            # journal (B-13): a crash between the move and the end of the link updates
+            # must not leave thousands of broken links; see _recover_rename()
+            self._journal({"phase": "move", "old": old, "new": new})
             self._mark_own(old, new, *moved, *moved.values())
-            self.vault.rename(old, new)
+            try:
+                self.vault.rename(old, new)
+            except BaseException:
+                self._journal(None)
+                raise
             self.index.rename(old, new)
             self.history.rename(old, new)
-            updated = []
-            # a moved note keeps its own relative markdown links working
+            # every rewrite is planned in memory first, then journaled, then written
+            plan: list[tuple[str, str, str, bool]] = []  # path, old text, new text, counts as "updated"
             for a, b in moved.items():
-                if ext_of(b) == "md":
+                if ext_of(b) == "md":  # a moved note keeps its own relative markdown links working
                     text = self._editable_text(b)
-                    if text is None:
-                        continue
-                    fixed = links.relink_moved_note(text, a, b, self.index)
-                    if fixed != text and self._rewrite(b, text, fixed, snapshot=False):
-                        self.index.update(b, fixed)
+                    if text is not None:
+                        fixed = links.relink_moved_note(text, a, b, self.index)
+                        if fixed != text:
+                            plan.append((b, text, fixed, False))
+            planned = {x[0]: x for x in plan}
             for src, items in refs.items():
                 src_now = moved.get(src, src)
-                text = self._editable_text(src_now)
+                prev = planned.get(src_now)
+                text = prev[2] if prev else self._editable_text(src_now)
                 if text is None:
                     continue
                 new_text = links.apply_rewrites(text, items, self.index, src_now)
-                if new_text != text and self._rewrite(src_now, text, new_text):
-                    self.index.update(src_now, new_text)
-                    updated.append(src_now)
+                if new_text != text:
+                    entry = (src_now, prev[1] if prev else text, new_text, True)
+                    if prev:
+                        plan[plan.index(prev)] = entry
+                    else:
+                        plan.append(entry)
+                    planned[src_now] = entry
             if update_links:
                 for src in [p for p in self.index.files if ext_of(p) == "canvas"]:
                     text = self._editable_text(src)
-                    if text is None:
-                        continue
-                    new_text = links.relink_canvas(text, moved)
-                    if new_text is not None and self._rewrite(src, text, new_text):
-                        self.index.update(src, new_text)
-                        updated.append(src)
+                    if text is not None:
+                        new_text = links.relink_canvas(text, moved)
+                        if new_text is not None:
+                            plan.append((src, text, new_text, True))
+            self._journal({"phase": "write", "old": old, "new": new,
+                           "writes": [{"path": p_, "sha": _sha(t0), "text": t1} for p_, t0, t1, _u in plan]})
+            updated = []
+            for path_, text, new_text, counts in plan:
+                if self._rewrite(path_, text, new_text, snapshot=counts):
+                    self.index.update(path_, new_text)
+                    if counts:
+                        updated.append(path_)
+            self._journal(None)
             payload = {"oldPath": old, "file": {"path": new, "folder": src_is_dir} if src_is_dir else self._entry(new),
                        "moved": [[a, b] for a, b in moved.items()], "updated": updated,
                        "metadata": {p: self.index.meta.get(p) for p in set(updated) | set(moved.values())
@@ -208,6 +234,56 @@ class VaultService:
             payload.update(self._links_payload(None))
             self.emit("rename", payload)
             return {"path": new, "updated": updated}
+
+    # ------------------------------------------------------------- rename journal
+    def _journal_path(self) -> Path:
+        return self.vault.config_dir / "rename-journal.json"
+
+    def _journal(self, data: dict | None) -> None:
+        p = self._journal_path()
+        try:
+            if data is None:
+                p.unlink(missing_ok=True)
+                return
+            tmp = p.with_name(p.name + ".tmp")
+            with open(tmp, "w", encoding="utf-8") as fh:
+                json.dump(data, fh, ensure_ascii=False)
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp, p)
+        except OSError as exc:  # read-only vault: rename without a safety net
+            log.warning("rename journal not written: %s", exc)
+
+    def _recover_rename(self) -> str | None:
+        """Finish or undo a rename that a crash interrupted. 'undone' if the files were
+        moved back (crash before the link updates were planned), 'completed' if the
+        planned link updates were written now, None if there was nothing to do."""
+        p = self._journal_path()
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        result = None
+        try:
+            old, new = data["old"], data["new"]
+            if data.get("phase") == "move":
+                if self.vault.exists(new) and not self.vault.exists(old):
+                    self.vault.rename(new, old)
+                    result = "undone"
+            elif data.get("phase") == "write":
+                for w in data.get("writes", []):
+                    try:
+                        cur = self.vault.read_bytes(w["path"]).decode("utf-8")
+                    except (OSError, UnicodeDecodeError, VaultError):
+                        continue
+                    if _sha(cur) == w["sha"]:  # not written yet, not changed by anyone since
+                        self.vault.write_text(w["path"], w["text"])
+                result = "completed"
+            log.warning("interrupted rename %s -> %s %s", old, new, result or "had nothing left to do")
+        except (KeyError, OSError, VaultError) as exc:
+            log.error("could not recover an interrupted rename: %s", exc)
+        self._journal(None)
+        return result
 
     def _editable_text(self, path: str) -> str | None:
         """Text of a file that may be rewritten automatically (link updates): None for

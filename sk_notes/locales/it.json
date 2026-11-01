@@ -816,5 +816,7 @@
  "plugins.slow-load": "ancora in caricamento",
  "plugins.slow-load-notice": "\"{name}\" impiega molto a caricarsi; gli altri plugin continuano a caricarsi.",
  "skai.found-keywords-no-index": "{n} note trovate per parole chiave: l'indice del vault non è ancora stato creato (comando \"{cmd}\").",
- "skai.found-keywords-plain": "{n} note trovate per parole chiave."
+ "skai.found-keywords-plain": "{n} note trovate per parole chiave.",
+ "rename.recovered-undone": "L'ultima volta una rinomina è stata interrotta alla chiusura di sk_notes; è stata annullata perché nessun link resti rotto.",
+ "rename.recovered-completed": "L'ultima volta una rinomina è stata interrotta alla chiusura di sk_notes; l'aggiornamento dei link è stato completato ora."
 }
