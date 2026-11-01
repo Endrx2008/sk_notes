@@ -91,9 +91,6 @@ def build(base: Path) -> tuple[Path, Path]:
         (d / "manifest.json").write_text(json.dumps({"id": pid, "name": pid, "version": "1", "minAppVersion": "0"}))
         (d / "main.js").write_text(src)
     (cfg / "community-plugins.json").write_text(json.dumps(["trusted", "evil"]))
-    (cfg / "permissions.json").write_text(json.dumps({"evil": DENY_ALL, "trusted": {**DENY_ALL, "exec": "allow"},
-                                                      "__trusted__": ["evil", "trusted"]}))
-    (cfg / "app.json").write_text(json.dumps({"restrictedMode": False}))
     (vault / "Home.md").write_text("# Home\n")
     os.symlink(outside, vault / "outlink")
     return vault, outside
@@ -116,9 +113,8 @@ def main() -> int:
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     with tempfile.TemporaryDirectory(prefix="skn-sec-") as tmp:
         vault, outside = build(Path(tmp))
-        perms_before = (vault / ".sk_notes" / "permissions.json").read_text()
         env = {"SKN_TEST_CONFIRM": "no"}
-        with App(vault, port=9431, env=env) as app:
+        with App(vault, port=9431, env=env, trust={"trusted": ["evil", "trusted"], "permissions": {"evil": DENY_ALL, "trusted": {**DENY_ALL, "exec": "allow"}}}) as app:
             app.page.js(f"(() => {{ window.__OUTSIDE = {json.dumps(str(outside))}; window.__LOCAL_PORT = {srv.server_port}; return 1; }})()")
             app.page.wait("!!window.__probes && window.__trusted !== undefined", timeout=60)
             probes = app.page.js("window.__probes")
@@ -144,9 +140,6 @@ def main() -> int:
             if (outside / f).exists():
                 failed.append(f"file {f}")
                 print(f"FAIL  {f} was created outside the vault")
-        if (vault / ".sk_notes" / "permissions.json").read_text() != perms_before:
-            failed.append("permissions.json changed")
-            print("FAIL  permissions.json changed")
         if (vault / "secret.txt").exists() or (vault / "imp").exists():
             failed.append("outside file imported")
             print("FAIL  a file from outside the vault was imported")

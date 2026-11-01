@@ -162,6 +162,8 @@ class VaultService:
     # ------------------------------------------------------------- rename / move
     def rename(self, old: str, new: str, *, update_links: bool | None = None) -> dict:
         old, new = normalize_path(old), normalize_path(new)
+        if "/" in (old, new):
+            raise VaultError("vault-root")
         if old == new:
             return {"path": new, "updated": []}
         if update_links is None:
@@ -310,6 +312,8 @@ class VaultService:
 
     def copy(self, old: str, new: str) -> dict:
         old, new = normalize_path(old), normalize_path(new)
+        if "/" in (old, new) or new.startswith(old + "/"):
+            raise VaultError("into-itself" if old != "/" else "vault-root")
         with self.lock:
             self._mark_own(new)
             self.vault.copy(old, new)
@@ -324,6 +328,8 @@ class VaultService:
     # ------------------------------------------------------------- delete
     def delete(self, path: str, *, mode: str | None = None) -> dict:
         path = normalize_path(path)
+        if path == "/":
+            raise VaultError("vault-root")  # a plugin with an empty folder setting deleted the whole vault (B2-8)
         mode = mode or self.app_setting("trashOption", "system")
         with self.lock:
             targets = [p for p in self.index.files if p == path or p.startswith(path + "/")]

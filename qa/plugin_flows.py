@@ -31,9 +31,7 @@ def vault_with(base: Path, pid: str, files: dict[str, str], data: dict | None = 
     shutil.copytree(src, cfg / "plugins" / pid)
     if data is not None:
         (cfg / "plugins" / pid / "data.json").write_text(json.dumps(data))
-    (cfg / "app.json").write_text(json.dumps({"restrictedMode": False}))
     (cfg / "community-plugins.json").write_text(json.dumps([pid]))
-    (cfg / "permissions.json").write_text(json.dumps({"__trusted__": [pid]}))
     for rel, text in files.items():
         p = v / rel
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -52,7 +50,7 @@ def templater(base: Path):
                                                  "QA/Tpl.md": "# Tpl\n\n"}, {"templates_folder": "Templates"})
     if v is None:
         return "skip"
-    with App(v, port=9461) as app:
+    with App(v, port=9461, trust={"trusted": [v.name]}) as app:
         p = app.page
         time.sleep(2)
         open_note(p, "QA/Tpl.md")
@@ -79,7 +77,7 @@ def calendar(base: Path):
     v = vault_with(base, "calendar", {"Home.md": "# Home", f"{other}.md": "# other day"})
     if v is None:
         return "skip"
-    with App(v, port=9462, env={"SKN_TEST_CONFIRM": "yes"}) as app:
+    with App(v, port=9462, env={"SKN_TEST_CONFIRM": "yes"}, trust={"trusted": [v.name]}) as app:
         p = app.page
         time.sleep(2)
         p.js("(() => { app.commands.executeCommandById('calendar:show-calendar-view'); return 1; })()")
@@ -102,7 +100,7 @@ def tasks(base: Path):
     v = vault_with(base, "obsidian-tasks-plugin", files)
     if v is None:
         return "skip"
-    with App(v, port=9463) as app:
+    with App(v, port=9463, trust={"trusted": [v.name]}) as app:
         p = app.page
         time.sleep(3)
         open_note(p, "QA/Tasks.md")
@@ -123,7 +121,7 @@ def dataview(base: Path):
     v = vault_with(base, "dataview", files)
     if v is None:
         return "skip"
-    with App(v, port=9464) as app:
+    with App(v, port=9464, trust={"trusted": [v.name]}) as app:
         p = app.page
         time.sleep(3)
         open_note(p, "QA/Dv.md")

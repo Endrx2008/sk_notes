@@ -47,6 +47,11 @@ def protected(config_name: str) -> bool:
     return bool(_PROTECTED.match(config_name.strip("/"))) or config_name.strip("/") == ""
 
 
+def _plugins_allowed(app) -> bool:
+    from ..plugins.permissions import plugins_allowed
+    return bool(app.service) and plugins_allowed(app)
+
+
 def register(app) -> None:
     api = app.api
     r = api.route
@@ -60,6 +65,9 @@ def register(app) -> None:
         """Community plugins may write inside the vault (default permission) but never
         into sk_notes' own configuration folder except their own data. Nobody writes the
         files that decide what plugins may do through these routes (see protected())."""
+        if path == ".git" or path.startswith(".git/"):
+            # git runs what its config says (fsmonitor, hooks, filters): never written by page code (B2-4)
+            raise ApiError("permission-denied", path)
         if path == CONFIG_DIR or path.startswith(CONFIG_DIR + "/"):
             if path == CONFIG_DIR or protected(path[len(CONFIG_DIR) + 1:]):
                 raise ApiError("permission-denied", path)
@@ -80,6 +88,7 @@ def register(app) -> None:
             "home": str(Path.home()),
             "zoom": app.settings.zoom,
             "safeMode": app.safe_mode,
+            "pluginsAllowed": _plugins_allowed(app),
             "renameRecovered": getattr(s, "recovered_rename", None) if s else None,
         }
 
@@ -212,6 +221,8 @@ def register(app) -> None:
 
     @r("vault.createUnique")
     def vault_create_unique(p, ctx):
+        folder = normalize_path(p.get("folder", "") or "")
+        check_plugin_write(ctx, normalize_path((folder + "/" if folder != "/" else "") + p.get("base", "Untitled")))  # B2-7
         return svc().create_unique(p.get("folder", ""), p.get("base", "Untitled"), p.get("ext", "md"), p.get("text", ""))
 
     @r("vault.availablePath")

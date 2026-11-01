@@ -826,5 +826,11 @@
  "debug.copied": "Copiado al portapapeles.",
  "settings.status-bar": "Barra de estado",
  "settings.word-count": "Recuento de palabras",
- "settings.word-count-desc": "Muestra el número de palabras y caracteres de la nota abierta (desactívalo si un complemento muestra su propio recuento)."
+ "settings.word-count-desc": "Muestra el número de palabras y caracteres de la nota abierta (desactívalo si un complemento muestra su propio recuento).",
+ "plugins.allow-title": "Complementos de la comunidad",
+ "plugins.allow-question": "¿Permitir complementos de la comunidad en esta bóveda? Son código escrito por terceros; esta elección se guarda solo en este equipo.",
+ "plugins.allow-ok": "Activar complementos de la comunidad",
+ "plugins.remove-title": "Desinstalar complemento",
+ "plugins.remove-question": "¿Desinstalar {plugin}? Se eliminan sus archivos y ajustes.",
+ "plugins.remove-ok": "Desinstalar"
 }

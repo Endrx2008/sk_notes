@@ -826,5 +826,11 @@
  "debug.copied": "已复制到剪贴板。",
  "settings.status-bar": "状态栏",
  "settings.word-count": "字数统计",
- "settings.word-count-desc": "显示当前笔记的字数和字符数（如果插件显示自己的统计，可将其关闭）。"
+ "settings.word-count-desc": "显示当前笔记的字数和字符数（如果插件显示自己的统计，可将其关闭）。",
+ "plugins.allow-title": "社区插件",
+ "plugins.allow-question": "允许在此仓库中使用社区插件吗？插件是第三方编写的代码；此选择仅保存在这台电脑上。",
+ "plugins.allow-ok": "启用社区插件",
+ "plugins.remove-title": "卸载插件",
+ "plugins.remove-question": "卸载 {plugin}？其文件和设置将被删除。",
+ "plugins.remove-ok": "卸载"
 }

@@ -826,5 +826,11 @@
  "debug.copied": "Copiato negli appunti.",
  "settings.status-bar": "Barra di stato",
  "settings.word-count": "Conteggio parole",
- "settings.word-count-desc": "Mostra il numero di parole e caratteri della nota aperta (disattivalo se un plugin mostra un suo conteggio)."
+ "settings.word-count-desc": "Mostra il numero di parole e caratteri della nota aperta (disattivalo se un plugin mostra un suo conteggio).",
+ "plugins.allow-title": "Plugin della community",
+ "plugins.allow-question": "Consentire i plugin della community in questo vault? I plugin sono codice scritto da terzi; la scelta resta solo su questo computer.",
+ "plugins.allow-ok": "Attiva i plugin della community",
+ "plugins.remove-title": "Disinstalla plugin",
+ "plugins.remove-question": "Disinstallare {plugin}? I suoi file e le sue impostazioni vengono eliminati.",
+ "plugins.remove-ok": "Disinstalla"
 }

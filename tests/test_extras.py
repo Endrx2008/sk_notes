@@ -189,17 +189,27 @@ class PermissionTests(unittest.TestCase):
         (Path(self.outside.name) / "secret.txt").write_text("s")
         permissions._session.clear()
         permissions._chosen.clear()
+        self._cfg = tempfile.TemporaryDirectory()  # the machine-local trust store (B2-5)
+        self._old_cfg = os.environ.get("XDG_CONFIG_HOME")
+        os.environ["XDG_CONFIG_HOME"] = self._cfg.name
 
     def tearDown(self):
         self.svc.close()
         self.tmp.cleanup()
         self.outside.cleanup()
+        self._cfg.cleanup()
+        if self._old_cfg is None:
+            os.environ.pop("XDG_CONFIG_HOME", None)
+        else:
+            os.environ["XDG_CONFIG_HOME"] = self._old_cfg
 
     def ctx(self, plugin="demo"):
         return Ctx(plugin=plugin, sync=False)
 
     def test_status_roundtrip_and_network_refresh(self):
         self.svc.config_write("community-plugins.json", ["demo"])
+        permissions.set_plugins_allowed(self.app, True)
+        permissions.trust(self.app, "demo")
         permissions.set_status(self.app, "demo", "network", "allow")
         self.assertEqual(permissions.status(self.app, "demo", "network"), "allow")
         self.assertEqual(self.app.network_plugins, {"demo"})

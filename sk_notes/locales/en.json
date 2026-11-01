@@ -826,5 +826,11 @@
  "debug.copied": "Copied to the clipboard.",
  "settings.status-bar": "Status bar",
  "settings.word-count": "Word count",
- "settings.word-count-desc": "Show the number of words and characters of the open note (turn it off if a plugin shows its own count)."
+ "settings.word-count-desc": "Show the number of words and characters of the open note (turn it off if a plugin shows its own count).",
+ "plugins.allow-title": "Community plugins",
+ "plugins.allow-question": "Allow community plugins in this vault? Plugins are code written by third parties; this choice is kept on this computer only.",
+ "plugins.allow-ok": "Turn on community plugins",
+ "plugins.remove-title": "Uninstall plugin",
+ "plugins.remove-question": "Uninstall {plugin}? Its files and settings are deleted.",
+ "plugins.remove-ok": "Uninstall"
 }

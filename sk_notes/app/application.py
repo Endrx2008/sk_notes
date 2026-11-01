@@ -84,16 +84,20 @@ class Page(QWebEnginePage):
         scripts.insert(sc)
 
     def acceptNavigationRequest(self, url, nav_type, is_main):  # noqa: N802 - Qt API
-        if url.scheme() == "skn":
-            return True
         if url.scheme() in ("http", "https", "mailto") and nav_type == QWebEnginePage.NavigationType.NavigationTypeLinkClicked:
             QDesktopServices.openUrl(url)
             return False
-        return url.scheme() in ("data", "blob", "about") or not is_main
+        if is_main:
+            # the window only ever shows the app itself: any other document (a vault file,
+            # data:, blob:) would receive the page's boot secret (B2-1)
+            return url.scheme() == "skn" and url.host() == "app"
+        return url.scheme() in ("skn", "data", "blob", "about")
 
-    def createWindow(self, _type):  # noqa: N802 - window.open → pop-out window
-        win = self.app.new_window(popout=True, boot=False)
-        return win.view.page()
+    def createWindow(self, _type):  # noqa: N802
+        # window.open() gets no page: a pop-up keeps a handle on this window and could read
+        # the next boot secret after a reload (B2-2). The page's window.open sends web links
+        # to the browser instead (core/api.js); pop-out windows come from window.popout.
+        return None
 
     def javaScriptConsoleMessage(self, level, message, line, source):  # noqa: N802
         if level == QWebEnginePage.JavaScriptConsoleMessageLevel.ErrorMessageLevel:
@@ -260,9 +264,11 @@ class SkNotesApp(QObject):
         """A plugin that freezes or exhausts memory would do it again at every start, and
         Settings cannot be reached then (B-20): if the last session with community plugins
         did not close normally, offer to start without them."""
+        from ..plugins.permissions import refresh_network
+        refresh_network(self)
         marker = config.cache_dir() / f"running-{sknotes_uri.server_name(vault)}"
-        app_cfg = self.service.config_read("app.json", {}) or {}
-        plugins_on = app_cfg.get("restrictedMode") is False and bool(self.service.config_read("community-plugins.json", []))
+        from ..plugins.permissions import active_plugins
+        plugins_on = bool(active_plugins(self))
         if marker.exists() and plugins_on and not self.safe_mode:
             from ..plugins.permissions import confirm
             s = i18n.strings(self.language)

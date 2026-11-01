@@ -140,11 +140,23 @@ class Page:
             pass
 
 
+def write_trust(home: str, vault: str, trust: dict) -> None:
+    """Machine-local plugin trust for `vault` in the app home `home` (XDG_CONFIG_HOME=<home>/config)."""
+    import hashlib
+    root = str(Path(vault).resolve())
+    p = Path(home) / "config" / "sk_notes" / "vault-trust" / (hashlib.sha1(root.encode("utf-8")).hexdigest()[:20] + ".json")
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({"plugins": True, "trusted": [], "permissions": {}, "paths": [], **trust}))
+
+
 class App:
     """Start sk_notes on a vault under Xvfb with remote debugging; context manager."""
 
     def __init__(self, vault: str | os.PathLike, port: int = 9340, home: str | None = None, env: dict | None = None,
-                 size: str = "1366x800"):
+                 size: str = "1366x800", trust: dict | None = None):
+        """trust: what the user allowed for this vault on this machine, written before start:
+        {"plugins": True, "trusted": [ids], "permissions": {id: {perm: "allow"|"deny"}}}
+        (see sk_notes/plugins/permissions.py)."""
         self.vault, self.port, self.size = str(vault), port, size
         # a home made here is removed on exit (set SKN_KEEP_HOME=1 to keep logs and config)
         self._own_home = home is None
@@ -153,6 +165,8 @@ class App:
         self.proc = None
         self.page: Page | None = None
         self.log_path = Path(self.home) / "app.log"
+        if trust is not None:
+            write_trust(self.home, self.vault, trust)
 
     def __enter__(self) -> "App":
         try:

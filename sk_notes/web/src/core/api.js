@@ -26,6 +26,16 @@ const xhrSend = XHR?.prototype.send;
 const xhrText = XHR && Object.getOwnPropertyDescriptor(XHR.prototype, 'responseText').get;
 const fetchJson = async (u, init) => apply(responseJson, await apply(nativeFetch, globalThis, [u, init]), []);
 
+// window.open() never opens a page (see application.Page.createWindow): web links go to the
+// browser like a clicked link
+if (globalThis.window && globalThis.document) {
+  window.open = (u) => {
+    const s = String(u ?? '');
+    if (/^(https?|mailto):/i.test(s)) window.app?.openExternal?.(s);
+    return null;
+  };
+}
+
 let boot = globalThis.__sknBoot?.token || null;
 try { delete globalThis.__sknBoot; } catch { globalThis.__sknBoot = undefined; }
 
@@ -36,12 +46,28 @@ export function takeBootSecret() {
   return b;
 }
 
+const encode = encodeURIComponent;
+const hasOwn = Object.hasOwn;
+const textEncode = TextEncoder.prototype.encode;
+const parseJson = JSON.parse;
+
+/** A call whose body holds a secret (boot secret, page key): the body is a string the
+ * caller builds, sent without JSON.stringify or TextEncoder lookups a plugin could
+ * replace. Returns the result. */
+export async function secretCall(method, body) {
+  const bytes = apply(textEncode, enc, [body]);
+  return unwrap(await fetchJson('skn://api/' + method + '?len=' + bytes.length, { method: 'POST', body: bytes }));
+}
+
+// Only string concatenation and functions taken above: a plugin that replaces
+// encodeURIComponent, Array.prototype.push/join or Object.entries must not see the caller
+// token of another plugin's call (B2-3). Tokens are URL-safe, so they need no encoding.
 function url(method, caller, sync, extra = {}) {
-  const q = [];
-  if (caller) q.push('c=' + encodeURIComponent(caller));
-  if (sync) q.push('sync=1');
-  for (const [k, v] of Object.entries(extra)) q.push(`${k}=${encodeURIComponent(v)}`);
-  return 'skn://api/' + method + (q.length ? '?' + q.join('&') : '');
+  let q = '';
+  if (caller) q += '&c=' + caller;
+  if (sync) q += '&sync=1';
+  for (const k in extra) if (apply(hasOwn, Object, [extra, k])) q += '&' + k + '=' + encode(String(extra[k]));
+  return 'skn://api/' + method + (q ? '?' + q.slice(1) : '');
 }
 
 function unwrap(data) {
@@ -74,7 +100,7 @@ function syncPost(u, body) {
   const xhr = new XHR();
   apply(xhrOpen, xhr, ['POST', u, false]);
   apply(xhrSend, xhr, [body]);
-  return JSON.parse(apply(xhrText, xhr, []));
+  return parseJson(apply(xhrText, xhr, []));
 }
 
 /** Synchronous call (blocks the page): only for plugin APIs that must be synchronous. */

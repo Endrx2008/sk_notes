@@ -1,17 +1,25 @@
 """Per-plugin permissions for the parts of a community plugin that reach outside the
 page: files outside the vault, child processes, network, external URLs, clipboard.
 
-Stored per vault in .sk_notes/permissions.json: {plugin_id: {permission: "allow"|"deny"}}.
+Everything that decides what plugins may do is stored on this machine, not in the vault
+(a shared, synced or downloaded vault must not arrive with its plugins already allowed,
+B2-5): ``<config>/sk_notes/vault-trust/<vault hash>.json`` with
+``{"plugins": bool, "trusted": [ids], "permissions": {id: {perm: "allow"|"deny"}},
+"paths": [picked folders]}``. ``plugins`` replaces the vault's restricted-mode switch.
 The first time a plugin needs a permission, a native dialog asks the user:
 Allow once / Always allow / Deny."""
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import os
+from pathlib import Path
 
 from PyQt6.QtWidgets import QMessageBox
 
+from ..app import config
 from ..app.bridge import ApiError, Ctx
 from ..core import i18n
 
@@ -21,35 +29,95 @@ PERMISSIONS = ("fs-outside-vault", "exec", "network", "open-external", "clipboar
 _session: dict[tuple[str, str], bool] = {}  # "allow once" answers for this run
 
 
+def _store_path(app) -> Path | None:
+    if not app.service:
+        return None
+    root = str(Path(app.service.vault.root).resolve())
+    return config.config_dir() / "vault-trust" / (hashlib.sha1(root.encode("utf-8")).hexdigest()[:20] + ".json")
+
+
 def _store(app) -> dict:
-    return app.service.config_read("permissions.json", {}) or {} if app.service else {}
+    data = {}
+    p = _store_path(app)
+    if p is not None:
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            data = {}
+    if not isinstance(data, dict):
+        data = {}
+    data.setdefault("plugins", False)
+    for key, empty in (("trusted", []), ("permissions", {}), ("paths", [])):
+        if not isinstance(data.get(key), type(empty)):
+            data[key] = empty
+    return data
+
+
+def _save(app, data: dict) -> None:
+    p = _store_path(app)
+    if p is None:
+        return
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_name(p.name + ".tmp")
+    tmp.write_text(json.dumps(data, indent=1), encoding="utf-8")
+    os.replace(tmp, p)
+
+
+def all_permissions(app) -> dict:
+    return {k: v for k, v in _store(app)["permissions"].items() if isinstance(v, dict)}
 
 
 def status(app, plugin: str, perm: str) -> str | None:
-    return (_store(app).get(plugin) or {}).get(perm)
+    return (_store(app)["permissions"].get(plugin) or {}).get(perm)
 
 
 def set_status(app, plugin: str, perm: str, value: str | None) -> None:
     data = _store(app)
-    entry = data.setdefault(plugin, {})
+    entry = data["permissions"].setdefault(plugin, {})
     if value is None:
         entry.pop(perm, None)
     else:
         entry[perm] = value
-    app.service.config_write("permissions.json", data)
+    _save(app, data)
     if perm == "network":
         refresh_network(app)
 
 
-def refresh_network(app) -> None:
-    """Remote fetch() from the page is allowed only while an enabled plugin holds 'network'."""
+def forget_plugin(app, plugin: str) -> None:
+    """A removed plugin loses its trust and answers: a new copy must be confirmed again (B2-7)."""
     data = _store(app)
-    enabled = set(app.service.config_read("community-plugins.json", []) or []) if app.service else set()
-    app.network_plugins = {p for p, perms in data.items()
-                           if isinstance(perms, dict) and perms.get("network") == "allow" and p in enabled}
+    data["permissions"].pop(plugin, None)
+    data["trusted"] = [x for x in data["trusted"] if x != plugin]
+    _save(app, data)
+    refresh_network(app)
 
 
-TRUSTED_KEY = "__trusted__"  # plugin ids the user confirmed once (not a valid plugin id)
+def plugins_allowed(app) -> bool:
+    """Community plugins may run in this vault (restricted mode off), decided on this machine."""
+    return bool(_store(app)["plugins"])
+
+
+def set_plugins_allowed(app, value: bool) -> None:
+    data = _store(app)
+    data["plugins"] = bool(value)
+    _save(app, data)
+    refresh_network(app)
+
+
+def active_plugins(app) -> list[str]:
+    """Plugins that may run: enabled in the vault, trusted here, and plugins allowed."""
+    if not app.service or not plugins_allowed(app):
+        return []
+    trusted = set(_store(app)["trusted"])
+    return [p for p in (app.service.config_read("community-plugins.json", []) or []) if p in trusted]
+
+
+def refresh_network(app) -> None:
+    """Remote fetch() from the page is allowed only while an active plugin holds 'network'."""
+    perms = _store(app)["permissions"]
+    app.network_plugins = {p for p in active_plugins(app) if (perms.get(p) or {}).get("network") == "allow"}
+
+
 
 
 def confirm(app, title: str, text: str, detail: str = "", ok: str = "") -> bool:
@@ -73,19 +141,18 @@ def confirm(app, title: str, text: str, detail: str = "", ok: str = "") -> bool:
 
 
 def is_trusted(app, plugin: str) -> bool:
-    return plugin in (_store(app).get(TRUSTED_KEY) or [])
+    return plugin in _store(app)["trusted"]
 
 
 def trust(app, plugin: str, value: bool = True) -> None:
     data = _store(app)
-    lst = [x for x in (data.get(TRUSTED_KEY) or []) if x != plugin]
+    lst = [x for x in data["trusted"] if x != plugin]
     if value:
         lst.append(plugin)
-    data[TRUSTED_KEY] = lst
-    app.service.config_write("permissions.json", data)
+    data["trusted"] = lst
+    _save(app, data)
 
 
-PATHS_KEY = "__paths__"  # folders outside the vault the user picked in a native dialog
 _chosen: set[str] = set()
 
 
@@ -95,15 +162,14 @@ def remember_path(app, path: str, persist: bool = False) -> None:
     _chosen.add(real)
     if persist and app.service:
         data = _store(app)
-        lst = [x for x in (data.get(PATHS_KEY) or []) if x != real][-19:]
-        data[PATHS_KEY] = lst + [real]
-        app.service.config_write("permissions.json", data)
+        data["paths"] = [x for x in data["paths"] if x != real][-19:] + [real]
+        _save(app, data)
 
 
 def chosen(app, path: str) -> bool:
     """True if `path` is, or is inside, a location the user picked."""
     real = os.path.realpath(os.path.expanduser(path))
-    picked = _chosen | set(_store(app).get(PATHS_KEY) or [])
+    picked = _chosen | set(_store(app)["paths"])
     return any(real == c or real.startswith(c.rstrip(os.sep) + os.sep) for c in picked)
 
 

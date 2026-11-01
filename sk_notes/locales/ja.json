@@ -826,5 +826,11 @@
  "debug.copied": "クリップボードにコピーしました。",
  "settings.status-bar": "ステータスバー",
  "settings.word-count": "単語数",
- "settings.word-count-desc": "開いているノートの単語数と文字数を表示します（プラグインが独自の数を表示する場合はオフにしてください）。"
+ "settings.word-count-desc": "開いているノートの単語数と文字数を表示します（プラグインが独自の数を表示する場合はオフにしてください）。",
+ "plugins.allow-title": "コミュニティプラグイン",
+ "plugins.allow-question": "この保管庫でコミュニティプラグインを許可しますか？プラグインは第三者が書いたコードです。この選択はこのコンピューターにのみ保存されます。",
+ "plugins.allow-ok": "コミュニティプラグインをオンにする",
+ "plugins.remove-title": "プラグインをアンインストール",
+ "plugins.remove-question": "{plugin} をアンインストールしますか？ファイルと設定は削除されます。",
+ "plugins.remove-ok": "アンインストール"
 }

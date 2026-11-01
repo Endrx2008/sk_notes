@@ -14,7 +14,7 @@ import * as lezerLr from '@lezer/lr';
 import * as cmLint from '@codemirror/lint';
 import * as cmLangMarkdown from '@codemirror/lang-markdown';
 import moment from 'moment';
-import { call, takeBootSecret } from '../core/api.js';
+import { call, secretCall, takeBootSecret } from '../core/api.js';
 import { setIcon } from '../core/icons.js';
 import { getLanguage, t } from '../core/i18n.js';
 import { Buffer, nodeModules, process as nodeProcess } from '../compat/node.js';
@@ -25,7 +25,7 @@ import { ButtonComponent, Modal, Setting, confirmDialog, promptDialog } from '..
 
 // Caller tokens (see app/callers.py): kept in this module's private variables and
 // handed only to each plugin's own shims, never to the manager object plugins can reach.
-const tokens = new Map();
+const tokens = Object.create(null); // plain object: no Map methods a plugin could replace
 let pageKey = null;
 let exchange = null;
 
@@ -34,9 +34,10 @@ function ensureTokens() {
     const boot = takeBootSecret();
     if (!boot) return; // pages opened by window.open(): plugins run without identity
     try {
-      const r = await call('plugins.tokens', { boot });
+      // secrets are URL-safe; the body is built without JSON.stringify (B2-3)
+      const r = await secretCall('plugins.tokens', '{"boot":"' + boot + '"}');
       pageKey = r.key;
-      for (const [id, tok] of Object.entries(r.tokens)) tokens.set(id, tok);
+      for (const id in r.tokens) tokens[id] = r.tokens[id];
     } catch (e) { console.error('plugin tokens', e); }
   })();
   return exchange;
@@ -44,10 +45,10 @@ function ensureTokens() {
 
 async function tokenFor(id) {
   await ensureTokens();
-  if (!tokens.has(id) && pageKey) {
-    try { tokens.set(id, await call('plugins.token', { key: pageKey, id })); } catch (e) { console.warn('plugin without identity', id, e); }
+  if (!tokens[id] && pageKey && /^[A-Za-z0-9._-]+$/.test(id)) {
+    try { tokens[id] = await secretCall('plugins.token', '{"key":"' + pageKey + '","id":"' + id + '"}'); } catch (e) { console.warn('plugin without identity', id, e.code || e); }
   }
-  return tokens.get(id) || null;
+  return tokens[id] || null;
 }
 
 function makeRequire(mgr, token) {
@@ -78,6 +79,9 @@ async function obsidianModule(mgr) {
 }
 
 const LOAD_TIMEOUT = 15000;
+// taken before any plugin runs: a plugin that wraps window.Function must not get to run its
+// code inside the next plugin it makes the manager compile (B2-3)
+const FunctionCtor = Function;
 
 // Plugins written for Obsidian import `tokenClassNodeProp` from @codemirror/language, which
 // upstream CodeMirror does not have; an empty prop keeps them from crashing (Dataview's
@@ -165,7 +169,8 @@ class PluginManager {
     this.compat = null;
   }
 
-  get restricted() { return !!this.app.info?.safeMode || this.app.settings.get('restrictedMode') !== false; }
+  // restricted mode is kept on this machine (a vault cannot switch it off by itself, B2-5)
+  get restricted() { return !!this.app.info?.safeMode || !this.app.info?.pluginsAllowed; }
 
   async obsidianModule() { return obsidianModule(this); }
 
@@ -174,7 +179,8 @@ class PluginManager {
     this.manifests = {};
     // the folder name is the identity (a release may ship a different id, e.g. a beta)
     for (const m of r.plugins) this.manifests[m.dir || m.id] = { ...m, id: m.dir || m.id };
-    this.enabledList = r.enabled;
+    // only plugins confirmed on this machine run; a vault's own list is not enough (B2-5)
+    this.enabledList = r.trusted || [];
     this.permissions = r.permissions || {};
     return r;
   }
@@ -199,7 +205,7 @@ class PluginManager {
       // the plugin bundle is CommonJS: function(module, exports, require, ...)
       // only CommonJS names as parameters: bundles may declare their own top-level
       // `app`, `process`... (those are available as globals instead)
-      const fn = new Function('module', 'exports', 'require', `${src.main}\n//# sourceURL=plugin:${id}/main.js`);
+      const fn = new FunctionCtor('module', 'exports', 'require', `${src.main}\n//# sourceURL=plugin:${id}/main.js`);
       fn(module, module.exports, req);
       PluginClass = module.exports.default || module.exports;
       if (typeof PluginClass !== 'function') throw new Error(t('plugins.no-class'));
@@ -288,9 +294,12 @@ class PluginManager {
   }
 
   async setRestricted(v) {
-    this.app.settings.set('restrictedMode', v);
-    if (v) for (const id of Object.keys(this.plugins)) await this.unloadPlugin(id);
+    let r;
+    try { r = await call('plugins.setRestricted', { restricted: !!v }); } catch (e) { if (e.code !== 'cancelled') throw e; return false; }
+    this.app.info.pluginsAllowed = r.allowed;
+    if (!r.allowed) for (const id of Object.keys(this.plugins)) await this.unloadPlugin(id);
     else await this.loadAll();
+    return true;
   }
 
   // ---------------------------------------------------------------- settings tab
@@ -302,10 +311,7 @@ class PluginManager {
     warn.createDiv({ cls: 'callout-title', text: t('plugins.warning-title') });
     warn.createDiv({ cls: 'callout-content', text: t('plugins.warning-text') });
     new Setting(el).setName(t('plugins.restricted')).setDesc(t('plugins.restricted-desc')).addToggle((tg) => tg.setValue(this.restricted).onChange(async (v) => {
-      if (!v) {
-        const ok = await confirmDialog(this.app, { title: t('plugins.restricted-off-title'), message: t('plugins.warning-text'), confirm: t('plugins.restricted-off') });
-        if (!ok) { tg.setValue(true); return; }
-      }
+      // turning plugins on is confirmed in a native dialog (Python), which page code cannot answer
       await this.setRestricted(v);
       this.renderSettings(el, modal);
     }));
@@ -347,10 +353,9 @@ class PluginManager {
       }
       s.addExtraButton((b) => b.setIcon('shield').setTooltip(t('plugins.permissions')).onClick(() => new PermissionsModal(this.app, id, m).open()));
       s.addExtraButton((b) => b.setIcon('trash').setTooltip(t('plugins.uninstall')).onClick(async () => {
-        const ok = await confirmDialog(this.app, { title: t('plugins.uninstall'), message: t('plugins.uninstall-confirm', { name: m.name || id }), confirm: t('plugins.uninstall'), warning: true });
-        if (!ok) return;
+        // confirmed in a native dialog by plugins.remove
+        try { await call('plugins.remove', { id }); } catch (e) { if (e.code !== 'cancelled') throw e; return; }
         await this.unloadPlugin(id);
-        await call('plugins.remove', { id });
         this.renderSettings(el, modal);
       }));
       s.addToggle((tg) => tg.setValue(enabled).setDisabled(this.restricted).onChange(async (v) => {

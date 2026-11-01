@@ -31,6 +31,9 @@ MAX_ALIASES = 50
 MAX_VALUES = 100_000
 
 
+_ASTRAL = re.compile("[\U00010000-\U0010FFFF]")
+
+
 class FrontmatterLoader(yaml.SafeLoader):
     """Safe YAML loader that keeps dates/times as plain strings (like the JS side) and
     limits aliases."""
@@ -132,7 +135,7 @@ class _Positions:
         self.line_starts = [0]
         for m in re.finditer("\n", text):
             self.line_starts.append(m.end())
-        self.wide = any(ord(c) > 0xFFFF for c in text)
+        self.wide = _ASTRAL.search(text) is not None  # characters that take 2 UTF-16 units (C speed)
         if self.wide:
             acc, self.u16 = 0, [0] * (len(text) + 1)
             for i, c in enumerate(text):

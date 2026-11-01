@@ -79,6 +79,8 @@ def read_skai_theme() -> str:
 
 
 _LOCAL = {"localhost", "127.0.0.1", "::1", "[::1]"}
+_OLLAMA_PATHS = {"", "/api/version", "/api/tags", "/api/ps", "/api/show", "/api/chat", "/api/generate", "/api/embed",
+                 "/api/embeddings", "/v1/models", "/v1/chat/completions", "/v1/completions", "/v1/embeddings"}
 
 
 def is_ollama_url(url: str) -> bool:
@@ -88,7 +90,10 @@ def is_ollama_url(url: str) -> bool:
     try:
         u, o = urlsplit(url), urlsplit(read_suite_ollama()[0])
         same_host = u.hostname == o.hostname or {u.hostname, o.hostname} <= _LOCAL
-        return u.scheme in ("http", "https") and same_host and (u.port or 80) == (o.port or 80)
+        # only asking the models: /api/pull, /api/push, /api/create… would let page code make
+        # Ollama contact any registry (B2-9)
+        return (u.scheme in ("http", "https") and same_host and (u.port or 80) == (o.port or 80)
+                and (u.path or "/").rstrip("/") in _OLLAMA_PATHS)
     except ValueError:
         return False
 

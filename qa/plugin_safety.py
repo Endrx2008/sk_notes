@@ -37,7 +37,6 @@ def build(base: Path) -> Path:
         (d / "manifest.json").write_text(json.dumps({"id": pid, "name": pid, "version": "1", "minAppVersion": "0"}))
         (d / "main.js").write_text(src)
     (cfg / "community-plugins.json").write_text(json.dumps(list(PLUGINS)))
-    (cfg / "app.json").write_text(json.dumps({"restrictedMode": False}))
     (v / "Home.md").write_text("# Home\n")
     return v
 
@@ -49,7 +48,8 @@ def main() -> int:
         home = Path(tmp) / "home"
         home.mkdir()
         env = {"SKN_TEST_CONFIRM": "yes"}
-        app = App(vault, port=9441, home=str(home), env=env)
+        trust = {"trusted": list(PLUGINS)}
+        app = App(vault, port=9441, home=str(home), env=env, trust=trust)
         with app:
             ok = app.page.js("new Promise((r) => { const end = Date.now() + 30000;"
                              " (function w() { if (window.__after) r(true); else if (Date.now() > end) r(false); else setTimeout(w, 200); })(); })",

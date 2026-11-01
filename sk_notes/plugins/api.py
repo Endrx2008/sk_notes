@@ -61,8 +61,9 @@ def register(app) -> None:
             m["hasStyles"] = (d / "styles.css").is_file()
             m["hasMain"] = (d / "main.js").is_file()
             out.append(m)
-        perms = {k: v for k, v in (svc().config_read("permissions.json", {}) or {}).items() if isinstance(v, dict)}
-        return {"plugins": out, "enabled": enabled(), "permissions": perms}
+        return {"plugins": out, "enabled": enabled(), "permissions": permissions.all_permissions(app),
+                "trusted": [x for x in enabled() if permissions.is_trusted(app, x)],
+                "allowed": permissions.plugins_allowed(app)}
 
     def installed_ids() -> list[str]:
         d = plugins_dir()
@@ -71,14 +72,19 @@ def register(app) -> None:
     # ------------------------------------------------------------- caller tokens (see app/callers.py)
     @r("plugins.tokens")
     def plugins_tokens(p, ctx):
-        res = app.scheme.callers.exchange(p.get("boot") or "", installed_ids())
+        # only plugins that may run get an identity: a disabled or untrusted plugin loaded
+        # by another one runs without any permission (B2-6)
+        res = app.scheme.callers.exchange(p.get("boot") or "", [x for x in permissions.active_plugins(app) if x in installed_ids()])
         if res is None:
             raise ApiError("permission-denied", "boot secret already used or unknown")
         return res
 
     @r("plugins.token")
     def plugins_token(p, ctx):
-        tok = app.scheme.callers.token(p.get("key") or "", _safe_id(p.get("id", "")))
+        pid = _safe_id(p.get("id", ""))
+        if pid not in permissions.active_plugins(app):
+            raise ApiError("permission-denied", "plugin not enabled")
+        tok = app.scheme.callers.token(p.get("key") or "", pid)
         if tok is None:
             raise ApiError("permission-denied", "no token")
         return tok
@@ -118,14 +124,32 @@ def register(app) -> None:
         if ctx.plugin:
             raise ApiError("permission-denied")
         pid = _safe_id(p["id"])
+        strings = i18n.strings(app.language)
+        if not permissions.confirm(app, strings.get("plugins.remove-title", "Uninstall plugin"),
+                                   strings.get("plugins.remove-question", "Uninstall {plugin}?").replace("{plugin}", permissions._plugin_name(app, pid)),
+                                   ok=strings.get("plugins.remove-ok", "Uninstall")):
+            raise ApiError("cancelled")
         d = plugins_dir() / pid
         if d.is_dir():
             shutil.rmtree(d)
         svc().config_write("community-plugins.json", [x for x in enabled() if x != pid])
-        perms = svc().config_read("permissions.json", {}) or {}
-        perms.pop(pid, None)
-        svc().config_write("permissions.json", perms)
+        permissions.forget_plugin(app, pid)
         return True
+
+    @r("plugins.setRestricted")
+    def plugins_set_restricted(p, ctx):
+        """Restricted mode is kept on this machine: a vault cannot turn it off by itself."""
+        if ctx.plugin:
+            raise ApiError("permission-denied")
+        allow = not p.get("restricted", True)
+        if allow and not permissions.plugins_allowed(app):
+            strings = i18n.strings(app.language)
+            if not permissions.confirm(app, strings.get("plugins.allow-title", "Community plugins"),
+                                       strings.get("plugins.allow-question", "Allow community plugins in this vault?"),
+                                       ok=strings.get("plugins.allow-ok", "Turn on community plugins")):
+                raise ApiError("cancelled")
+        permissions.set_plugins_allowed(app, allow)
+        return {"allowed": permissions.plugins_allowed(app)}
 
     @r("plugins.installFolder")
     def plugins_install_folder(p, ctx):
@@ -196,7 +220,7 @@ def register(app) -> None:
                                                .replace("{what}", strings.get(f"perm.{perm}", perm))):
                         continue
                 permissions.set_status(app, pid, perm, value)
-        return (svc().config_read("permissions.json", {}) or {}).get(p["id"], {})
+        return permissions.all_permissions(app).get(p["id"], {})
 
     # ------------------------------------------------------------- Node shims
     def resolve_path(ctx: Ctx, raw: str, write: bool) -> Path:
@@ -214,6 +238,8 @@ def register(app) -> None:
                 permissions.require(app, ctx, "fs-outside-vault", f"{path} -> {real}")
                 return path
             rel = path.relative_to(root).as_posix() if path != root else ""
+            if write and (rel == "" or rel == ".git" or rel.startswith(".git/")):
+                raise ApiError("permission-denied", rel or "vault folder")  # B2-4, B2-8
             cfg = ".sk_notes"
             if rel == cfg or rel.startswith(cfg + "/"):
                 own = f"{cfg}/plugins/{ctx.plugin}" if ctx.plugin else None

@@ -826,5 +826,11 @@
  "debug.copied": "Copié dans le presse-papiers.",
  "settings.status-bar": "Barre d'état",
  "settings.word-count": "Nombre de mots",
- "settings.word-count-desc": "Affiche le nombre de mots et de caractères de la note ouverte (désactivez-le si un module affiche son propre compte)."
+ "settings.word-count-desc": "Affiche le nombre de mots et de caractères de la note ouverte (désactivez-le si un module affiche son propre compte).",
+ "plugins.allow-title": "Modules de la communauté",
+ "plugins.allow-question": "Autoriser les modules de la communauté dans ce coffre ? Ce sont du code écrit par des tiers ; ce choix reste sur cet ordinateur seulement.",
+ "plugins.allow-ok": "Activer les modules de la communauté",
+ "plugins.remove-title": "Désinstaller le module",
+ "plugins.remove-question": "Désinstaller {plugin} ? Ses fichiers et réglages sont supprimés.",
+ "plugins.remove-ok": "Désinstaller"
 }

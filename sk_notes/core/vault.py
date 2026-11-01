@@ -297,7 +297,7 @@ class Vault:
         if dst.exists():
             raise VaultError("already-exists")
         if src.is_dir():
-            shutil.copytree(src, dst)
+            shutil.copytree(src, dst, symlinks=True)  # links copied as links: loops cannot recurse (B2-16)
         else:
             shutil.copy2(src, dst)
 

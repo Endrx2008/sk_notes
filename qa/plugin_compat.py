@@ -37,8 +37,6 @@ def make_vault(base: Path, ids: list[str]) -> Path:
         src = ROOT / "research" / "plugins" / pid / "release"
         if (src / "main.js").exists():
             shutil.copytree(src, cfg / "plugins" / pid)
-    (cfg / "app.json").write_text(json.dumps({"restrictedMode": False}), encoding="utf-8")
-    (cfg / "permissions.json").write_text(json.dumps({pid: {p: "deny" for p in PERMS} for pid in ids}), encoding="utf-8")
     (cfg / "community-plugins.json").write_text("[]", encoding="utf-8")
     return v
 
@@ -82,7 +80,9 @@ def main() -> int:
         vault = make_vault(base, [pid])
         try:
             # the native "enable this plugin?" confirmation is answered yes (the user enables it)
-            with App(vault, port=9399 - (n % 2), env={"SKN_TEST_CONFIRM": "yes"}) as app:
+            # plugins allowed and every permission denied, on this machine (sk_notes/plugins/permissions.py)
+            with App(vault, port=9399 - (n % 2), env={"SKN_TEST_CONFIRM": "yes"},
+                     trust={"permissions": {pid: {p: "deny" for p in PERMS}}}) as app:
                 page = app.page
                 time.sleep(2)
                 page.console.clear()

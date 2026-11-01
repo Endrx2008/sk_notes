@@ -826,5 +826,11 @@
  "debug.copied": "Copiado para a área de transferência.",
  "settings.status-bar": "Barra de estado",
  "settings.word-count": "Contagem de palavras",
- "settings.word-count-desc": "Mostra o número de palavras e caracteres da nota aberta (desligue-a se um plugin mostrar a sua própria contagem)."
+ "settings.word-count-desc": "Mostra o número de palavras e caracteres da nota aberta (desligue-a se um plugin mostrar a sua própria contagem).",
+ "plugins.allow-title": "Plugins da comunidade",
+ "plugins.allow-question": "Permitir plugins da comunidade neste cofre? São código escrito por terceiros; esta escolha fica só neste computador.",
+ "plugins.allow-ok": "Ligar plugins da comunidade",
+ "plugins.remove-title": "Desinstalar plugin",
+ "plugins.remove-question": "Desinstalar {plugin}? Os seus ficheiros e definições são apagados.",
+ "plugins.remove-ok": "Desinstalar"
 }

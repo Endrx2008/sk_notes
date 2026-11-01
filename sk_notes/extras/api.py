@@ -106,8 +106,15 @@ def register(app) -> None:
 
     # ------------------------------------------------------------- git
     def git(*args, timeout=120, check=False):
+        root = svc().vault.root
+        gitdir = root / ".git"
+        if gitdir.exists() and not gitdir.is_dir() or gitdir.is_symlink():
+            # a ".git" file or link points git at a folder page code may have written (B2-4)
+            raise ApiError("permission-denied", ".git is not a folder")
+        env = dict(os.environ, GIT_DIR=str(gitdir), GIT_WORK_TREE=str(root), GIT_TERMINAL_PROMPT="0")
         try:
-            res = subprocess.run(["git", *args], cwd=svc().vault.root, capture_output=True, text=True, timeout=timeout)  # noqa: S603,S607
+            res = subprocess.run(["git", "-c", "core.fsmonitor=false", *args], cwd=root, env=env, capture_output=True,  # noqa: S603,S607
+                                 text=True, timeout=timeout)
         except FileNotFoundError as exc:
             raise ApiError("git-missing") from exc
         except subprocess.TimeoutExpired as exc:

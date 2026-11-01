@@ -826,5 +826,11 @@
  "debug.copied": "In die Zwischenablage kopiert.",
  "settings.status-bar": "Statusleiste",
  "settings.word-count": "Wortanzahl",
- "settings.word-count-desc": "Zeigt die Anzahl der Wörter und Zeichen der offenen Notiz (ausschalten, wenn ein Plugin eine eigene Zählung zeigt)."
+ "settings.word-count-desc": "Zeigt die Anzahl der Wörter und Zeichen der offenen Notiz (ausschalten, wenn ein Plugin eine eigene Zählung zeigt).",
+ "plugins.allow-title": "Community-Plugins",
+ "plugins.allow-question": "Community-Plugins in diesem Tresor erlauben? Plugins sind Code von Dritten; die Wahl bleibt nur auf diesem Computer.",
+ "plugins.allow-ok": "Community-Plugins einschalten",
+ "plugins.remove-title": "Plugin deinstallieren",
+ "plugins.remove-question": "{plugin} deinstallieren? Seine Dateien und Einstellungen werden gelöscht.",
+ "plugins.remove-ok": "Deinstallieren"
 }
