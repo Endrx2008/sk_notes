@@ -103,6 +103,8 @@
  "cmd.fold-all": "Piega tutti i titoli e gli elenchi",
  "cmd.unfold-all": "Espandi tutti i titoli e gli elenchi",
  "cmd.follow-link": "Segui il link sotto il cursore",
+ "cmd.open-link-new-tab": "Apri il link sotto il cursore in una nuova scheda",
+ "cmd.open-link-new-split": "Apri il link sotto il cursore a destra",
  "cmd.cursor-above": "Aggiungi cursore sopra",
  "cmd.cursor-below": "Aggiungi cursore sotto",
  "cmd.add-property": "Aggiungi proprietà al file",

@@ -103,6 +103,8 @@
  "cmd.fold-all": "Fold all headings and lists",
  "cmd.unfold-all": "Unfold all headings and lists",
  "cmd.follow-link": "Follow link under cursor",
+ "cmd.open-link-new-tab": "Open link under cursor in new tab",
+ "cmd.open-link-new-split": "Open link under cursor to the right",
  "cmd.cursor-above": "Add cursor above",
  "cmd.cursor-below": "Add cursor below",
  "cmd.add-property": "Add file property",

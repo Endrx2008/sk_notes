@@ -245,17 +245,20 @@ export function registerCoreFeatures(app) {
   cmd('editor:unindent-list', t('cmd.unindent'), { hotkeys: [{ modifiers: [M], key: '[' }], editorCallback: (e) => e.exec('indentLess') });
   cmd('editor:fold-all', t('cmd.fold-all'), { editorCallback: (e) => e.exec('foldAll') });
   cmd('editor:unfold-all', t('cmd.unfold-all'), { editorCallback: (e) => e.exec('unfoldAll') });
-  cmd('editor:follow-link', t('cmd.follow-link'), { hotkeys: [{ modifiers: [M], key: 'Enter' }], editorCheckCallback: (check, editor, view) => {
+  const linkCmd = (id, name, hotkeys, mode, toggleTask) => cmd(id, name, { hotkeys, editorCheckCallback: (check, editor, view) => {
     const link = linkAtCursor(editor);
     const line = editor.getLine(editor.getCursor().line);
-    const task = /^\s*([-*+]|\d+[.)])\s+\[.\]/.test(line);
+    const task = toggleTask && /^\s*([-*+]|\d+[.)])\s+\[.\]/.test(line);
     if (!link && !task) return false;
     if (!check) {
-      if (link) ws.openLinkText(link, view.file?.path || '', 'tab');
+      if (link) ws.openLinkText(link, view.file?.path || '', mode);
       else fmt.toggleChecklist(editor.cm);
     }
     return true;
   } });
+  linkCmd('editor:follow-link', t('cmd.follow-link'), [{ modifiers: ['Alt'], key: 'Enter' }], false, false);
+  linkCmd('editor:open-link-in-new-leaf', t('cmd.open-link-new-tab'), [{ modifiers: [M], key: 'Enter' }], 'tab', true);
+  linkCmd('editor:open-link-in-new-split', t('cmd.open-link-new-split'), [], 'split', false);
   cmd('editor:add-cursor-above', t('cmd.cursor-above'), { hotkeys: [{ modifiers: [M, 'Alt'], key: 'ArrowUp' }], editorCallback: (e) => addCursor(e, -1) });
   cmd('editor:add-cursor-below', t('cmd.cursor-below'), { hotkeys: [{ modifiers: [M, 'Alt'], key: 'ArrowDown' }], editorCallback: (e) => addCursor(e, 1) });
   cmd('editor:add-property', t('cmd.add-property'), { checkCallback: (check) => {

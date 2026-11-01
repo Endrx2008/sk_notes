@@ -103,6 +103,8 @@
  "cmd.fold-all": "Replier tous les titres et listes",
  "cmd.unfold-all": "Déplier tous les titres et listes",
  "cmd.follow-link": "Suivre le lien sous le curseur",
+ "cmd.open-link-new-tab": "Ouvrir le lien sous le curseur dans un nouvel onglet",
+ "cmd.open-link-new-split": "Ouvrir le lien sous le curseur à droite",
  "cmd.cursor-above": "Ajouter un curseur au-dessus",
  "cmd.cursor-below": "Ajouter un curseur en dessous",
  "cmd.add-property": "Ajouter une propriété au fichier",

@@ -103,6 +103,8 @@
  "cmd.fold-all": "Plegar todos los encabezados y listas",
  "cmd.unfold-all": "Desplegar todos los encabezados y listas",
  "cmd.follow-link": "Seguir el enlace bajo el cursor",
+ "cmd.open-link-new-tab": "Abrir el enlace bajo el cursor en una pestaña nueva",
+ "cmd.open-link-new-split": "Abrir el enlace bajo el cursor a la derecha",
  "cmd.cursor-above": "Añadir cursor arriba",
  "cmd.cursor-below": "Añadir cursor abajo",
  "cmd.add-property": "Añadir propiedad al archivo",

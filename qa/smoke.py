@@ -113,6 +113,15 @@ class Smoke:
             state = self.page.js("(() => { const e = app.workspace.activeEditor?.editor; return { file: app.workspace.getActiveFile()?.path,"
                                  " cursor: e?.getCursor(), line: e?.getLine(e.getCursor().line), focus: document.activeElement?.className }; })()")
             raise AssertionError(f"link not followed: {state}") from None
+        # Alt+Enter follows in the same tab (A-15)
+        self.page.key("Tab", "ctrl+shift")
+        self.page.wait("app.workspace.getActiveFile()?.path === 'Home.md'")
+        tabs = self.page.js("app.workspace.getLeavesOfType('markdown').length")
+        self.page.js("(() => { const e = app.workspace.activeEditor.editor; const l = e.getValue().split('\\n').findIndex((x) => x.includes('[[Ideas]]'));"
+                     " e.setCursor(l, e.getLine(l).indexOf('[[Ideas]]') + 3); e.focus(); return 1; })()")
+        self.page.key("Enter", "alt")
+        self.page.wait("app.workspace.getActiveFile()?.path === 'Ideas.md'", timeout=10)
+        assert self.page.js("app.workspace.getLeavesOfType('markdown').length") == tabs, "Alt+Enter opened a new tab"
 
     def new_note(self):
         before = len(list(self.vault.rglob("*.md")))
@@ -227,7 +236,10 @@ class Smoke:
                 break
             assert time.time() < end, f"canvas not saved as an object with the typed card: {str(data)[:120]}"
             time.sleep(0.3)
-        assert {n["id"] for n in data["nodes"]} >= {"t1", "f1"}
+        files = {n["id"]: n.get("file") for n in data["nodes"]}
+        assert set(files) >= {"t1", "f1"}
+        # A-3: the earlier rename of Projects/Plan.md must have reached the file card
+        assert files["f1"] == "Projects/Roadmap.md", files
         assert self.page.js("document.querySelectorAll('.canvas-node').length") == 3
 
     def active_editor_after_open(self):
@@ -241,7 +253,7 @@ class Smoke:
 
     def link_suggest_prefers_existing(self):
         """Regression: Enter in the [[ popup picked "create note" over an existing match."""
-        self.open_with_switcher("plan", "Projects/Plan.md")
+        self.open_with_switcher("roadmap", "Projects/Roadmap.md")
         before = self.page.js("(() => { const e = app.workspace.activeEditor.editor; e.setCursor(e.lastLine(), 0); e.focus(); return e.getValue(); })()")
         self.page.type_keys("see [[Idea")
         self.page.wait("!!document.querySelector('.cm-tooltip-autocomplete li[aria-selected]')")
@@ -263,12 +275,12 @@ class Smoke:
     def external_change_after_save(self):
         """Regression: after a note had been saved once, changes made outside the editor
         never reached it, and the next autosave wrote the old text back."""
-        self.open_with_switcher("plan", "Projects/Plan.md")
+        self.open_with_switcher("roadmap", "Projects/Roadmap.md")
         self.page.js("(async () => { const v = app.workspace.activeLeaf.view; v.editor.replaceRange('edited ', { line: 0, ch: 0 }); await v.save(); return 1; })()")
-        self.page.js("(async () => { await app.vault.process(app.vault.getAbstractFileByPath('Projects/Plan.md'), (t) => t + '\\nfrom a plugin\\n'); return 1; })()")
+        self.page.js("(async () => { await app.vault.process(app.vault.getAbstractFileByPath('Projects/Roadmap.md'), (t) => t + '\\nfrom a plugin\\n'); return 1; })()")
         self.page.wait("app.workspace.activeLeaf.view.editor.getValue().includes('from a plugin')", timeout=5)
         self.page.js("(() => { app.workspace.activeLeaf.view.editor.replaceRange('typed ', { line: 0, ch: 0 }); return 1; })()")
-        self._wait_file("Projects/Plan.md", lambda t: t.startswith("typed edited") and "from a plugin" in t, "plugin change lost")
+        self._wait_file("Projects/Roadmap.md", lambda t: t.startswith("typed edited") and "from a plugin" in t, "plugin change lost")
 
     def template_keeps_properties(self):
         """Regression: inserting a template dropped its properties."""
@@ -288,7 +300,7 @@ class Smoke:
     def skai_rewrite_replaces_selection(self):
         """Regression: the rewrite was inserted next to the selection (range read after the
         model answered, when the selection was gone). The model is stubbed here."""
-        self.open_with_switcher("plan", "Projects/Plan.md")
+        self.open_with_switcher("roadmap", "Projects/Roadmap.md")
         self.page.js("""(async () => {
           const leaf = await app.workspace.ensureSideLeaf('skai', 'right', { reveal: false });
           const sv = leaf.view, e = app.workspace.activeEditor.editor;
@@ -302,7 +314,7 @@ class Smoke:
         self.page.js("(() => { document.querySelector('.skai-message-actions button.mod-cta').click(); return 1; })()")
         self.page.wait("!!document.querySelector('.modal button.mod-cta')")
         self.page.js("(() => { document.querySelector('.modal button.mod-cta').click(); return 1; })()")
-        text = self._wait_file("Projects/Plan.md", lambda t: "Step one, rewritten." in t, "rewrite not applied")
+        text = self._wait_file("Projects/Roadmap.md", lambda t: "Step one, rewritten." in t, "rewrite not applied")
         assert "links back" not in text, text
 
     def export_pdf(self):

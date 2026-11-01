@@ -103,6 +103,8 @@
  "cmd.fold-all": "すべての見出しとリストを折りたたむ",
  "cmd.unfold-all": "すべての見出しとリストを展開",
  "cmd.follow-link": "カーソル位置のリンクを開く",
+ "cmd.open-link-new-tab": "カーソル位置のリンクを新しいタブで開く",
+ "cmd.open-link-new-split": "カーソル位置のリンクを右側に開く",
  "cmd.cursor-above": "上にカーソルを追加",
  "cmd.cursor-below": "下にカーソルを追加",
  "cmd.add-property": "ファイルにプロパティを追加",

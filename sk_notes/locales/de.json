@@ -103,6 +103,8 @@
  "cmd.fold-all": "Alle Überschriften und Listen einklappen",
  "cmd.unfold-all": "Alle Überschriften und Listen ausklappen",
  "cmd.follow-link": "Link unter dem Cursor folgen",
+ "cmd.open-link-new-tab": "Link unter dem Cursor in neuem Tab öffnen",
+ "cmd.open-link-new-split": "Link unter dem Cursor rechts öffnen",
  "cmd.cursor-above": "Cursor oberhalb hinzufügen",
  "cmd.cursor-below": "Cursor unterhalb hinzufügen",
  "cmd.add-property": "Dateieigenschaft hinzufügen",

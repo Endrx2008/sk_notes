@@ -103,6 +103,8 @@
  "cmd.fold-all": "折叠所有标题和列表",
  "cmd.unfold-all": "展开所有标题和列表",
  "cmd.follow-link": "打开光标处的链接",
+ "cmd.open-link-new-tab": "在新标签页中打开光标处的链接",
+ "cmd.open-link-new-split": "在右侧打开光标处的链接",
  "cmd.cursor-above": "在上方添加光标",
  "cmd.cursor-below": "在下方添加光标",
  "cmd.add-property": "添加文件属性",
