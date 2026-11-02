@@ -24,7 +24,7 @@ const setProto = Object.setPrototypeOf;
 // runs, and called without going through anything a plugin could replace.
 const apply = Reflect.apply;
 const nativeFetch = globalThis.fetch;
-const responseJson = globalThis.Response?.prototype.json;
+const responseText = globalThis.Response?.prototype.text; // text, not json(): a promise resolved with a parsed object lets Object.prototype.then see it
 const XHR = globalThis.XMLHttpRequest; // absent in Node (unit tests)
 const xhrOpen = XHR?.prototype.open;
 const xhrSend = XHR?.prototype.send;
@@ -32,7 +32,7 @@ const xhrText = XHR && Object.getOwnPropertyDescriptor(XHR.prototype, 'responseT
 // The parsed reply has no prototype: when a promise is resolved with an object, JavaScript
 // looks up `then` on it, and a plugin hooking Object.prototype.then would see replies that
 // carry a plugin token (B4-1).
-const fetchJson = async (u, init) => setProto(await apply(responseJson, await apply(nativeFetch, globalThis, [u, init]), []), null);
+const fetchJson = async (u, init) => setProto(parseJson(await apply(responseText, await apply(nativeFetch, globalThis, [u, init]), [])), null);
 
 // window.open() never opens a page (see application.Page.createWindow): web links go to the
 // browser like a clicked link
