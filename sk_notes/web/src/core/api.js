@@ -32,7 +32,7 @@ const xhrText = XHR && Object.getOwnPropertyDescriptor(XHR.prototype, 'responseT
 // The parsed reply has no prototype: when a promise is resolved with an object, JavaScript
 // looks up `then` on it, and a plugin hooking Object.prototype.then would see replies that
 // carry a plugin token (B4-1).
-const fetchJson = async (u, init) => setProto(apply(responseJson, await apply(nativeFetch, globalThis, [u, init]), []), null);
+const fetchJson = async (u, init) => setProto(await apply(responseJson, await apply(nativeFetch, globalThis, [u, init]), []), null);
 
 // window.open() never opens a page (see application.Page.createWindow): web links go to the
 // browser like a clicked link
@@ -58,7 +58,7 @@ const authReady = (async () => {
   const bytes = apply(textEncode, enc, ['{"boot":"' + b + '"}']);
   const r = await fetchJson('skn://api/app.auth?len=' + bytes.length, { method: 'POST', body: bytes });
   if (r && r.ok) appKey = r.result;
-  else console.error('sk_notes: not authenticated', r);
+  else console.error('sk_notes: not authenticated', r?.error, r?.detail);
 })();
 
 function bodyOf(obj) {
@@ -84,6 +84,18 @@ export async function pluginTokens() {
 
 export async function pluginToken(id) {
   return String(await secretReply('plugins.token', { id }));
+}
+
+// Only string concatenation and functions taken above: a plugin that replaces
+// encodeURIComponent, Array.prototype.push/join or Object.entries must not see the caller
+// token of another plugin's call (B2-3). Tokens and keys are URL-safe, so they need no encoding.
+function url(method, caller, sync, extra = {}) {
+  let q = '';
+  if (caller) q += '&c=' + caller;
+  else if (appKey) q += '&a=' + appKey;
+  if (sync) q += '&sync=1';
+  for (const k in extra) if (apply(hasOwn, Object, [extra, k])) q += '&' + k + '=' + encode(String(extra[k]));
+  return 'skn://api/' + method + (q ? '?' + q.slice(1) : '');
 }
 
 function unwrap(data) {

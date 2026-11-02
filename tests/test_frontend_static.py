@@ -39,6 +39,12 @@ class FrontendStaticTests(unittest.TestCase):
                 bad.append(f.name)
         self.assertEqual(bad, [])
 
+    def test_api_module_defines_what_it_calls(self):
+        # an edit once dropped url() from core/api.js: every call then failed at start-up
+        src = (WEB / "src" / "core" / "api.js").read_text(encoding="utf-8")
+        for name in ("url", "unwrap", "bodyOf", "partsOf", "syncPost", "fetchJson", "secretReply"):
+            self.assertRegex(src, rf"(?m)^(async )?function {name}\(|^const {name} = ", name)
+
     def test_codemirror_overrides_beat_its_base_theme(self):
         css = (WEB / "styles" / "20-editor.css").read_text(encoding="utf-8")
         # a single-class rule loses against CodeMirror's injected ".ͼ2 .cm-gutters" (light background)
