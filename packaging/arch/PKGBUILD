@@ -34,10 +34,12 @@ package() {
     # SKAI_ Memory: shared Markdown memory (library, JS twin, write helper, first-run setup)
     install -d "$pkgdir/usr/lib/skai"
     install -m755 skai_memory/skai-memory-write skai_memory/skai-memory-setup skai_memory/skai_memory.py "$pkgdir/usr/lib/skai/"
+    install -m644 skai_memory/skai_memory_bridge.py "$pkgdir/usr/lib/skai/"
     install -m644 skai_memory/skai_memory.js "$pkgdir/usr/lib/skai/"
     local py; py=$(python -c 'import sysconfig;print(sysconfig.get_paths()["purelib"])')
     install -d "$pkgdir$py"
     ln -s /usr/lib/skai/skai_memory.py "$pkgdir$py/skai_memory.py"
+    ln -s /usr/lib/skai/skai_memory_bridge.py "$pkgdir$py/skai_memory_bridge.py"
     ln -s /usr/lib/skai/skai_memory.py "$pkgdir/usr/bin/skai-memory"
     install -Dm644 skai_memory/README.md "$pkgdir/usr/share/doc/$pkgname/README.skai-memory.md"
 

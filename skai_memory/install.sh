@@ -6,8 +6,9 @@ here=$(cd "$(dirname "$0")" && pwd)
 LIB=/usr/lib/skai
 install -d -m 0755 "$LIB"
 install -m 0755 "$here/skai-memory-write" "$here/skai-memory-setup" "$LIB/"
-install -m 0644 "$here/skai_memory.py" "$here/skai_memory.js" "$LIB/"
+install -m 0644 "$here/skai_memory.py" "$here/skai_memory.js" "$here/skai_memory_bridge.py" "$LIB/"
 py=$(python3 -c 'import sysconfig;print(sysconfig.get_paths()["purelib"])')
 ln -sf "$LIB/skai_memory.py" "$py/skai_memory.py"
+ln -sf "$LIB/skai_memory_bridge.py" "$py/skai_memory_bridge.py"
 ln -sf "$LIB/skai_memory.py" /usr/bin/skai-memory
 exec sh "$LIB/skai-memory-setup"

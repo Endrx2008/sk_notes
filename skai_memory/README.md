@@ -34,3 +34,8 @@ Install: the sk-notes package does it; from a checkout `sudo sh install.sh`, the
 In sk_notes just open `/var/lib/skai/SKAI_ Memory` as a vault: it is shown read-only with an "Unlock editing" bar.
 
 Tests: `python3 -m unittest discover -s tests`.
+
+## For apps with a chat
+`skai_memory_bridge.py` is the ready-made glue: `open_memory(app)`, `recall_text(mem, question)` (a block for the
+prompt) and `remember_turn(mem, app, question, answer)`, or `around_turn(app, request, ask)` for apps with an
+`ask(request)` function. Python apps copy it next to `skai_memory.py`; add-ons use `skai_memory.js`.

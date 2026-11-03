@@ -32,8 +32,10 @@ find "$APPDIR" -type f -exec chmod 644 {} +
 install -d -m 755 "$STAGE/usr/lib/skai" "$STAGE/usr/lib/python3/dist-packages"
 install -m 755 skai_memory/skai-memory-write skai_memory/skai-memory-setup "$STAGE/usr/lib/skai/"
 install -m 755 skai_memory/skai_memory.py "$STAGE/usr/lib/skai/"
+install -m 644 skai_memory/skai_memory_bridge.py "$STAGE/usr/lib/skai/"
 install -m 644 skai_memory/skai_memory.js "$STAGE/usr/lib/skai/"
 ln -s ../../skai/skai_memory.py "$STAGE/usr/lib/python3/dist-packages/skai_memory.py"
+ln -s ../../skai/skai_memory_bridge.py "$STAGE/usr/lib/python3/dist-packages/skai_memory_bridge.py"
 ln -s ../lib/skai/skai_memory.py "$STAGE/usr/bin/skai-memory"
 install -m 644 skai_memory/README.md "$STAGE/usr/share/doc/sk-notes/README.skai-memory.md"
 
