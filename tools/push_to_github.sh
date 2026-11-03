@@ -4,6 +4,7 @@
 # uses it only for this run and forgets it: it is never written to disk, to the git config or to
 # the command line, and the variable and the temporary helper are removed on exit.
 #   Token: GitHub -> Settings -> Developer settings -> Personal access tokens, scope "repo".
+[ -n "${BASH_VERSION:-}" ] || exec bash "$0" "$@"   # started with sh: switch to bash (read -s)
 set -eu
 OWNER=Endrx2008
 REPO=sk_notes
