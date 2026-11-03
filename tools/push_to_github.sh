@@ -1,49 +1,39 @@
-#!/bin/bash
-# Push this repository to GitHub as Endrx2008/sk_notes.
-# Asks for a GitHub personal access token (GitHub no longer accepts account passwords for git),
-# uses it only for this run and forgets it: it is never written to disk, to the git config or to
-# the command line, and the variable and the temporary helper are removed on exit.
-#   Token: GitHub -> Settings -> Developer settings -> Personal access tokens, scope "repo".
-[ -n "${BASH_VERSION:-}" ] || exec bash "$0" "$@"   # started with sh: switch to bash (read -s)
+#!/bin/sh
+# Push this repository to GitHub as Endrx2008/sk_notes, logging in through the GitHub website.
+# `gh auth login` shows a one-time code and opens github.com: you sign in there with your normal
+# account (password / 2FA). Nothing is typed into this script, and no password or token is kept
+# by it: the permission is granted to the gh tool, and revoked again below unless you say otherwise.
 set -eu
 OWNER=Endrx2008
 REPO=sk_notes
 cd "$(cd "$(dirname "$0")/.." && pwd)"
+command -v gh >/dev/null || { echo "install the GitHub CLI first: sudo apt install gh" >&2; exit 1; }
 
-printf 'GitHub token for %s (input hidden): ' "$OWNER" >&2
-IFS= read -rs SKN_PUSH_TOKEN
-printf '\n' >&2
-[ -n "$SKN_PUSH_TOKEN" ] || { echo "no token given" >&2; exit 1; }
-export SKN_PUSH_TOKEN
+LOGGED_IN_BEFORE=0
+gh auth status -h github.com >/dev/null 2>&1 && LOGGED_IN_BEFORE=1
+if [ "$LOGGED_IN_BEFORE" = 0 ]; then
+    gh auth login -h github.com -p https -w     # opens the browser: sign in on the website
+fi
+if [ "$(gh api user -q .login)" != "$OWNER" ]; then
+    echo "logged in as $(gh api user -q .login), not $OWNER: run 'gh auth logout' and try again" >&2
+    exit 1
+fi
 
-ASKPASS=$(mktemp)
-chmod 700 "$ASKPASS"
-cleanup() { rm -f "$ASKPASS"; unset SKN_PUSH_TOKEN; }
-trap cleanup EXIT
-cat > "$ASKPASS" <<'SH'
-#!/bin/sh
-case "$1" in
-  Username*) printf '%s\n' "$SKN_PUSH_USER" ;;
-  *) printf '%s\n' "$SKN_PUSH_TOKEN" ;;
-esac
-SH
-export SKN_PUSH_USER="$OWNER" GIT_ASKPASS="$ASKPASS" GIT_TERMINAL_PROMPT=0
-
-# create the repository when it does not exist yet (token passed to curl on stdin, not as an argument)
-code=$(printf 'header = "Authorization: Bearer %s"\n' "$SKN_PUSH_TOKEN" |
-  curl -sS -K - -o /dev/null -w '%{http_code}' "https://api.github.com/repos/$OWNER/$REPO") || code=000
-case "$code" in
-  200) echo "repository $OWNER/$REPO exists" >&2 ;;
-  404)
+if gh repo view "$OWNER/$REPO" >/dev/null 2>&1; then
+    echo "repository $OWNER/$REPO exists" >&2
+else
     echo "creating $OWNER/$REPO (public)..." >&2
-    printf 'header = "Authorization: Bearer %s"\n' "$SKN_PUSH_TOKEN" |
-      curl -sS -K - -f -o /dev/null -X POST https://api.github.com/user/repos \
-        -d "{\"name\":\"$REPO\",\"description\":\"Markdown notes and SKAI shared memory for Skorpion OS\",\"private\":false}" ;;
-  401|403) echo "GitHub refused the token (HTTP $code)" >&2; exit 1 ;;
-  *) echo "cannot reach GitHub (HTTP $code)" >&2; exit 1 ;;
-esac
+    gh repo create "$OWNER/$REPO" --public --description "Markdown notes and SKAI shared memory for Skorpion OS"
+fi
 
 git remote remove origin 2>/dev/null || true
 git remote add origin "https://github.com/$OWNER/$REPO.git"
+gh auth setup-git -h github.com           # git asks gh for the credentials during the push only
 git push -u origin main
 echo "done: https://github.com/$OWNER/$REPO" >&2
+
+if [ "$LOGGED_IN_BEFORE" = 0 ]; then
+    printf 'Forget this login on the computer now? [Y/n] ' >&2
+    read -r a
+    case "$a" in n|N) ;; *) gh auth logout -h github.com >/dev/null 2>&1 && echo "logged out" >&2 ;; esac
+fi
