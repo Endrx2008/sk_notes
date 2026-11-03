@@ -32,6 +32,10 @@ License: **GPL-3.0-or-later**. sk_notes is not affiliated with Obsidian or Dynal
 | SKAI | questions about the open note or the whole vault (local embedding index), summaries, tag and link suggestions, proofreading and rewriting — streamed, cancellable, and never applied without your confirmation (diff first) |
 | Languages | English, Italiano, Español, Français, Deutsch, Português, Русский, 简体中文, 日本語 |
 
+## SKAI_ Memory
+
+The package also installs SKAI's shared Markdown memory (`/var/lib/skai/SKAI_ Memory`, see `skai_memory/README.md`): every SKAI app and plugin identifies itself through the `skai_memory` library, keeps its own notes under `plugins/<app>/` and can read all the others. To let a user's apps write: `sudo usermod -aG skai <user>`.
+
 ## Install
 
 ### Skorpion OS / Debian

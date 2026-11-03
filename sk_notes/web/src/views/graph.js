@@ -1,5 +1,6 @@
 // Graph view (global and local): force layout in a Web Worker, canvas rendering.
 
+import { memoryEdgeStyle } from '../features/memory.js';
 import { setIcon } from '../core/icons.js';
 import { t } from '../core/i18n.js';
 import { debounce } from '../core/util.js';
@@ -333,6 +334,12 @@ export class GraphView extends ItemView {
     }
     this.nodes = finalNodes;
     this.links = new Int32Array(finalLinks);
+    // SKAI_ Memory: solid = tree, dashed = inside one app's memory, dotted = between apps
+    this.linkStyles = null;
+    if (this.app.info?.vault?.protected) {
+      this.linkStyles = new Uint8Array(this.links.length / 2);
+      for (let e = 0; e < this.links.length; e += 2) this.linkStyles[e / 2] = memoryEdgeStyle(finalNodes[this.links[e]]?.id, finalNodes[this.links[e + 1]]?.id);
+    }
     this.neighbors = finalNodes.map(() => []);
     for (let e = 0; e < this.links.length; e += 2) {
       this.neighbors[this.links[e]].push(this.links[e + 1]);
@@ -408,19 +415,25 @@ export class GraphView extends ItemView {
     const hov = this.hover;
     const hl = hov >= 0 ? new Set([hov, ...this.neighbors[hov]]) : null;
     c.lineWidth = Math.max(0.5, 1 * this.options.lineSizeMultiplier * Math.min(1, k));
-    // links
-    c.beginPath();
+    // links (SKAI_ Memory draws three kinds: solid, dashed, dotted)
     c.strokeStyle = col.line;
     c.globalAlpha = hl ? 0.25 : 0.8;
-    for (let e = 0; e < this.links.length; e += 2) {
-      const a = this.links[e];
-      const b = this.links[e + 1];
-      const [x1, y1] = this.toScreen(pos[a * 2], pos[a * 2 + 1]);
-      const [x2, y2] = this.toScreen(pos[b * 2], pos[b * 2 + 1]);
-      c.moveTo(x1, y1);
-      c.lineTo(x2, y2);
+    const dashes = [[], [8, 5], [1.5, 4]];
+    for (let style = 0; style < (this.linkStyles ? 3 : 1); style++) {
+      c.beginPath();
+      c.setLineDash(dashes[style]);
+      for (let e = 0; e < this.links.length; e += 2) {
+        if (this.linkStyles && this.linkStyles[e / 2] !== style) continue;
+        const a = this.links[e];
+        const b = this.links[e + 1];
+        const [x1, y1] = this.toScreen(pos[a * 2], pos[a * 2 + 1]);
+        const [x2, y2] = this.toScreen(pos[b * 2], pos[b * 2 + 1]);
+        c.moveTo(x1, y1);
+        c.lineTo(x2, y2);
+      }
+      c.stroke();
     }
-    c.stroke();
+    c.setLineDash([]);
     if (hl) {
       c.beginPath();
       c.strokeStyle = col.hl;

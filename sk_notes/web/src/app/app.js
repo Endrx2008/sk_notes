@@ -17,6 +17,7 @@ import { Workspace } from '../ui/workspace.js';
 import { MarkdownView } from '../views/markdown.js';
 import { StatusBar } from '../ui/statusbar.js';
 import { registerCoreFeatures } from '../features/core.js';
+import { registerMemory } from '../features/memory.js';
 import { installLinkHandler } from '../features/links.js';
 import { getAllTags, resolveSubpath } from '../model/metadata.js';
 
@@ -97,6 +98,7 @@ export class App extends Events {
     const main = this.containerEl.createDiv('horizontal-main-container');
     main.appendChild(this.workspace.containerEl);
     this.statusBar = new StatusBar(this, this.containerEl);
+    registerMemory(this);
 
     this.viewRegistry.registerView('markdown', (leaf) => new MarkdownView(leaf));
     this.viewRegistry.registerExtensions(['md'], 'markdown');

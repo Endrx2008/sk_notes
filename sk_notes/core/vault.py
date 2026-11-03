@@ -3,10 +3,12 @@ POSIX paths ("Folder/Note.md"); every access is checked to stay inside the vault
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import threading
 import shutil
+import subprocess
 import stat as statmod
 import time
 import unicodedata
@@ -30,6 +32,11 @@ def eol_of(data: bytes) -> str:
     if cr and not lf and not crlf:
         return "\r"
     return "\n"
+
+
+MEMORY_MARKER = ".skai-memory"  # a vault with this file is SKAI's shared memory: see Vault.protected
+MEMORY_HELPER = "/usr/lib/skai/skai-memory-write"
+UNLOCK_SECONDS = 300
 
 
 class VaultError(Exception):
@@ -94,6 +101,10 @@ class Vault:
         self.root = Path(root).expanduser().resolve()
         if not self.root.is_dir():
             raise VaultError("not-a-folder")
+        # SKAI_ Memory: root-owned, readable by everybody, changed only by the privileged helper
+        self.protected = (self.root / MEMORY_MARKER).is_file()
+        self._sudo_password: str | None = None
+        self._unlock_until = 0.0
 
     # ------------------------------------------------------------- paths
     @property
@@ -102,12 +113,51 @@ class Vault:
 
     @property
     def config_dir(self) -> Path:
+        if self.protected:  # the vault itself is not writable: index, history and layout live in the user's data dir
+            base = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local/share")
+            d = base / "sk_notes" / "memory-vault"
+            d.mkdir(parents=True, exist_ok=True)
+            return d
         d = self.root / CONFIG_DIR
         try:
             d.mkdir(exist_ok=True)
         except OSError:
             pass  # read-only vault: callers handle the missing folder
         return d
+
+    # ------------------------------------------------------------- protected vault (SKAI_ Memory)
+    @property
+    def unlocked(self) -> bool:
+        return bool(self._sudo_password) and time.time() < self._unlock_until
+
+    def unlock(self, password: str) -> None:
+        """Allow edits for a few minutes after the user gave their sudo password (checked with sudo itself)."""
+        if not self.protected:
+            return
+        r = subprocess.run(["sudo", "-S", "-k", "-p", "", "-v"], input=password + "\n", capture_output=True, text=True, timeout=30)
+        if r.returncode != 0:
+            raise VaultError("wrong-password")
+        self._sudo_password, self._unlock_until = password, time.time() + UNLOCK_SECONDS
+
+    def lock(self) -> None:
+        self._sudo_password, self._unlock_until = None, 0.0
+
+    def _privileged(self, op: str, rel: str, text: str = "") -> None:
+        if not self.unlocked:
+            self.lock()
+            raise VaultError("memory-locked")
+        helper = os.environ.get("SKAI_MEMORY_HELPER") or MEMORY_HELPER
+        req = json.dumps({"op": op, "path": normalize_path(rel).lstrip("/"), "text": text, "caller": "sk_notes"})
+        r = subprocess.run(["sudo", "-S", "-k", "-p", "", helper, "--manual"], input=self._sudo_password + "\n" + req,
+                           capture_output=True, text=True, timeout=30)
+        if r.returncode != 0:
+            log.warning("memory write refused: %s", (r.stderr or "").strip()[:200])
+            raise VaultError("memory-refused")
+        self._unlock_until = time.time() + UNLOCK_SECONDS  # active use keeps it open
+
+    def _no_protected(self) -> None:
+        if self.protected:
+            raise VaultError("memory-locked" if not self.unlocked else "memory-unsupported")
 
     def abs(self, rel: str) -> Path:
         rel = normalize_path(rel)
@@ -246,6 +296,11 @@ class Vault:
         return self.write_bytes(rel, text.encode("utf-8"), mtime=mtime)
 
     def write_bytes(self, rel: str, data: bytes, *, mtime: float | None = None) -> FileEntry:
+        if self.protected:
+            if not rel.lower().endswith(".md"):
+                raise VaultError("memory-unsupported")
+            self._privileged("write", rel, data.decode("utf-8"))
+            return self.stat(rel)
         p = self.abs(rel)
         for part in normalize_path(rel).split("/"):
             check_name(part)
@@ -279,11 +334,13 @@ class Vault:
         return self.write_text(rel, text)
 
     def mkdir(self, rel: str) -> None:
+        self._no_protected()
         for part in normalize_path(rel).split("/"):
             check_name(part)
         self.abs(rel).mkdir(parents=True, exist_ok=True)
 
     def rename(self, old: str, new: str) -> None:
+        self._no_protected()
         src, dst = self.abs(old), self.abs(new)
         if not src.exists():
             raise VaultError("not-found")
@@ -303,6 +360,7 @@ class Vault:
             os.rename(src, dst)
 
     def copy(self, old: str, new: str) -> None:
+        self._no_protected()
         src, dst = self.abs(old), self.abs(new)
         if dst.exists():
             raise VaultError("already-exists")
@@ -312,6 +370,10 @@ class Vault:
             shutil.copy2(src, dst)
 
     def delete_permanently(self, rel: str) -> None:
+        if self.protected:
+            if self.abs(rel).is_dir():
+                raise VaultError("memory-unsupported")
+            return self._privileged("delete", rel)
         p = self.abs(rel)
         if p.is_dir() and not p.is_symlink():
             shutil.rmtree(p)

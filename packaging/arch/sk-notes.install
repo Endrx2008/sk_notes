@@ -1,0 +1,12 @@
+post_install() {
+    sh /usr/lib/skai/skai-memory-setup || true   # group 'skai', SKAI_ Memory vault, sudo rule
+}
+
+post_upgrade() {
+    post_install
+}
+
+post_remove() {
+    # the sudo rule goes away with the program; the vault (user data) and the group stay
+    rm -f /etc/sudoers.d/skai-memory
+}

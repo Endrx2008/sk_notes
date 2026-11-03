@@ -255,7 +255,7 @@ export class WorkspaceTabs extends WorkspaceParent {
     menu.addItem((it) => it.setTitle(this.isStacked ? t('tab.unstack') : t('tab.stack')).setIcon('stack')
       .onClick(() => this.setStacked(!this.isStacked)));
     menu.addItem((it) => it.setTitle(t('tab.close-all')).setIcon('x')
-      .onClick(() => this.children.slice().forEach((l) => l.detach())));
+      .onClick(() => closeLeaves(this.children)));
     const r = anchor.getBoundingClientRect();
     menu.showAtPosition({ x: r.right, y: r.bottom + 4, left: true });
   }
@@ -268,17 +268,22 @@ export class WorkspaceTabs extends WorkspaceParent {
   }
 
   _render() {
-    this.tabsInnerEl.empty();
-    this.tabsContainerEl.empty();
     if (this.currentTab >= this.children.length) this.currentTab = Math.max(0, this.children.length - 1);
+    // Reconcile instead of rebuilding: a header that is detached and re-attached between mousedown and
+    // mouseup never gets its click, which made the tab close button ("x") do nothing.
+    this._sync(this.tabsInnerEl, this.children.map((l) => l.tabHeaderEl));
+    this._sync(this.tabsContainerEl, this.children.map((l) => l.containerEl));
     this.children.forEach((leaf, i) => {
-      this.tabsInnerEl.appendChild(leaf.tabHeaderEl);
-      this.tabsContainerEl.appendChild(leaf.containerEl);
       const active = i === this.currentTab;
       leaf.tabHeaderEl.toggleClass('is-active', active);
       leaf.containerEl.toggle(active || this.isStacked);
       if (this.isStacked) leaf.containerEl.style.left = (i * 40) + 'px';
     });
+  }
+
+  _sync(parentEl, want) {
+    for (const c of Array.from(parentEl.children)) if (!want.includes(c)) c.detach();
+    want.forEach((node, i) => { if (parentEl.children[i] !== node) parentEl.insertBefore(node, parentEl.children[i] || null); });
   }
 
   selectTab(leaf) {
@@ -294,8 +299,9 @@ export class WorkspaceTabs extends WorkspaceParent {
 
   _onEmpty() {
     const root = this.getRoot();
-    if (root instanceof WorkspaceRoot && this.parent === root && root.children.length === 1) {
-      // never leave the main area without a tab group
+    // never leave the main area without a tab group, also when this one sits in a nested split
+    const lastInRoot = root instanceof WorkspaceRoot && !this.workspace._allTabs().some((t2) => t2 !== this && t2.getRoot() === root);
+    if (lastInRoot) {
       const leaf = new WorkspaceLeaf(this.workspace);
       this.insertChild(0, leaf);
       leaf.setViewState({ type: 'empty' });
@@ -350,6 +356,13 @@ export class WorkspaceTabs extends WorkspaceParent {
   serialize() {
     return { id: this.id, type: 'tabs', dimension: this.dimension, stacked: this.isStacked || undefined,
       currentTab: this.currentTab, children: this.children.map((c) => c.serialize()) };
+  }
+}
+
+/** Close leaves one after the other: detach() is async and parallel closes raced on the tab group. */
+async function closeLeaves(leaves) {
+  for (const l of leaves.slice()) {
+    try { await l.detach(); } catch (e) { console.error('close tab failed', e); }
   }
 }
 
@@ -428,13 +441,13 @@ export class WorkspaceLeaf extends WorkspaceItem {
     const ws = this.workspace;
     menu.addItem((i) => i.setTitle(t('tab.close')).setIcon('x').setSection('close').onClick(() => this.detach()));
     menu.addItem((i) => i.setTitle(t('tab.close-others')).setSection('close')
-      .onClick(() => this.parent?.children.filter((l) => l !== this && !l.pinned).forEach((l) => l.detach())));
+      .onClick(() => closeLeaves((this.parent?.children || []).filter((l) => l !== this && !l.pinned))));
     menu.addItem((i) => i.setTitle(t('tab.close-right')).setSection('close').onClick(() => {
       const kids = this.parent?.children || [];
-      kids.slice(kids.indexOf(this) + 1).filter((l) => !l.pinned).forEach((l) => l.detach());
+      closeLeaves(kids.slice(kids.indexOf(this) + 1).filter((l) => !l.pinned));
     }));
     menu.addItem((i) => i.setTitle(t('tab.close-all')).setSection('close')
-      .onClick(() => this.parent?.children.slice().filter((l) => !l.pinned).forEach((l) => l.detach())));
+      .onClick(() => closeLeaves((this.parent?.children || []).filter((l) => !l.pinned))));
     menu.addItem((i) => i.setTitle(this.pinned ? t('tab.unpin') : t('tab.pin')).setIcon('pin').setSection('action')
       .onClick(() => this.togglePinned()));
     menu.addItem((i) => i.setTitle(t('tab.split-right')).setIcon('split-right').setSection('action')
@@ -820,7 +833,13 @@ export class Workspace extends Events {
   // ---------------------------------------------------------------- leaves
   _activeTabsInRoot() {
     const l = this.activeLeaf && this.activeLeaf.getRoot() === this.rootSplit ? this.activeLeaf : this.getMostRecentLeaf();
-    return l?.parent instanceof WorkspaceTabs ? l.parent : this._firstTabs(this.rootSplit);
+    if (l?.parent instanceof WorkspaceTabs) return l.parent;
+    let tabs = this._firstTabs(this.rootSplit);
+    if (!tabs) { // safety net: the main area lost its last tab group
+      tabs = new WorkspaceTabs(this);
+      this.rootSplit.insertChild(0, tabs);
+    }
+    return tabs;
   }
 
   createLeafInParent(parent, index) {

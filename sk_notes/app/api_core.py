@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import QApplication, QFileDialog
 
 from ..core import i18n
 from ..core.search import QueryError, search, snippets
-from ..core.vault import CONFIG_DIR, normalize_path
+from ..core.vault import CONFIG_DIR, VaultError, normalize_path
 from . import config
 from .bridge import ApiError, Ctx
 
@@ -87,7 +87,7 @@ def register(app) -> None:
             "languages": i18n.available(),
             "strings": i18n.strings(app.language),
             "theme": app.theme,
-            "vault": {"name": s.vault.name, "path": str(s.vault.root)} if s else None,
+            "vault": {"name": s.vault.name, "path": str(s.vault.root), "protected": s.vault.protected} if s else None,
             "home": str(Path.home()),
             "zoom": app.settings.zoom,
             "safeMode": app.safe_mode,
@@ -153,6 +153,9 @@ def register(app) -> None:
         for path, info in sorted(app.settings.vaults.items(), key=lambda kv: -kv[1].get("ts", 0)):
             out.append({"path": path, "name": Path(path).name, "ts": info.get("ts", 0),
                         "exists": Path(path).is_dir(), "current": str(app.vault_root() or "") == path})
+        mem = Path(os.environ.get("SKAI_MEMORY_DIR") or "/var/lib/skai/SKAI_ Memory")
+        if mem.is_dir() and str(mem) not in app.settings.vaults:  # SKAI's shared memory is always on the list
+            out.append({"path": str(mem), "name": mem.name, "ts": 0, "exists": True, "current": str(app.vault_root() or "") == str(mem)})
         return out
 
     @r("vaults.open")
@@ -198,6 +201,27 @@ def register(app) -> None:
     @r("vault.read")
     def vault_read(p, ctx):
         return svc().read(p["path"])
+
+    @r("memory.status")
+    def memory_status(p, ctx):
+        v = svc().vault
+        return {"protected": v.protected, "unlocked": v.unlocked}
+
+    @r("memory.unlock", slow=True)
+    def memory_unlock(p, ctx):
+        # the page asks for both things explicitly: the consent flag and the sudo password
+        if not p.get("consent"):
+            raise ApiError("memory-consent", "consent required")
+        try:
+            svc().vault.unlock(str(p.get("password", "")))
+        except VaultError as exc:
+            raise ApiError(str(exc), "") from exc
+        return {"unlocked": True}
+
+    @r("memory.lock")
+    def memory_lock(p, ctx):
+        svc().vault.lock()
+        return {"unlocked": False}
 
     @r("vault.readBinary")
     def vault_read_binary(p, ctx):

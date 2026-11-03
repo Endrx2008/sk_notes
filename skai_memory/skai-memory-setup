@@ -1,0 +1,48 @@
+#!/bin/sh
+# Prepare SKAI_ Memory on this machine (idempotent; run as root by the package and by install.sh):
+# group 'skai', the vault with its first notes, and the sudo rule that lets members of 'skai' run
+# the write helper (exactly "--skai") without a password. Never adds users to the group.
+# SKAI_ROOT=<dir> runs it inside a staging tree (tests, image builds).
+set -eu
+R=${SKAI_ROOT:-}
+VAULT="$R/var/lib/skai/SKAI_ Memory"
+LIB=/usr/lib/skai
+
+[ -n "$R" ] || getent group skai >/dev/null || groupadd --system skai
+install -d -m 0755 "$R/var/lib/skai" "$VAULT" "$VAULT/plugins"
+
+# seed the hub (never overwrites an existing vault)
+if [ ! -f "$VAULT/.skai-memory" ]; then
+  printf '{"version": 1}\n' > "$VAULT/.skai-memory"
+  cat > "$VAULT/SKAI.md" <<'MD'
+---
+kind: hub
+---
+# SKAI
+
+Shared memory of SKAI and every app and plugin that makes her up. Each app has a note in `plugins/`
+and its sub-chats under `plugins/<app>/`; only that app changes them, everybody reads them.
+SKAI links here to system files, user files, web pages and other apps.
+
+## Apps
+
+## Links
+- [[system]]
+- [[user]]
+- [[web]]
+MD
+  printf '# system\n\nLinks to system files, e.g. [os-release](file:///etc/os-release).\n' > "$VAULT/system.md"
+  printf '# user\n\nLinks to the user'"'"'s files.\n' > "$VAULT/user.md"
+  printf '# web\n\nLinks to web pages SKAI found useful.\n' > "$VAULT/web.md"
+  chmod 0644 "$VAULT"/*.md "$VAULT/.skai-memory"
+fi
+
+# SKAI and her apps (group 'skai') may run ONLY this exact command without a password.
+# Human edits use '--manual', which is not listed: sudo asks for the password.
+install -d -m 0755 "$R/etc/sudoers.d"
+tmp=$(mktemp)
+printf '%%skai ALL=(root) NOPASSWD: %s/skai-memory-write --skai\n' "$LIB" > "$tmp"
+if command -v visudo >/dev/null 2>&1; then visudo -cf "$tmp" >/dev/null || { rm -f "$tmp"; echo "sudoers rule rejected" >&2; exit 1; }; fi
+install -m 0440 "$tmp" "$R/etc/sudoers.d/skai-memory"
+rm -f "$tmp"
+echo "SKAI_ Memory ready. To let a user's apps write: sudo usermod -aG skai <user>  (then log in again)"

@@ -176,3 +176,13 @@
 .vault-manager-action-desc { color: var(--text-muted); font-size: var(--font-ui-smaller); margin-top: 2px; }
 .vault-manager-create { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px; border: 1px solid var(--sk-border); border-radius: var(--radius-m); }
 .vault-manager-create-where { color: var(--text-muted); font-size: var(--font-ui-smaller); flex-basis: 100%; }
+
+/* SKAI_ Memory: protected vault banner and unlock dialog */
+.sk-memory-banner { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-size: var(--font-ui-smaller); background: color-mix(in srgb, var(--sk-orange, #e05c00) 14%, var(--background-primary)); border-bottom: 1px solid var(--background-modifier-border); }
+.sk-memory-banner.is-unlocked { background: color-mix(in srgb, var(--sk-red) 14%, var(--background-primary)); }
+.sk-memory-text { flex: 1; }
+.sk-memory-icon .svg-icon { width: 14px; height: 14px; }
+.sk-memory-consent { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 12px; }
+.sk-memory-label { margin-bottom: 4px; color: var(--text-muted); }
+.sk-memory-password { width: 100%; }
+.sk-memory-error { color: var(--text-error, var(--sk-red)); min-height: 1.4em; margin: 6px 0; }

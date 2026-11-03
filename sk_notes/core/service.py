@@ -94,6 +94,8 @@ class VaultService:
             info = self.vault.text_info(path)
             # an editor must not save these back: the text is lossy, or the file read-only
             out["readOnly"] = "not-utf8" if not info["utf8"] else (None if info["writable"] else "read-only")
+            if self.vault.protected:  # SKAI_ Memory: root-owned on disk, editable only after consent + sudo password
+                out["readOnly"] = None if self.vault.unlocked else "memory-locked"
         return out
 
     def write(self, path: str, text: str, *, expected_mtime: int | None = None, reason: str = "edit",
@@ -333,7 +335,7 @@ class VaultService:
         path = normalize_path(path)
         if path == "/":
             raise VaultError("vault-root")  # a plugin with an empty folder setting deleted the whole vault (B2-8)
-        mode = mode or self.app_setting("trashOption", "system")
+        mode = "permanent" if self.vault.protected else (mode or self.app_setting("trashOption", "system"))
         with self.lock:
             targets = [p for p in self.index.files if p == path or p.startswith(path + "/")]
             for p in targets:

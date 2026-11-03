@@ -90,6 +90,7 @@ export class SkaiView extends ItemView {
 
   clear() {
     this.history = [];
+    this.conversation = null;
     this.messagesEl.empty();
   }
 
@@ -172,11 +173,11 @@ export class SkaiView extends ItemView {
         info.body.setText(r.method === 'embeddings' ? t('skai.found-semantic', { n: r.hits.length })
           : t(r.reason === 'no-index' ? 'skai.found-keywords-no-index' : r.reason === 'no-match' ? 'skai.found-keywords-plain' : 'skai.found-keywords', { n: r.hits.length, cmd: t('skai.cmd.index') }));
         context = r.hits.map((h, i) => `[${i + 1}] Note "${h.path.replace(/\.md$/, '')}":\n${h.text}`).join('\n\n');
-        if (r.memory?.length) context += '\n\nShared SKAI memory:\n' + r.memory.map((m) => m.text).join('\n');
+        if (r.memory?.length) context += '\n\nShared SKAI memory (what other SKAI apps know; use it when relevant):\n' + r.memory.map((m) => m.text).join('\n');
       } catch (e) { info.body.setText(this.client.errorText(e)); }
     }
     const instr = this.mode === 'vault'
-      ? 'Answer using only the numbered excerpts of the user\'s notes below. Cite the notes you use as [[Note name]] links. If the excerpts do not contain the answer, say that the notes do not mention it.'
+      ? 'Answer using only the numbered excerpts of the user\'s notes below (and the shared SKAI memory block, if present). Cite the notes you use as [[Note name]] links. If the excerpts do not contain the answer, say that the notes do not mention it.'
       : 'The user is looking at the note below. Answer about it.';
     const messages = [...sys, ...this.history.slice(-6)];
     messages.push({ role: 'user', content: `${instr}\n\n${context || '(no note is open)'}\n\nQuestion: ${q}` });
@@ -191,7 +192,11 @@ export class SkaiView extends ItemView {
       }
       this._insertButton(b, text);
     } });
-    if (answer) this.history.push({ role: 'user', content: q }, { role: 'assistant', content: answer });
+    if (answer) {
+      this.history.push({ role: 'user', content: q }, { role: 'assistant', content: answer });
+      this.conversation ||= window.moment().format('YYYY-MM-DD HH:mm');
+      call('ai.remember', { question: q, answer, sources: sources.map((h) => h.path), conversation: this.conversation }).catch(() => {});
+    }
   }
 
   _insertButton(b, text) {

@@ -28,6 +28,15 @@ tar -C "$ROOT" --exclude='__pycache__' --exclude='*.pyc' \
 find "$APPDIR" -type d -exec chmod 755 {} +
 find "$APPDIR" -type f -exec chmod 644 {} +
 
+# SKAI_ Memory: shared Markdown memory (library, JS twin, write helper, first-run setup)
+install -d -m 755 "$STAGE/usr/lib/skai" "$STAGE/usr/lib/python3/dist-packages"
+install -m 755 skai_memory/skai-memory-write skai_memory/skai-memory-setup "$STAGE/usr/lib/skai/"
+install -m 755 skai_memory/skai_memory.py "$STAGE/usr/lib/skai/"
+install -m 644 skai_memory/skai_memory.js "$STAGE/usr/lib/skai/"
+ln -s ../../skai/skai_memory.py "$STAGE/usr/lib/python3/dist-packages/skai_memory.py"
+ln -s ../lib/skai/skai_memory.py "$STAGE/usr/bin/skai-memory"
+install -m 644 skai_memory/README.md "$STAGE/usr/share/doc/sk-notes/README.skai-memory.md"
+
 cat > "$STAGE/usr/bin/sk-notes" <<'SH'
 #!/bin/sh
 exec /usr/bin/python3 /usr/share/sk-notes/main.py "$@"
@@ -51,6 +60,7 @@ License: GPL-3.0-or-later
  Bundled JavaScript libraries and their licences: see THIRD_PARTY_LICENSES.md.
 TXT
 
+find "$STAGE" -type d -exec chmod 755 {} +
 SIZE=$(du -sk "$STAGE/usr" | cut -f1)
 cat > "$STAGE/DEBIAN/control" <<CTL
 Package: sk-notes
@@ -59,7 +69,7 @@ Section: editors
 Priority: optional
 Architecture: all
 Installed-Size: $SIZE
-Depends: python3 (>= 3.11), python3-pyqt6, python3-pyqt6.qtwebengine, python3-yaml, python3-numpy
+Depends: python3 (>= 3.11), python3-pyqt6, python3-pyqt6.qtwebengine, python3-yaml, python3-numpy, sudo
 Recommends: git
 Suggests: syncthing, pandoc
 Maintainer: Enrico Miot <$(git config user.email 2>/dev/null || echo maintainer@localhost)>
@@ -78,6 +88,7 @@ cat > "$STAGE/DEBIAN/postinst" <<'SH'
 set -e
 if [ "$1" = configure ]; then
     python3 -m compileall -q /usr/share/sk-notes >/dev/null 2>&1 || true
+    sh /usr/lib/skai/skai-memory-setup || true   # group 'skai', SKAI_ Memory vault, sudo rule
 fi
 SH
 cat > "$STAGE/DEBIAN/prerm" <<'SH'
@@ -85,7 +96,13 @@ cat > "$STAGE/DEBIAN/prerm" <<'SH'
 set -e
 find /usr/share/sk-notes -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null || true
 SH
-chmod 755 "$STAGE/DEBIAN/postinst" "$STAGE/DEBIAN/prerm"
+cat > "$STAGE/DEBIAN/postrm" <<'SH'
+#!/bin/sh
+set -e
+# the sudo rule goes away with the program; the vault (user data) and the group stay
+if [ "$1" = remove ] || [ "$1" = purge ]; then rm -f /etc/sudoers.d/skai-memory; fi
+SH
+chmod 755 "$STAGE/DEBIAN/postinst" "$STAGE/DEBIAN/prerm" "$STAGE/DEBIAN/postrm"
 
 mkdir -p "$ROOT/dist"
 fakeroot dpkg-deb --build -Zxz "$STAGE" "$ROOT/dist/sk-notes_${VERSION}_all.deb" >/dev/null

@@ -1,0 +1,102 @@
+#!/usr/bin/python3
+"""skai-memory-write - the only thing allowed to change SKAI_ Memory (installed root:root, 0755).
+
+Reads ONE JSON request on stdin: {"op": "write"|"append"|"delete", "path": "apps/x.md", "text": "...", "caller": "..."}
+and applies it inside the vault. Modes (first argument):
+  --skai    called by SKAI / its apps through sudo (NOPASSWD for group 'skai', exactly this argument)
+  --manual  called by sk_notes for a human edit: sudo asks the password, the app asked the consent
+  --direct  no privilege change (tests; refuses to run unless SKAI_MEMORY_NO_SUDO=1)
+Refuses: paths outside the vault, '..', symlinks, anything but *.md, files over 256 KB, other ops.
+Files are written 0644 root-owned so everybody can read them and nobody else can change them."""
+import json, os, re, sys, tempfile, time
+
+NAME = re.compile(r"^[a-z0-9][a-z0-9_-]{1,39}$")
+
+MAX = 256 * 1024
+DEFAULT_DIR = "/var/lib/skai/SKAI_ Memory"
+mode = sys.argv[1] if len(sys.argv) == 2 else ""
+if mode not in ("--skai", "--manual", "--direct"):
+    sys.exit("usage: skai-memory-write --skai|--manual")
+if mode == "--direct" and os.environ.get("SKAI_MEMORY_NO_SUDO") != "1":
+    sys.exit("refused: --direct is for tests")
+direct = mode == "--direct"
+if direct and os.environ.get("SKAI_TEST_AS") == "manual":
+    mode = "--manual"  # tests: act like the human at sk_notes after sudo
+try:
+    req = json.loads(sys.stdin.read(MAX * 2 + 4096))
+    op, rel, text = req["op"], req.get("path", "plugins/x.md"), req.get("text", "")
+    if op not in ("write", "append", "delete", "register") or not isinstance(rel, str) or not isinstance(text, str):
+        raise ValueError("bad request")
+except (ValueError, KeyError) as e:
+    sys.exit(f"refused: {e}")
+
+# the vault location is fixed when running privileged; tests may choose it
+root = os.path.realpath(req.get("dir") or os.environ.get("SKAI_MEMORY_DIR") or DEFAULT_DIR) if direct else DEFAULT_DIR
+rel = rel.replace("\\", "/").lstrip("/")
+parts = rel.split("/")
+if not rel.endswith(".md") or any(p in ("", ".", "..") or p.startswith(".") for p in parts) or "\0" in rel:
+    sys.exit("refused: not a note path")
+if len(text.encode()) > MAX:
+    sys.exit("refused: note too large")
+caller = str(req.get("caller", ""))
+if mode != "--manual":
+    # An app may change only its own memory: plugins/<caller>.md and plugins/<caller>/**.
+    # (--manual, the human at sk_notes after sudo, may change anything.)
+    if not NAME.match(caller):
+        sys.exit("refused: unknown caller")
+    if op != "register" and not (rel == f"plugins/{caller}.md" or rel.startswith(f"plugins/{caller}/")):
+        sys.exit(f"refused: {caller} may only change its own notes (plugins/{caller}.md, plugins/{caller}/)")
+os.makedirs(root, mode=0o755, exist_ok=True)
+target = os.path.join(root, *parts)
+cur = root
+for p in parts[:-1]:  # no symlinked directories on the way
+    cur = os.path.join(cur, p)
+    if os.path.islink(cur):
+        sys.exit("refused: symlink")
+if os.path.islink(target) or os.path.commonpath([root, os.path.realpath(os.path.dirname(target))]) != root:
+    sys.exit("refused: outside the vault")
+os.makedirs(os.path.dirname(target), mode=0o755, exist_ok=True)
+
+def atomic_write(path, content):
+    os.makedirs(os.path.dirname(path), mode=0o755, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".tmp-")
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        fh.write(content)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, path)
+
+
+def read(path):
+    if not os.path.exists(path):
+        return ""
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        return fh.read()
+
+
+if op == "register":
+    # first contact of an app: its note is created from this template and linked from SKAI.md
+    note = os.path.join(root, "plugins", f"{caller}.md")
+    if not os.path.exists(note):
+        atomic_write(note, f"---\napp: {caller}\nkind: app\nregistered: {time.strftime('%F')}\n---\n# {caller}\n\n"
+                           f"Plugin of SKAI. This note and everything under `plugins/{caller}/` is this app's memory:\n"
+                           f"only {caller} can change it, every other app can read it.\nPart of [[SKAI]].\n\n## Links to other apps\n\n## Sub-chats\n")
+    hub = os.path.join(root, "SKAI.md")
+    cur = read(hub)
+    if f"[[{caller}]]" not in cur:
+        atomic_write(hub, (cur if cur.endswith("\n") or not cur else cur + "\n") + f"- [[{caller}]]\n")
+    rel = f"plugins/{caller}.md"
+elif op == "delete":
+    if os.path.exists(target):
+        os.remove(target)
+else:
+    new = read(target) + text if op == "append" else text
+    if len(new.encode()) > MAX:
+        sys.exit("refused: note too large")
+    atomic_write(target, new)
+try:
+    with open(os.path.join(root, ".audit.log"), "a", encoding="utf-8") as log:
+        log.write(f"{time.strftime('%F %T')} {mode[2:]} {op} {rel} uid={os.environ.get('SUDO_UID', os.getuid())} caller={str(req.get('caller',''))[:40]!r}\n")
+except OSError:
+    pass  # the change is already done; as root this cannot fail

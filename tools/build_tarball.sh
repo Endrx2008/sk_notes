@@ -1,6 +1,6 @@
 #!/bin/sh
 # Source tarball for the Arch PKGBUILD: committed files + the built web front-end.
-# Writes dist/sk_notes-<version>.tar.gz and dist/PKGBUILD (with its sha256).
+# Writes dist/sk_notes-<version>.tar.gz, dist/PKGBUILD (with its sha256) and dist/sk-notes.install.
 set -eu
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
@@ -17,4 +17,5 @@ mkdir -p dist
 tar -C "$TMP" --sort=name --owner=0 --group=0 --numeric-owner -czf "dist/$NAME.tar.gz" "$NAME"
 SUM=$(sha256sum "dist/$NAME.tar.gz" | cut -d' ' -f1)
 sed -e "s/^pkgver=.*/pkgver=$VERSION/" -e "s/^sha256sums=.*/sha256sums=('$SUM')/" packaging/arch/PKGBUILD > dist/PKGBUILD
-echo "built dist/$NAME.tar.gz and dist/PKGBUILD"
+cp packaging/arch/sk-notes.install dist/sk-notes.install
+echo "built dist/$NAME.tar.gz, dist/PKGBUILD and dist/sk-notes.install (cd dist && makepkg -si)"

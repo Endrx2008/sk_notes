@@ -128,6 +128,18 @@ def register(app) -> None:
                 log.info("embedding search unavailable (%s); keyword fallback", exc.kind)
         return {"method": "keywords", "reason": reason, "hits": keyword_retrieve(s, query, k), "memory": memory.recall(query, 3)}
 
+    @r("ai.remember")
+    def ai_remember(p, ctx):
+        """After an answer: keep a short record in this conversation's sub-chat of SKAI_ Memory."""
+        if not memory.available():
+            return {"saved": False}
+        q, a = str(p.get("question", ""))[:600], str(p.get("answer", ""))[:900]
+        root = str(svc().vault.root)
+        links = [f"file://{root}/{n}" for n in (p.get("sources") or [])[:5] if isinstance(n, str) and ".." not in n]
+        chat = "conversation " + str(p.get("conversation", ""))[:20]
+        memory.remember("chat", f"**Q:** {q}\n\n**A:** {a}", "sk_notes", {"chat": chat, "links": links})
+        return {"saved": True}
+
     @r("ai.memory")
     def ai_memory(p, ctx):
         return {"available": memory.available()}

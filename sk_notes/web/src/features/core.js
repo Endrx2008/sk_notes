@@ -676,15 +676,28 @@ class VersionHistoryModal extends Modal {
     const snaps = await call('history.list', { path: this.file.path });
     if (!snaps.length) { list.createDiv({ cls: 'pane-empty', text: t('history.none') }); return; }
     const current = await this.app.vault.read(this.file);
+    let mode = 'previous'; // 'previous': what this version changed (shows removed lines); 'current': distance from the file now
+    let selected = null;
     const show = async (s, row) => {
+      selected = [s, row];
       list.findAll('.is-active').forEach((x) => x.removeClass('is-active'));
       row.addClass('is-active');
       right.empty();
       const text = await call('history.read', { id: s.id });
-      const ops = diffLines(text, current);
+      let base = current;
+      if (mode === 'previous') {
+        const older = snaps[snaps.indexOf(s) + 1]; // snaps are newest first
+        base = older ? await call('history.read', { id: older.id }) : '';
+      }
+      const ops = mode === 'previous' ? diffLines(base, text) : diffLines(text, base);
       const st = diffStats(ops);
       const bar = right.createDiv('version-history-toolbar');
-      bar.createSpan({ text: t('history.compare', { added: st.added, removed: st.removed }) });
+      const modeSel = bar.createEl('select', { cls: 'dropdown' });
+      modeSel.createEl('option', { value: 'previous', text: t('history.mode-previous') });
+      modeSel.createEl('option', { value: 'current', text: t('history.mode-current') });
+      modeSel.value = mode;
+      modeSel.addEventListener('change', () => { mode = modeSel.value; show(...selected); });
+      bar.createSpan({ text: t(mode === 'previous' ? 'history.compare-previous' : 'history.compare', { added: st.added, removed: st.removed }) });
       new ButtonComponent(bar).setButtonText(t('history.restore')).setCta().onClick(async () => {
         const ok = await confirmDialog(this.app, { title: t('history.restore'), message: t('history.restore-confirm'), confirm: t('history.restore') });
         if (!ok) return;
