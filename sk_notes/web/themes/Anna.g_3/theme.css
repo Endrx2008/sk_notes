@@ -1,0 +1,78 @@
+/* Anna.g_3 – a theme of sk_notes (desktop): bordeaux on black, violet details, a touch of gold.
+   Copyright (C) 2026 Enrico Miot. SPDX-License-Identifier: GPL-3.0-or-later
+   The same palette as on sk_notes for Android:
+     bordeaux  what is pressed to do something: main buttons, switches, the active tab
+     violet    what leads elsewhere: links, tags, the field being typed in
+     gold      the vault seen as a whole (file list folders, graph notes) and small marks */
+body {
+  --anna-bordeaux: #8c1c3a; --anna-bordeaux-2: #b3284f; --anna-rose: #d2456e; --anna-violet: #a67cf0; --anna-gold: #d4af6a;
+  --sk-bg: #000000; --sk-bg2: #0a0507; --sk-bg3: #170b10; --sk-hover: #22101a;
+  --sk-accent: var(--anna-bordeaux-2); --sk-accent2: var(--anna-rose); --sk-on-accent: #ffffff;
+  --sk-text: #f0e6e9; --sk-muted: #b09aa2; --sk-dim: #77606a; --sk-border: #3a1522;
+  --sk-select: rgba(140, 28, 58, 0.38);
+  --background-primary: #050203; --background-primary-alt: #170b10;
+  --background-secondary: #000000; --background-secondary-alt: #170b10;
+  --background-modifier-hover: #22101a; --background-modifier-active-hover: rgba(140, 28, 58, 0.38);
+  --background-modifier-border: #3a1522; --background-modifier-border-hover: #77606a;
+  --background-modifier-border-focus: var(--anna-violet); --background-modifier-form-field: #170b10;
+  --background-modifier-message: #170b10;
+  --text-normal: #f0e6e9; --text-muted: #b09aa2; --text-faint: #77606a; --text-on-accent: #ffffff;
+  --text-accent: var(--anna-rose); --text-accent-hover: var(--anna-bordeaux-2);
+  --text-selection: rgba(166, 124, 240, 0.30); --text-highlight-bg: rgba(212, 175, 106, 0.28);
+  --interactive-normal: #170b10; --interactive-hover: #22101a;
+  --interactive-accent: var(--anna-bordeaux); --interactive-accent-hover: var(--anna-bordeaux-2);
+  --color-accent: var(--anna-bordeaux-2); --color-accent-1: var(--anna-rose); --color-accent-2: var(--anna-rose);
+  --color-purple: var(--anna-violet); --color-yellow: var(--anna-gold); --color-orange: var(--anna-rose);
+  --color-base-00: #000000; --color-base-05: #000000; --color-base-10: #0a0507; --color-base-20: #170b10; --color-base-25: #22101a;
+  --color-base-30: #3a1522; --color-base-35: #3a1522; --color-base-40: #77606a; --color-base-50: #77606a;
+  --color-base-60: #b09aa2; --color-base-70: #b09aa2; --color-base-100: #f0e6e9;
+  --code-background: #12080c; --code-normal: #f0e6e9;
+  --link-color: var(--anna-violet); --link-color-hover: #c3a4ff; --link-external-color: var(--anna-violet);
+  --link-unresolved-color: #8a6fc0; --tag-color: var(--anna-violet); --tag-background: rgba(166, 124, 240, 0.16);
+  --icon-color: #b09aa2; --icon-color-hover: #f0e6e9; --icon-color-active: var(--anna-rose);
+  --scrollbar-thumb-bg: #3a1522; --scrollbar-active-thumb-bg: var(--anna-bordeaux);
+  --checkbox-color: var(--anna-bordeaux-2); --checkbox-border-color: #77606a;
+  --titlebar-background: #000000; --tab-background-active: #0a0507;
+  --nav-item-color: #b09aa2; --nav-item-color-active: #f0e6e9; --nav-item-background-active: rgba(140, 28, 58, 0.38);
+  --graph-line: #7a3049; --graph-node: var(--anna-gold); --graph-node-focused: var(--anna-rose); --graph-text: #f0e6e9;
+  color-scheme: dark;
+}
+
+/* notes */
+body .cm-header, body .markdown-rendered h1, body .markdown-rendered h2, body .inline-title { color: #f6dfe6; }
+body .markdown-rendered h1 { border-bottom: 1px solid var(--anna-bordeaux); }
+body .is-flashing, body mark, body .cm-highlight { background: rgba(212, 175, 106, 0.28); color: inherit; }
+body .markdown-rendered blockquote, body .cm-line.HyperMD-quote { border-color: var(--anna-bordeaux); }
+
+/* fields and buttons */
+body input:focus, body textarea:focus, body select:focus { border-color: var(--anna-violet); box-shadow: 0 0 0 1px var(--anna-violet); }
+body button.mod-cta { background: var(--anna-bordeaux); border-color: var(--anna-bordeaux); color: #fff; }
+body button.mod-cta:hover { background: var(--anna-bordeaux-2); }
+body input[type=checkbox], body input[type=range] { accent-color: var(--anna-bordeaux-2); }
+body .checkbox-container.is-enabled { background: var(--anna-bordeaux-2); border-color: var(--anna-bordeaux-2); }
+
+/* the frame of the window: ribbon, side docks, tabs, status bar */
+body .workspace-ribbon { background: #000; border-color: var(--sk-border); }
+body .side-dock-ribbon-action:hover { color: var(--anna-rose); }
+body .workspace-split.mod-sidedock { background: var(--sk-bg2); }
+body .workspace-tab-header-container { background: #000; border-color: var(--sk-border); }
+body .workspace-tab-header.is-active { background: var(--sk-bg2); box-shadow: inset 0 -2px 0 var(--anna-bordeaux-2); }
+body .workspace-tab-header.is-active .workspace-tab-header-inner-title { color: #f6dfe6; }
+body .workspace-tab-header.mod-pinned .workspace-tab-header-inner-icon { color: var(--anna-gold); }
+body .status-bar { background: #000; border-color: var(--sk-border); color: var(--sk-muted); }
+body .view-header { background: var(--sk-bg2); border-color: var(--sk-border); }
+
+/* the file list: folders in gold, the open note in bordeaux, chosen rows marked */
+body .nav-folder-title, body .nav-folder-collapse-indicator { color: var(--anna-gold); }
+body .nav-file-title.is-active { background: var(--sk-select); color: #f6dfe6; }
+body .nav-file-tag { color: var(--anna-gold); border-color: var(--anna-gold); }
+body .tree-item-self.is-chosen { box-shadow: inset 3px 0 0 var(--anna-gold); }
+
+/* dialogs, menus, the graph's settings */
+body .modal, body .menu, body .graph-controls:not(.is-close), body .suggestion-container { background: var(--sk-bg2); border-color: var(--sk-border); }
+body .graph-control-section-header, body .setting-item-heading .setting-item-name, body .vertical-tab-header-group-title { color: var(--anna-gold); }
+body .vertical-tab-nav-item.is-active { background: var(--sk-select); color: #f6dfe6; }
+body .menu-item .menu-item-icon { color: var(--anna-rose); }
+body .vault-manager-title { color: var(--anna-rose); }
+body .pc-gallery-flag, body .pc-sync-icon { color: var(--anna-gold); border-color: var(--anna-gold); }
+body .crypt-code { border-color: var(--anna-gold); }

@@ -44,4 +44,8 @@ mkdirSync(join(dist, 'katex'), { recursive: true });
 cpSync(join(katexDist, 'katex.min.css'), join(dist, 'katex', 'katex.min.css'));
 cpSync(join(katexDist, 'fonts'), join(dist, 'katex', 'fonts'), { recursive: true });
 cpSync(join(web, 'logo.svg'), join(dist, 'logo.svg'));
+// themes that come with sk_notes (desktop/desktop.js loads them from here)
+cpSync(join(web, 'themes'), join(dist, 'themes'), { recursive: true });
+// community templates: the copy that works without a network (extras/gallery_api.py)
+cpSync(join(root, 'community', 'templates'), join(dist, 'community', 'templates'), { recursive: true, filter: (src) => !src.endsWith('README.md') });
 console.log('built', dist);

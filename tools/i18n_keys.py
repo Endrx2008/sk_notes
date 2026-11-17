@@ -29,7 +29,7 @@ DYNAMIC = {
     "perm.": ["title", "question", "warning", "once", "always", "deny", "fs-outside-vault", "exec", "network", "open-external", "clipboard"],
 }
 # API method names (Python routes) and base-property ids are not translation keys
-ROUTE_RE = re.compile(r"""(?:route|r)\(\s*["']([a-zA-Z.]+)["']""")
+ROUTE_RE = re.compile(r"""(?:route|r|guard)\(\s*["']([a-zA-Z.]+)["']""")  # guard(): routes of extras/sync_api.py
 NOT_KEYS_RE = re.compile(r"^(file\.(name|path|ext|size|ctime|mtime|tags|folder|links|backlinks|basename|properties)|graph\.png)$")
 
 

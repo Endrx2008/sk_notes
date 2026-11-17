@@ -71,7 +71,7 @@ Section: editors
 Priority: optional
 Architecture: all
 Installed-Size: $SIZE
-Depends: python3 (>= 3.11), python3-pyqt6, python3-pyqt6.qtwebengine, python3-yaml, python3-numpy, sudo
+Depends: python3 (>= 3.11), python3-pyqt6, python3-pyqt6.qtwebengine, python3-yaml, python3-numpy, python3-cryptography, python3-keyring, git, sudo
 Recommends: git
 Suggests: syncthing, pandoc
 Maintainer: Enrico Miot <$(git config user.email 2>/dev/null || echo maintainer@localhost)>

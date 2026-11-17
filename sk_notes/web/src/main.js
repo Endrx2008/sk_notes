@@ -15,7 +15,7 @@ async function boot() {
   performance.mark('skn:info');
   setStrings(info.language, info.strings);
   moment.locale(info.language.toLowerCase());
-  document.body.addClass('sk-notes', 'mod-linux', 'is-frameless');
+  document.body.addClass('sk-notes', 'mod-linux', 'is-frameless', 'is-desktop');
   applyTheme(info.theme, 'skai');
   installTooltips();
   const root = document.getElementById('sk-root');
@@ -23,21 +23,23 @@ async function boot() {
     document.body.addClass('is-vault-manager');
     onBackend('skai-theme', (d) => applyTheme(d.theme, 'skai'));
     const { renderVaultManager } = await import('./ui/vaults.js');
-    renderVaultManager(root.createDiv('vault-manager-page'));
+    renderVaultManager(root.createDiv('vault-manager-page'), { locked: info.locked?.path || null });
     document.title = t('vaults.title') + ' – sk_notes';
     return;
   }
-  const [{ App }, plugins, skai, extras] = await Promise.all([
+  const [{ App }, plugins, skai, extras, desktop] = await Promise.all([
     import('./app/app.js'),
     import('./plugins/manager.js'),
     import('./skai/skai.js'),
     import('./features/extras.js'),
+    import('./desktop/desktop.js'), // what only the PC has (the Android app has its own page)
   ]);
   performance.mark('skn:modules');
   const app = new App(info);
   plugins.installPluginManager(app);
   skai.installSkai(app);
   extras.installExtras(app);
+  desktop.installDesktop(app, info);
   await app.start(root);
   document.body.addClass('is-ready');
   window.__sknReady = true;

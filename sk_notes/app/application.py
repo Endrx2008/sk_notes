@@ -158,6 +158,13 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(3000, done)
 
 
+def _quiet(fn) -> None:
+    try:
+        fn()
+    except Exception as exc:  # noqa: BLE001 - offline at exit: sent at the next start
+        log.info("last sync not done: %s", exc)
+
+
 def Qt_color(theme: str):  # noqa: N802
     from PyQt6.QtGui import QColor
     return QColor("#0d0d0d" if theme == "dark" else "#f6f4f1")
@@ -210,19 +217,27 @@ class SkNotesApp(QObject):
         self.theme_watch.fileChanged.connect(self._theme_changed)
         self.theme_watch.directoryChanged.connect(self._theme_changed)
 
-        from . import api_core
+        from . import api_core, crypt_session
+        from ..core.crypt import is_blob
+        self.crypt_session = crypt_session.CryptSession(self)
         api_core.register(self)
+        crypt_session.register(self)
         self._register_optional()
 
-        if vault_path:
+        # an encrypted vault starts locked: its password is asked on the vault screen
+        if vault_path and is_blob(vault_path) and Path(vault_path).is_file():
+            self.crypt_session.start_locked(vault_path)
+        elif vault_path:
             self.open_vault(vault_path)
+        elif self.settings.last_vault and is_blob(self.settings.last_vault) and Path(self.settings.last_vault).is_file():
+            self.crypt_session.start_locked(self.settings.last_vault)
         elif self.settings.last_vault and Path(self.settings.last_vault).is_dir():
             self.open_vault(self.settings.last_vault)
 
     def _register_optional(self) -> None:
         """Feature modules register their own API methods."""
         import importlib
-        for mod in ("sk_notes.ai.api", "sk_notes.plugins.api", "sk_notes.extras.api"):
+        for mod in ("sk_notes.ai.api", "sk_notes.plugins.api", "sk_notes.extras.api", "sk_notes.extras.sync_api", "sk_notes.extras.gallery_api"):
             try:
                 importlib.import_module(mod).register(self)
             except ModuleNotFoundError as exc:
@@ -234,14 +249,21 @@ class SkNotesApp(QObject):
     def vault_root(self) -> Path | None:
         return self.service.vault.root if self.service else None
 
-    def open_vault(self, path: str) -> dict:
+    def open_vault(self, path: str, record: str | None = None) -> dict:
+        """Open a vault folder. `record`: what the vault list remembers instead of the folder
+        (the encrypted file, for the decrypted folder of an encrypted vault)."""
         path = str(Path(path).expanduser().resolve())
         if self.service is not None and str(self.service.vault.root) == path:
             return {"path": path}
         if self.service is not None:
             raise ApiError("vault-already-open")
+
+        def emit(name, payload):
+            self.emit(name, payload)
+            if self.crypt_session.vault is not None:
+                self.crypt_session.touch()  # an encrypted vault: into its file shortly
         try:
-            self.service = VaultService(path, emit=self.emit)
+            self.service = VaultService(path, emit=emit)
         except VaultError as exc:
             raise ApiError(str(exc), path) from exc
         t0 = time.perf_counter()
@@ -251,14 +273,44 @@ class SkNotesApp(QObject):
         self.watcher.changed.connect(self.service.external_change)
         self.watcher.moved.connect(self.service.external_rename)
         self.watcher.rescan.connect(self.service.rescan)
-        self.settings.vaults[path] = {"ts": int(time.time() * 1000)}
-        self.settings.last_vault = path
+        key = record or path
+        self.settings.vaults[key] = {"ts": int(time.time() * 1000)}
+        self.settings.last_vault = key
         self.settings.save()
         for w in self.windows:
             w.setWindowTitle(f"{self.service.vault.name} – sk_notes")
         self._listen_for_links(path)
         self._check_last_exit(path)
         return {"path": path, **stats}
+
+    def _last_sync(self) -> None:
+        """Closing with Git sync on: what was written since the last round is sent now (at most 20 s)."""
+        try:
+            st = self.sync_status() if hasattr(self, "sync_status") else {}
+        except Exception:  # noqa: BLE001
+            return
+        if not (st.get("linked") and st.get("auto")):
+            return
+        t = threading.Thread(target=lambda: _quiet(self.sync_round), daemon=True)
+        t.start()
+        t.join(20)
+
+    def close_vault(self) -> None:
+        """Close the open vault (an encrypted vault being locked or turned into a folder)."""
+        if self.watcher:
+            self.watcher.close()
+            self.watcher = None
+        if self.service:
+            self.service.close()
+            self.service = None
+        if self.uri_server:
+            self.uri_server.close()
+            self.uri_server = None
+        if self._run_marker:
+            self._run_marker.unlink(missing_ok=True)
+            self._run_marker = None
+        for w in self.windows:
+            w.setWindowTitle("sk_notes")
 
     def _check_last_exit(self, vault: str) -> None:
         """A plugin that freezes or exhausts memory would do it again at every start, and
@@ -380,6 +432,8 @@ class SkNotesApp(QObject):
             self.emit("skai-theme", {"theme": theme})
 
     def quit(self) -> None:
+        self._last_sync()
+        self.crypt_session.shutdown()  # an encrypted vault: saved, its decrypted files removed
         if self._run_marker:
             self._run_marker.unlink(missing_ok=True)  # closed normally
         if self.uri_server:

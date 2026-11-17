@@ -12,6 +12,8 @@ PY = [
     ("Qt WebEngine / python3-pyqt6.qtwebengine", "LGPL-3.0 / GPL-3.0", "Chromium-based web engine for the workspace (system package)."),
     ("PyYAML / python3-yaml", "MIT", "Frontmatter parsing (system package)."),
     ("NumPy / python3-numpy", "BSD-3-Clause", "Vector search for the SKAI index (system package)."),
+    ("cryptography / python3-cryptography", "Apache-2.0 OR BSD-3-Clause", "Encrypted vaults: AES-GCM, PBKDF2 (system package)."),
+    ("keyring / python3-keyring", "MIT", "The Git sync token in the system keyring (system package)."),
     ("websocket-client / python3-websocket", "Apache-2.0", "UI tests only (Chrome DevTools Protocol driver); not shipped."),
     ("esbuild", "MIT", "Build tool only; not shipped."),
 ]

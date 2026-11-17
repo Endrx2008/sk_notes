@@ -9,9 +9,8 @@ pkgdesc="Markdown notes and knowledge base for Skorpion OS, with local AI (SKAI)
 arch=('any')
 url="https://sourceforge.net/projects/skos/"
 license=('GPL-3.0-or-later')
-depends=('python' 'python-pyqt6' 'python-pyqt6-webengine' 'python-yaml' 'python-numpy' 'sudo')
-optdepends=('git: Git sync of the vault'
-            'syncthing: Syncthing status in the sync panel'
+depends=('python' 'python-pyqt6' 'python-pyqt6-webengine' 'python-yaml' 'python-numpy' 'python-cryptography' 'python-keyring' 'git' 'sudo')
+optdepends=('syncthing: Syncthing status in the sync panel'
             'pandoc: needed by some community plugins'
             'ollama: SKAI, the local AI')
 install=sk-notes.install

@@ -1,0 +1,99 @@
+/* Desktop only (body.is-desktop): the Android build bundles the desktop styles too, and has its own for these. */
+
+/* ---------------------------------------------------------------- community themes
+   They set the variables of the app they were written for (--color-base-*, --accent-h,
+   --background-primary…), not the --sk-* ones this interface is drawn with. While one is in
+   use, the --sk-* colours follow those variables (a default: :where keeps any rule of the theme first). */
+:where(body.is-desktop.has-css-theme) {
+  --accent-h: 25; --accent-s: 100%; --accent-l: 44%;
+  --color-accent: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
+  --color-accent-1: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 4%));
+  --color-accent-2: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 8%));
+  --background-primary: var(--color-base-00); --background-primary-alt: var(--color-base-10);
+  --background-secondary: var(--color-base-20); --background-secondary-alt: var(--color-base-05);
+  --background-modifier-border: var(--color-base-30); --background-modifier-border-hover: var(--color-base-35);
+  --background-modifier-border-focus: var(--color-base-40); --background-modifier-form-field: var(--color-base-25);
+  --text-normal: var(--color-base-100); --text-muted: var(--color-base-70); --text-faint: var(--color-base-50);
+  --interactive-normal: var(--color-base-30); --interactive-hover: var(--color-base-35);
+  --interactive-accent: var(--color-accent); --interactive-accent-hover: var(--color-accent-1);
+  --text-accent: var(--color-accent-1); --text-accent-hover: var(--color-accent-2);
+  --link-color: var(--text-accent); --link-color-hover: var(--text-accent-hover); --link-external-color: var(--text-accent);
+  --link-unresolved-color: var(--text-accent); --tag-color: var(--text-accent);
+  --icon-color: var(--text-muted); --icon-color-hover: var(--text-normal); --icon-color-active: var(--text-accent);
+  --nav-item-color: var(--text-muted); --nav-item-color-active: var(--text-normal);
+  --checkbox-color: var(--interactive-accent); --checkbox-border-color: var(--text-faint);
+  --titlebar-background: var(--background-secondary); --tab-background-active: var(--background-primary);
+  --code-background: var(--background-primary-alt); --code-normal: var(--text-normal);
+  --scrollbar-thumb-bg: var(--background-modifier-border);
+  --sk-bg: var(--background-secondary); --sk-bg2: var(--background-primary); --sk-bg3: var(--background-primary-alt);
+  --sk-hover: var(--background-modifier-hover); --sk-select: var(--background-modifier-active-hover);
+  --sk-accent: var(--interactive-accent); --sk-accent2: var(--text-accent); --sk-on-accent: var(--text-on-accent);
+  --sk-text: var(--text-normal); --sk-muted: var(--text-muted); --sk-dim: var(--text-faint); --sk-border: var(--background-modifier-border);
+}
+:where(body.is-desktop.has-css-theme.theme-light) { --accent-l: 39%; --interactive-normal: var(--color-base-00); --interactive-hover: var(--color-base-10); }
+body.is-desktop.theme-dark { color-scheme: dark; }
+body.is-desktop.theme-light { color-scheme: light; }
+
+/* ---------------------------------------------------------------- notices with buttons */
+body.is-desktop .notice-buttons { display: flex; gap: 8px; margin-top: 8px; }
+body.is-desktop .notice-buttons button { padding: 4px 12px; }
+body.is-desktop .pc-sync-offer-title { font-weight: 700; margin-bottom: 4px; }
+
+/* ---------------------------------------------------------------- file list: several files chosen */
+body.is-desktop .tree-item-self.is-chosen { background: var(--sk-select) !important; box-shadow: inset 3px 0 0 var(--sk-accent); }
+body.is-desktop .workspace-leaf-content[data-type="file-explorer"] { position: relative; }
+body.is-desktop .pc-select-bar { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 5; display: flex; align-items: center; gap: 2px;
+  padding: 4px 6px; border: 1px solid var(--sk-accent); border-radius: var(--radius-l); background: var(--sk-bg2); box-shadow: 0 6px 20px rgba(0, 0, 0, .35); }
+body.is-desktop .pc-select-count { flex: 1; font-weight: 600; padding: 0 6px; font-size: var(--font-ui-small); }
+body.is-desktop .pc-select-bar .mod-warning { color: var(--sk-red); }
+
+/* ---------------------------------------------------------------- sync */
+body.is-desktop .pc-sync-status { display: inline-flex; align-items: center; gap: 2px; }
+body.is-desktop .pc-sync-icon { display: inline-flex; color: var(--sk-accent); }
+body.is-desktop .pc-sync-icon .svg-icon { width: 14px; height: 14px; }
+body.is-desktop .pc-sync-icon.is-error { color: var(--sk-red); }
+body.is-desktop .pc-sync-icon.is-busy { animation: pc-pulse 1.1s ease-in-out infinite; }
+@keyframes pc-pulse { 50% { opacity: .35; } }
+body.is-desktop .modal.mod-pc-sync { width: 640px; }
+body.is-desktop .pc-sync .setting-item-control input[type=text], body.is-desktop .pc-sync .setting-item-control input[type=password] { width: 260px; }
+
+/* ---------------------------------------------------------------- galleries */
+body.is-desktop .modal.mod-pc-gallery { width: min(1080px, 92vw); height: min(780px, 88vh); }
+body.is-desktop .modal.mod-pc-gallery .modal-content { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+body.is-desktop .pc-gallery-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+body.is-desktop .pc-gallery-top .search-input-container { flex: 1; }
+body.is-desktop .pc-gallery-status { color: var(--text-muted); font-size: var(--font-ui-smaller); white-space: nowrap; }
+body.is-desktop .pc-gallery-grid { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; align-content: start; padding: 2px; }
+body.is-desktop .pc-gallery-card { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--sk-border); border-radius: var(--radius-l);
+  background: var(--sk-bg3); cursor: pointer; min-height: 70px; }
+body.is-desktop .pc-gallery-card:hover, body.is-desktop .pc-gallery-card:focus-visible { border-color: var(--sk-accent); background: var(--background-modifier-hover); outline: none; }
+body.is-desktop .pc-gallery-card.is-current { border-color: var(--sk-accent); box-shadow: inset 0 0 0 1px var(--sk-accent); }
+body.is-desktop .pc-gallery-head { display: flex; align-items: center; gap: 8px; }
+body.is-desktop .pc-gallery-name { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.is-desktop .pc-gallery-flag { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--sk-accent); border: 1px solid var(--sk-accent); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+body.is-desktop .pc-gallery-meta { color: var(--text-muted); font-size: var(--font-ui-smaller); }
+body.is-desktop .pc-gallery-desc { color: var(--text-normal); font-size: var(--font-ui-small); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+body.is-desktop .pc-gallery-remove { position: absolute; right: 6px; bottom: 6px; opacity: 0; }
+body.is-desktop .pc-gallery-card:hover .pc-gallery-remove { opacity: 1; }
+body.is-desktop .pc-gallery-more { align-self: center; margin-top: 10px; }
+body.is-desktop .pc-template-gallery-entry { display: flex; justify-content: flex-end; padding: 8px 12px; border-top: 1px solid var(--sk-border); }
+
+/* ---------------------------------------------------------------- encrypted vaults */
+body.is-desktop .crypt-form { display: flex; flex-direction: column; gap: 8px; padding: 8px 0 12px; max-width: 420px; }
+body.is-desktop .crypt-form .setting-item { padding: 6px 0; }
+body.is-desktop .crypt-input { width: 100%; }
+body.is-desktop .crypt-code-input { font-family: var(--font-monospace); text-transform: uppercase; letter-spacing: .05em; }
+body.is-desktop .crypt-code { font-family: var(--font-monospace); font-size: 20px; font-weight: 700; letter-spacing: .06em; text-align: center; padding: 16px 8px; margin: 12px 0;
+  border: 1px dashed var(--sk-accent); border-radius: var(--radius-l); background: var(--sk-bg3); user-select: all; white-space: nowrap; }
+body.is-desktop .crypt-check { display: flex; align-items: flex-start; gap: 10px; margin: 6px 0; cursor: pointer; }
+body.is-desktop .crypt-check input[type=checkbox] { margin-top: 3px; flex-shrink: 0; }
+body.is-desktop .crypt-option { border: 1px solid var(--sk-border); border-radius: var(--radius-m); padding: 8px 10px; flex-basis: 100%; }
+body.is-desktop .crypt-option.is-active { border-color: var(--sk-accent); }
+body.is-desktop .crypt-option-title { font-weight: 600; }
+body.is-desktop .crypt-warning { font-size: var(--font-ui-smaller); color: var(--sk-red); line-height: 1.4; }
+body.is-desktop .crypt-links { display: flex; gap: 16px; font-size: var(--font-ui-smaller); }
+body.is-desktop .crypt-unlock { padding: 6px 10px 12px; }
+body.is-desktop .crypt-pane:empty { display: none; }
+body.is-desktop .crypt-pane { border-left: 3px solid var(--sk-accent); padding-left: 12px; margin: 4px 0 10px; }
+body.is-desktop .vault-manager-item-icon { display: flex; color: var(--sk-accent); }
+body.is-desktop .vault-manager-item-icon .svg-icon { width: 16px; height: 16px; }

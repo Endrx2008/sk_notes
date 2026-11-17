@@ -5,7 +5,7 @@ linked notes, graph, canvas, database views, community plugins, and **SKAI**, th
 of Skorpion OS — all offline. *Italiano: [README.it.md](README.it.md).*
 
 - **Your files, your computer.** A vault is a normal folder of `.md` files. No account, no
-  telemetry. The only network connection is to the local SKAI service (Ollama).
+  telemetry. The network is used only for the local SKAI service (Ollama) and for what you ask: Git sync, and the community directories of plugins, themes and templates.
 - **Familiar.** If you used another Markdown knowledge-base app, panels, menus and shortcuts
   are where you expect them; an existing vault opens as it is, and a wizard offers to import
   its settings (read-only — the original files are never changed).
@@ -17,18 +17,19 @@ License: **GPL-3.0-or-later**. sk_notes is not affiliated with Obsidian or Dynal
 
 | Area | What you get |
 |---|---|
-| Vault | open/create/switch vaults, file explorer with sorting, drag & drop, rename (links are updated automatically), system trash or `.trash`, file recovery and version history |
+| Vault | open/create/switch vaults, file explorer with sorting, drag & drop, several files at once (Ctrl/Shift+click: rename one after the other, move, delete), rename (links are updated automatically), system trash or `.trash`, file recovery and version history |
 | Editor | Live Preview and Source mode, Reading view, syntax highlighting, tasks, tables, code blocks, math (KaTeX), callouts, footnotes, highlights, comments, multiple cursors, folding, find & replace, slash commands |
 | Links | `[[wikilinks]]` with autocomplete, aliases, heading and block links, embeds of notes, sections, images, audio, video and PDF, backlinks and unlinked mentions, outgoing links, page preview |
 | Search | full-text index with `file:`, `path:`, `tag:`, `line:()`, `section:()`, `task-todo:`, `[property:value]`, `OR`, `-`, regex… |
 | Navigation | quick switcher, command palette, nested tags, outline, bookmarks, tabs, split panes, stacked tabs, saved layouts, pop-out windows |
 | Graph | global and local graph, filters, color groups, forces |
-| Canvas | `.canvas` files (open JSON Canvas format): cards, notes, media, groups, connections |
+| Canvas | `.canvas` files (open JSON Canvas format): cards, notes, media, groups, connections (colour, label, direction, remove all arrows of a card), rename by the title, picture of the whole board (JPG) |
 | Properties | typed property editor and **Bases** (`.base`): table, cards, list and board views with filters and formulas |
 | Organisation | templates, daily notes, unique notes, note composer (merge/extract), word count, random note |
 | Export & import | PDF export; import from Markdown folders, Evernote, Notion, Bear/TextBundle, Logseq, Roam, Google Keep, HTML, CSV |
-| Sync & publish (optional) | Git sync (commit/pull/push, auto-commit), Syncthing status, static website generated locally |
-| Plugins | native sk_notes API with explicit permissions, and a compatibility layer for community plugins ([compatibility table](docs/compatibility.md)) |
+| Sync & publish (optional) | sync with **GitHub, GitLab or any Git server** with a name and a token: commit, pull and push by themselves, merges without conflict markers (the other version is kept beside the note); the same vault opens in sk_notes for Android, Obsidian with its Git plugin, Foam or Tolaria. Git by hand and Syncthing status; static website generated locally |
+| Encryption (optional) | a whole vault as one encrypted file (`.skvault`, AES-256-GCM, password + recovery code), made new or from an existing vault and back; locks by itself after the time chosen; the same file opens in sk_notes for Android |
+| Plugins & themes | native sk_notes API with explicit permissions, and a compatibility layer for community plugins ([compatibility table](docs/compatibility.md)); the public directories of community plugins, themes and note templates browsed and installed in one click; the Anna.g_3 theme included |
 | SKAI | questions about the open note or the whole vault (local embedding index), summaries, tag and link suggestions, proofreading and rewriting — streamed, cancellable, and never applied without your confirmation (diff first) |
 | Languages | English, Italiano, Español, Français, Deutsch, Português, Русский, 简体中文, 日本語 |
 
