@@ -497,7 +497,7 @@ export function applyTemplateVars(app, text, title, date = window.moment()) {
     .replace(/\{\{\s*time\s*(?::\s*([^}]+?))?\s*\}\}/gi, (m, f) => date.format(f || s.get('templateTimeFormat') || 'HH:mm'));
 }
 
-class TemplateModal extends FuzzySuggestModal {
+export class TemplateModal extends FuzzySuggestModal {
   constructor(app, onChoose) {
     super(app);
     this.onChoose = onChoose;

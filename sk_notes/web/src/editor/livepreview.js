@@ -65,14 +65,35 @@ class CheckboxWidget extends WidgetType {
   toDOM(view) {
     const box = createEl('input', { type: 'checkbox', cls: 'task-list-item-checkbox' });
     box.checked = this.checked;
-    box.addEventListener('mousedown', (e) => {
+    // The marker is found where the box stands, not by the shape of the line: tasks inside
+    // quotes and callouts ("> - [ ]") are ticked like the others. A press must not move the
+    // caret into the line (the box would be redrawn under the finger and the tick lost), and
+    // the tick happens once, on the click, for a mouse and for a finger alike.
+    const keep = (e) => e.preventDefault();
+    box.addEventListener('mousedown', keep);
+    // a finger: the tick is made when it lifts, before the browser moves the caret into the
+    // line (that redraws the line with its "- " and the box slides away from under the finger)
+    let down = null;
+    box.addEventListener('touchstart', (e) => { const p = e.touches[0]; down = e.touches.length === 1 ? { x: p.clientX, y: p.clientY, at: Date.now() } : null; }, { passive: true });
+    box.addEventListener('touchend', (e) => {
+      const p = e.changedTouches[0];
+      const tap = down && Math.hypot(p.clientX - down.x, p.clientY - down.y) < 12 && Date.now() - down.at < 700;
+      down = null;
+      if (!tap) return; // a scroll that began on the box
       e.preventDefault();
-      const line = view.state.doc.lineAt(this.pos);
-      const m = /^(\s*(?:[-*+]|\d+[.)])\s+\[)(.)(\])/.exec(line.text);
-      if (!m) return;
-      const at = line.from + m[1].length;
-      view.dispatch({ changes: { from: at, to: at + 1, insert: m[2] === ' ' ? 'x' : ' ' } });
+      toggle();
     });
+    const toggle = () => {
+      const at = view.posAtDOM(box);
+      for (const from of [this.pos, at, at - 3]) {
+        if (from < 0 || from + 3 > view.state.doc.length) continue;
+        const txt = view.state.doc.sliceString(from, from + 3);
+        if (!/^\[.\]$/.test(txt)) continue;
+        view.dispatch({ changes: { from: from + 1, to: from + 2, insert: txt[1] === ' ' ? 'x' : ' ' } });
+        return;
+      }
+    };
+    box.addEventListener('click', (e) => { e.preventDefault(); toggle(); });
     return box;
   }
   ignoreEvent() { return true; }
@@ -129,6 +150,20 @@ class RenderedBlockWidget extends WidgetType {
       const secs = renderSections(this.info.app, this.text, box, this.info.file?.path || '', c, { keepFrontmatter: true });
       postProcess(this.info.app, secs, this.info.file?.path || '', c, undefined, this.text);
     }
+    // tasks inside a callout or a table: the box of the drawn block ticks the line of the note
+    box.addEventListener('click', (e) => {
+      const tick = e.target.closest?.('input.task-list-item-checkbox');
+      if (!tick) return;
+      e.preventDefault();
+      const first = view.state.doc.lineAt(view.posAtDOM(box)).number;
+      const n = first + Number(tick.getAttribute('data-line') || 0);
+      if (!(n >= 1 && n <= view.state.doc.lines)) return;
+      const line = view.state.doc.line(n);
+      const m = /^((?:\s*>)*\s*(?:[-*+]|\d+[.)])\s+\[)(.)(\])/.exec(line.text);
+      if (!m) return;
+      const at = line.from + m[1].length;
+      view.dispatch({ changes: { from: at, to: at + 1, insert: m[2] === ' ' ? 'x' : ' ' } });
+    });
     const edit = box.createDiv({ cls: 'cm-sk-block-edit clickable-icon' });
     setIcon(edit, 'code');
     edit.addEventListener('mousedown', (e) => {

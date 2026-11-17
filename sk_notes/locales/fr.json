@@ -849,5 +849,12 @@
  "plugins.allow-ok": "Activer les modules de la communauté",
  "plugins.remove-title": "Désinstaller le module",
  "plugins.remove-question": "Désinstaller {plugin} ? Ses fichiers et réglages sont supprimés.",
- "plugins.remove-ok": "Désinstaller"
+ "plugins.remove-ok": "Désinstaller",
+ "settings.title-heading": "Commencer les nouvelles notes par leur titre",
+ "settings.title-heading-desc": "Une nouvelle note commence par « # Nom ». Foam, Tolaria et la plupart des applications Markdown lisent le titre d'une note dans ce premier titre ; renommer la note le met à jour.",
+ "canvas.edge-delete": "Supprimer la flèche",
+ "canvas.unlink": "Retirer ses flèches ({n})",
+ "canvas.save-picture": "Enregistrer une image (JPG)",
+ "canvas.picture-empty": "Le tableau est vide : il n'y a rien à dessiner.",
+ "canvas.picture-failed": "L'image n'a pas pu être créée : {error}"
 }

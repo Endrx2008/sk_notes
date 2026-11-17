@@ -362,8 +362,8 @@ export class GraphView extends ItemView {
   _colors() {
     const cs = getComputedStyle(document.body);
     const v = (n) => cs.getPropertyValue(n).trim();
-    return { bg: v('--background-primary'), node: v('--text-muted'), focus: v('--sk-accent'), line: v('--sk-border'),
-      text: v('--text-normal'), tag: v('--color-green'), unresolved: v('--text-faint'), attachment: v('--color-yellow'), hl: v('--sk-accent2') };
+    return { bg: v('--background-primary'), node: v('--graph-node') || v('--text-muted'), focus: v('--graph-node-focused') || v('--sk-accent'), line: v('--graph-line') || v('--sk-border'), lineWidth: parseFloat(v('--graph-line-width')) || 1,
+      text: v('--graph-text') || v('--text-normal'), tag: v('--color-green'), unresolved: v('--text-faint'), attachment: v('--color-yellow'), hl: v('--sk-accent2') };
   }
 
   /** Fit all nodes in the view; big graphs end up zoomed out, where labels fade. */
@@ -414,7 +414,7 @@ export class GraphView extends ItemView {
     const k = this.view.k;
     const hov = this.hover;
     const hl = hov >= 0 ? new Set([hov, ...this.neighbors[hov]]) : null;
-    c.lineWidth = Math.max(0.5, 1 * this.options.lineSizeMultiplier * Math.min(1, k));
+    c.lineWidth = Math.max(0.5, col.lineWidth * this.options.lineSizeMultiplier * Math.min(1, k));
     // links (SKAI_ Memory draws three kinds: solid, dashed, dotted)
     c.strokeStyle = col.line;
     c.globalAlpha = hl ? 0.25 : 0.8;
@@ -560,7 +560,7 @@ export class GraphView extends ItemView {
     const nd = this.nodes[i];
     if (nd.type === 'tag') { this.app.openTagSearch(nd.label); return; }
     if (nd.type === 'unresolved') { this.app.workspace.openLinkText(nd.label, '', Keymap.isModEvent(e) || false); return; }
-    if (nd.file) await this.app.workspace.getLeaf(Keymap.isModEvent(e) || (this.leaf.getRoot() === this.app.workspace.rootSplit && !this.local ? 'tab' : false)).openFile(nd.file);
+    if (nd.file) await this.app.workspace.getLeaf(Keymap.isModEvent(e) || (this.leaf.getRoot() === this.app.workspace.rootSplit && !this.local && !this.app.baseViews ? 'tab' : false)).openFile(nd.file);
   }
 
   // ------------------------------------------------------------- controls panel
@@ -625,10 +625,17 @@ export class GraphView extends ItemView {
 
   onPaneMenu(menu, source) {
     menu.addItem((i) => i.setTitle(t('graph.export')).setIcon('image').onClick(() => {
-      const a = document.createElement('a');
-      a.href = this.canvas.toDataURL('image/png');
-      a.download = 'graph.png';
-      a.click();
+      // the graph is drawn on a clear sheet: the picture gets the colour of the page under it
+      // (a clear PNG shows black in most viewers), and is saved by the app (a download link
+      // does nothing inside a phone app)
+      const out = document.createElement('canvas');
+      out.width = this.canvas.width;
+      out.height = this.canvas.height;
+      const ctx = out.getContext('2d');
+      ctx.fillStyle = this._colors().bg || '#ffffff';
+      ctx.fillRect(0, 0, out.width, out.height);
+      ctx.drawImage(this.canvas, 0, 0);
+      Promise.resolve(this.app.saveImage('graph.png', out.toDataURL('image/png'), '')).catch((e) => this.app.notice(String(e?.message || e)));
     }));
     super.onPaneMenu(menu, source);
   }

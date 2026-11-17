@@ -849,5 +849,12 @@
  "plugins.allow-ok": "Attiva i plugin della community",
  "plugins.remove-title": "Disinstalla plugin",
  "plugins.remove-question": "Disinstallare {plugin}? I suoi file e le sue impostazioni vengono eliminati.",
- "plugins.remove-ok": "Disinstalla"
+ "plugins.remove-ok": "Disinstalla",
+ "settings.title-heading": "Inizia le nuove note con il titolo",
+ "settings.title-heading-desc": "Una nuova nota comincia con \"# Nome\". Foam, Tolaria e la maggior parte delle app Markdown leggono il titolo di una nota da quella prima intestazione; rinominando la nota resta allineata.",
+ "canvas.edge-delete": "Elimina freccia",
+ "canvas.unlink": "Togli le sue frecce ({n})",
+ "canvas.save-picture": "Salva un'immagine (JPG)",
+ "canvas.picture-empty": "La lavagna è vuota: non c'è niente da disegnare.",
+ "canvas.picture-failed": "Non è stato possibile creare l'immagine: {error}"
 }

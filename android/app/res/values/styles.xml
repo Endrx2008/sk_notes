@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="sk_bg">#0d0d0d</color>
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/sk_bg</item>
+        <item name="android:statusBarColor">@color/sk_bg</item>
+        <item name="android:navigationBarColor">@color/sk_bg</item>
+        <item name="android:colorAccent">#e05c00</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+</resources>

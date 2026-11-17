@@ -87,7 +87,7 @@ export class Plugin extends Component {
 
   addCommand(cmd) {
     const id = `${this.manifest.id}:${cmd.id}`;
-    const full = { ...cmd, id, name: `${this.manifest.name}: ${cmd.name}` };
+    const full = { ...cmd, id, name: `${this.manifest.name}: ${cmd.name}`, _plugin: this.manifest.id };
     this.app.commands.addCommand(full);
     this._commands.push(id);
     return full;

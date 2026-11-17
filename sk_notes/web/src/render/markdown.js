@@ -572,6 +572,12 @@ export async function renderEmbed(app, span, sourcePath, component, depth) {
   if (ext === 'pdf') {
     span.addClass('pdf-embed');
     const page = /page=(\d+)/.exec(subpath)?.[1];
+    if (app.renderPdf) {
+      const box = span.createDiv('pdf-embed-pages');
+      box.style.maxHeight = (size?.[1] || 600) + 'px';
+      app.renderPdf(box, file).then((show) => page && show && show(Number(page)));
+      return;
+    }
     span.createEl('iframe', { attr: { src: resourceUrl(file.path, file.stat.mtime) + (page ? `#page=${page}` : ''), height: size?.[1] || 600 } });
     return;
   }

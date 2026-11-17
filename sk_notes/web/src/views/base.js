@@ -98,10 +98,12 @@ export class ItemView extends View {
   }
 
   onPaneMenu(menu, source) {
-    menu.addItem((i) => i.setTitle(t('tab.split-right')).setIcon('split-right').setSection('pane')
-      .onClick(() => this.app.workspace.duplicateLeaf(this.leaf, 'vertical')));
-    menu.addItem((i) => i.setTitle(t('tab.split-down')).setIcon('split-down').setSection('pane')
-      .onClick(() => this.app.workspace.duplicateLeaf(this.leaf, 'horizontal')));
+    if (!this.app.noSplits?.()) { // a phone shows one note at a time
+      menu.addItem((i) => i.setTitle(t('tab.split-right')).setIcon('split-right').setSection('pane')
+        .onClick(() => this.app.workspace.duplicateLeaf(this.leaf, 'vertical')));
+      menu.addItem((i) => i.setTitle(t('tab.split-down')).setIcon('split-down').setSection('pane')
+        .onClick(() => this.app.workspace.duplicateLeaf(this.leaf, 'horizontal')));
+    }
     menu.addItem((i) => i.setTitle(t('tab.close')).setIcon('x').setSection('close').onClick(() => this.leaf.detach()));
   }
 }
@@ -272,11 +274,12 @@ export class TextFileView extends EditableFileView {
 
 export class EmptyView extends ItemView {
   getViewType() { return 'empty'; }
-  getDisplayText() { return t('view.new-tab'); }
-  getIcon() { return 'file'; }
+  getDisplayText() { return this.app.homeTitle || t('view.new-tab'); }
+  getIcon() { return this.app.homeTitle ? 'home' : 'file'; }
   async onOpen() {
     this.navigation = true;
     this.updateTitle();
+    if (this.app.renderHome) { this.app.renderHome(this); return; } // phones and tablets have their own start page
     const box = this.contentEl.createDiv('empty-state');
     const inner = box.createDiv('empty-state-container');
     inner.createDiv({ cls: 'empty-state-title', text: t('empty.title') });

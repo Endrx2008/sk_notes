@@ -1,0 +1,165 @@
+{
+ "v": 1,
+ "templates": [
+  {
+   "id": "meeting-en",
+   "name": "Meeting notes",
+   "description": "Agenda, decisions and tasks of a meeting.",
+   "lang": "en",
+   "file": "en/meeting.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "meeting-it",
+   "name": "Verbale di riunione",
+   "description": "Ordine del giorno, decisioni e compiti di una riunione.",
+   "lang": "it",
+   "file": "it/meeting.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "daily-en",
+   "name": "Daily note",
+   "description": "Plan of the day, notes and what went well.",
+   "lang": "en",
+   "file": "en/daily.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "daily-it",
+   "name": "Nota del giorno",
+   "description": "Piano della giornata, appunti e cosa è andato bene.",
+   "lang": "it",
+   "file": "it/daily.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "project-en",
+   "name": "Project",
+   "description": "Goal, steps, links and log of a project.",
+   "lang": "en",
+   "file": "en/project.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "project-it",
+   "name": "Progetto",
+   "description": "Obiettivo, passi, collegamenti e diario di un progetto.",
+   "lang": "it",
+   "file": "it/project.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "book-en",
+   "name": "Book notes",
+   "description": "Summary, ideas and quotes from a book.",
+   "lang": "en",
+   "file": "en/book.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "book-it",
+   "name": "Scheda libro",
+   "description": "Riassunto, idee e citazioni di un libro.",
+   "lang": "it",
+   "file": "it/book.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "weekly-en",
+   "name": "Weekly review",
+   "description": "Look back at the week and plan the next one.",
+   "lang": "en",
+   "file": "en/weekly.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "weekly-it",
+   "name": "Revisione settimanale",
+   "description": "Uno sguardo alla settimana e il piano per la prossima.",
+   "lang": "it",
+   "file": "it/weekly.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "todo-en",
+   "name": "To-do list",
+   "description": "Tasks by priority.",
+   "lang": "en",
+   "file": "en/todo.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "todo-it",
+   "name": "Lista di cose da fare",
+   "description": "Compiti per priorità.",
+   "lang": "it",
+   "file": "it/todo.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "person-en",
+   "name": "Person",
+   "description": "What to remember about someone.",
+   "lang": "en",
+   "file": "en/person.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "person-it",
+   "name": "Persona",
+   "description": "Cosa ricordare di qualcuno.",
+   "lang": "it",
+   "file": "it/person.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "lesson-en",
+   "name": "Study notes",
+   "description": "Notes of a lesson with questions and a summary.",
+   "lang": "en",
+   "file": "en/lesson.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "lesson-it",
+   "name": "Appunti di studio",
+   "description": "Appunti di una lezione con domande e riassunto.",
+   "lang": "it",
+   "file": "it/lesson.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "recipe-en",
+   "name": "Recipe",
+   "description": "Ingredients and steps of a recipe.",
+   "lang": "en",
+   "file": "en/recipe.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "recipe-it",
+   "name": "Ricetta",
+   "description": "Ingredienti e passaggi di una ricetta.",
+   "lang": "it",
+   "file": "it/recipe.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "decision-en",
+   "name": "Decision",
+   "description": "Why something was decided, and the options weighed.",
+   "lang": "en",
+   "file": "en/decision.md",
+   "author": "sk_notes"
+  },
+  {
+   "id": "decision-it",
+   "name": "Decisione",
+   "description": "Perché si è deciso qualcosa e le opzioni valutate.",
+   "lang": "it",
+   "file": "it/decision.md",
+   "author": "sk_notes"
+  }
+ ]
+}

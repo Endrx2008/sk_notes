@@ -849,5 +849,12 @@
  "plugins.allow-ok": "Activar complementos de la comunidad",
  "plugins.remove-title": "Desinstalar complemento",
  "plugins.remove-question": "¿Desinstalar {plugin}? Se eliminan sus archivos y ajustes.",
- "plugins.remove-ok": "Desinstalar"
+ "plugins.remove-ok": "Desinstalar",
+ "settings.title-heading": "Empezar las notas nuevas con su título",
+ "settings.title-heading-desc": "Una nota nueva empieza con \"# Nombre\". Foam, Tolaria y la mayoría de apps Markdown leen el título de una nota de ese primer encabezado; al renombrar la nota se mantiene igual.",
+ "canvas.edge-delete": "Eliminar flecha",
+ "canvas.unlink": "Quitar sus flechas ({n})",
+ "canvas.save-picture": "Guardar una imagen (JPG)",
+ "canvas.picture-empty": "El tablero está vacío: no hay nada que dibujar.",
+ "canvas.picture-failed": "No se pudo crear la imagen: {error}"
 }

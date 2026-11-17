@@ -450,10 +450,12 @@ export class WorkspaceLeaf extends WorkspaceItem {
       .onClick(() => closeLeaves((this.parent?.children || []).filter((l) => !l.pinned))));
     menu.addItem((i) => i.setTitle(this.pinned ? t('tab.unpin') : t('tab.pin')).setIcon('pin').setSection('action')
       .onClick(() => this.togglePinned()));
-    menu.addItem((i) => i.setTitle(t('tab.split-right')).setIcon('split-right').setSection('action')
-      .onClick(() => ws.duplicateLeaf(this, 'vertical')));
-    menu.addItem((i) => i.setTitle(t('tab.split-down')).setIcon('split-down').setSection('action')
-      .onClick(() => ws.duplicateLeaf(this, 'horizontal')));
+    if (!ws.app?.noSplits?.()) {
+      menu.addItem((i) => i.setTitle(t('tab.split-right')).setIcon('split-right').setSection('action')
+        .onClick(() => ws.duplicateLeaf(this, 'vertical')));
+      menu.addItem((i) => i.setTitle(t('tab.split-down')).setIcon('split-down').setSection('action')
+        .onClick(() => ws.duplicateLeaf(this, 'horizontal')));
+    }
     menu.addItem((i) => i.setTitle(t('tab.new-window')).setIcon('window').setSection('action')
       .onClick(() => ws.moveLeafToPopout(this)));
     const file = this.view instanceof FileView ? this.view.file : null;
@@ -495,6 +497,7 @@ export class WorkspaceLeaf extends WorkspaceItem {
     if (!creator && viewState.type !== 'empty') {
       viewState = { type: 'empty' };
     }
+    // the start page (Home on phones) is never a step of back/forward; base views (graph, file list) are
     if (!fromHistory && this.view && this.view.navigation && this.view.getViewType() !== 'empty') {
       const cur = this._currentNavState();
       if (JSON.stringify(cur.state.state) !== JSON.stringify(viewState.state) || cur.state.type !== viewState.type) {

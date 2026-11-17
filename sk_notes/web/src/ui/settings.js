@@ -122,8 +122,11 @@ class SettingsModal extends Modal {
       { id: 'editor', name: t('settings.editor'), icon: 'pencil', group: 'options', render: (el) => this.editor(el) },
       { id: 'files', name: t('settings.files'), icon: 'folder', group: 'options', render: (el) => this.files(el) },
       { id: 'appearance', name: t('settings.appearance'), icon: 'palette', group: 'options', render: (el) => this.appearance(el) },
-      { id: 'hotkeys', name: t('settings.hotkeys'), icon: 'keyboard', group: 'options', render: (el) => this.hotkeys(el) },
+      // keyboard shortcuts mean nothing on a phone: no such page there
+      ...(a.isMobile ? [] : [{ id: 'hotkeys', name: t('settings.hotkeys'), icon: 'keyboard', group: 'options', render: (el) => this.hotkeys(el) }]),
       { id: 'core', name: t('settings.core'), icon: 'layers', group: 'options', render: (el) => this.core(el) },
+      // phones and tablets: sync with GitHub, GitLab or another Git server
+      ...(a.renderSyncSettings ? [{ id: 'sync', name: t('mobile.sync.title'), icon: 'cloud', group: 'options', render: (el) => a.renderSyncSettings(el) }] : []),
       { id: 'skai', name: t('settings.skai'), icon: 'sparkles', group: 'options', render: (el) => a.skai?.renderSettings(el) || el.setText(t('skai.unavailable')) },
       { id: 'community-plugins', name: t('settings.community'), icon: 'puzzle', group: 'options', render: (el) => a.plugins?.renderSettings(el, this) },
     ];
@@ -228,6 +231,7 @@ class SettingsModal extends Modal {
       const ok = await confirmDialog(a, { title: t('settings.language'), message: t('settings.relaunch-needed'), confirm: t('settings.relaunch') });
       if (ok) { await a.flush(); call('app.relaunch'); }
     }));
+    a.renderVaultSecurity?.(el, this); // phones: password and lock of an encrypted vault
     new Setting(el).setName(t('settings.vaults')).setDesc(t('settings.vaults-desc')).addButton((b) => b.setButtonText(t('settings.manage')).onClick(() => a.commands.executeCommandById('app:open-vault')));
     new Setting(el).setName(t('settings.config-folder')).setDesc(t('settings.config-folder-desc')).addButton((b) => b.setButtonText(t('settings.open')).onClick(() => call('config.openFolder', {})));
     this.heading(el, t('settings.about'));
@@ -260,6 +264,8 @@ class SettingsModal extends Modal {
     this.folder(el, 'attachmentFolderPath', t('settings.attachments'), t('settings.attachments-desc'), '/');
     this.toggle(el, 'alwaysUpdateLinks', t('settings.update-links'), t('settings.update-links-desc'));
     this.toggle(el, 'useMarkdownLinks', t('settings.md-links'), t('settings.md-links-desc'));
+    new Setting(el).setName(t('settings.title-heading')).setDesc(t('settings.title-heading-desc')).addToggle((tg) => tg.setValue(a.fileManager.titleHeading())
+      .onChange((v) => a.settings.set('newNoteHeading', v)));
     this.dropdown(el, 'trashOption', t('settings.deleted-files'), t('settings.deleted-files-desc'), { system: t('settings.trash-system'), local: t('settings.trash-local'), none: t('settings.trash-none') });
     this.toggle(el, 'promptDelete', t('settings.confirm-delete'), t('settings.confirm-delete-desc'));
     this.heading(el, t('settings.import'));
@@ -282,6 +288,11 @@ class SettingsModal extends Modal {
     for (const th of themes) opts[th] = th;
     new Setting(el).setName(t('settings.community-theme')).setDesc(t('settings.community-theme-desc')).addDropdown((d) => d.addOptions(opts).setValue(s.get('cssTheme') || '').onChange((v) => s.set('cssTheme', v)))
       .addExtraButton((b) => b.setIcon('folder-open').setTooltip(t('settings.open-folder')).onClick(() => call('config.openFolder', { sub: 'themes' })));
+    // phones and tablets: themes straight from the community directory, no files to copy by hand
+    if (a.browseThemes) {
+      new Setting(el).setName(t('mobile.themes.title')).setDesc(t('mobile.themes.desc'))
+        .addButton((b) => b.setButtonText(t('mobile.plugins.browse-button')).setCta().onClick(() => a.browseThemes(() => this.openTabById(this.activeId))));
+    }
     this.heading(el, t('settings.snippets'));
     const snippets = await call('config.list', { kind: 'snippets' }).catch(() => []);
     new Setting(el).setName(t('settings.snippets-folder')).setDesc(t('settings.snippets-desc'))

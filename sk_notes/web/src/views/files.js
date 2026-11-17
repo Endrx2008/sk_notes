@@ -45,10 +45,12 @@ export class PdfView extends MediaView {
   constructor(leaf) { super(leaf, 'pdf', 'pdf'); }
   canAcceptExtension(ext) { return ext === 'pdf'; }
   renderFile(file) {
+    if (this.app.renderPdf) { this.pdfDone = this.app.renderPdf(this.contentEl, file); return; }
     this.contentEl.createEl('iframe', { cls: 'pdf-container', attr: { src: resourceUrl(file.path, file.stat.mtime) } });
   }
   setEphemeralState(st) {
     const page = /page=(\d+)/.exec(st?.subpath || '')?.[1];
+    if (page && this.pdfDone) { this.pdfDone.then((show) => show && show(Number(page))); return; }
     if (page && this.file) this.contentEl.find('iframe')?.setAttr('src', resourceUrl(this.file.path, this.file.stat.mtime) + `#page=${page}`);
   }
 }

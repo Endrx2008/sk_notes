@@ -273,7 +273,7 @@ export class App extends Events {
     if (!(file instanceof TFile) && !(file instanceof TFolder)) return;
     if (file instanceof TFile && source !== 'tab-header' && source !== 'more-options') {
       menu.addItem((i) => i.setTitle(t('file.open-new-tab')).setIcon('file').setSection('open').onClick(() => this.workspace.openFile(file, 'tab')));
-      menu.addItem((i) => i.setTitle(t('file.open-right')).setIcon('split-right').setSection('open').onClick(() => this.workspace.openFile(file, 'split')));
+      if (!this.noSplits?.()) menu.addItem((i) => i.setTitle(t('file.open-right')).setIcon('split-right').setSection('open').onClick(() => this.workspace.openFile(file, 'split')));
       menu.addItem((i) => i.setTitle(t('file.open-window')).setIcon('window').setSection('open').onClick(() => this.workspace.openFile(file, 'window')));
     }
     if (file instanceof TFolder) {
@@ -311,6 +311,14 @@ export class App extends Events {
   }
 
   // ---------------------------------------------------------------- attachments: paste & drop
+  /** Save a picture made by a view (a data: address). Here: a download; phones save it in the vault. */
+  async saveImage(name, dataUrl) {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = name;
+    a.click();
+  }
+
   async saveAttachment(name, data, sourcePath) {
     const path = await this.fileManager.getAvailablePathForAttachment(name, sourcePath);
     const file = await this.vault.createBinary(path, data);

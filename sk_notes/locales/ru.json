@@ -849,5 +849,12 @@
  "plugins.allow-ok": "Включить плагины сообщества",
  "plugins.remove-title": "Удалить плагин",
  "plugins.remove-question": "Удалить {plugin}? Его файлы и настройки будут удалены.",
- "plugins.remove-ok": "Удалить"
+ "plugins.remove-ok": "Удалить",
+ "settings.title-heading": "Начинать новые заметки с заголовка",
+ "settings.title-heading-desc": "Новая заметка начинается с «# Имя». Foam, Tolaria и большинство приложений Markdown берут название заметки из этого первого заголовка; при переименовании заметки он обновляется.",
+ "canvas.edge-delete": "Удалить стрелку",
+ "canvas.unlink": "Убрать её стрелки ({n})",
+ "canvas.save-picture": "Сохранить изображение (JPG)",
+ "canvas.picture-empty": "Доска пуста: нечего рисовать.",
+ "canvas.picture-failed": "Не удалось создать изображение: {error}"
 }

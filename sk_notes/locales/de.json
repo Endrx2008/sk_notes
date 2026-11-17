@@ -849,5 +849,12 @@
  "plugins.allow-ok": "Community-Plugins einschalten",
  "plugins.remove-title": "Plugin deinstallieren",
  "plugins.remove-question": "{plugin} deinstallieren? Seine Dateien und Einstellungen werden gelöscht.",
- "plugins.remove-ok": "Deinstallieren"
+ "plugins.remove-ok": "Deinstallieren",
+ "settings.title-heading": "Neue Notizen mit ihrem Titel beginnen",
+ "settings.title-heading-desc": "Eine neue Notiz beginnt mit „# Name“. Foam, Tolaria und die meisten Markdown-Apps lesen den Titel einer Notiz aus dieser ersten Überschrift; beim Umbenennen der Notiz wird sie angepasst.",
+ "canvas.edge-delete": "Pfeil löschen",
+ "canvas.unlink": "Seine Pfeile entfernen ({n})",
+ "canvas.save-picture": "Bild speichern (JPG)",
+ "canvas.picture-empty": "Die Tafel ist leer: Es gibt nichts zu zeichnen.",
+ "canvas.picture-failed": "Das Bild konnte nicht erstellt werden: {error}"
 }

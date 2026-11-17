@@ -849,5 +849,12 @@
  "plugins.allow-ok": "Turn on community plugins",
  "plugins.remove-title": "Uninstall plugin",
  "plugins.remove-question": "Uninstall {plugin}? Its files and settings are deleted.",
- "plugins.remove-ok": "Uninstall"
+ "plugins.remove-ok": "Uninstall",
+ "settings.title-heading": "Start new notes with their title",
+ "settings.title-heading-desc": "A new note begins with \"# Name\". Foam, Tolaria and most Markdown apps read the title of a note from that first heading; renaming the note keeps it in step.",
+ "canvas.edge-delete": "Delete arrow",
+ "canvas.unlink": "Remove its arrows ({n})",
+ "canvas.save-picture": "Save a picture (JPG)",
+ "canvas.picture-empty": "The board is empty: there is nothing to draw.",
+ "canvas.picture-failed": "The picture could not be made: {error}"
 }

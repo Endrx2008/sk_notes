@@ -849,5 +849,12 @@
  "plugins.allow-ok": "Ligar plugins da comunidade",
  "plugins.remove-title": "Desinstalar plugin",
  "plugins.remove-question": "Desinstalar {plugin}? Os seus ficheiros e definições são apagados.",
- "plugins.remove-ok": "Desinstalar"
+ "plugins.remove-ok": "Desinstalar",
+ "settings.title-heading": "Começar as notas novas com o título",
+ "settings.title-heading-desc": "Uma nota nova começa com \"# Nome\". O Foam, o Tolaria e a maioria das apps Markdown leem o título de uma nota nesse primeiro cabeçalho; ao mudar o nome da nota, ele acompanha.",
+ "canvas.edge-delete": "Eliminar seta",
+ "canvas.unlink": "Retirar as suas setas ({n})",
+ "canvas.save-picture": "Guardar uma imagem (JPG)",
+ "canvas.picture-empty": "O quadro está vazio: não há nada para desenhar.",
+ "canvas.picture-failed": "Não foi possível criar a imagem: {error}"
 }

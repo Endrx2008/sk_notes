@@ -849,5 +849,12 @@
  "plugins.allow-ok": "コミュニティプラグインをオンにする",
  "plugins.remove-title": "プラグインをアンインストール",
  "plugins.remove-question": "{plugin} をアンインストールしますか？ファイルと設定は削除されます。",
- "plugins.remove-ok": "アンインストール"
+ "plugins.remove-ok": "アンインストール",
+ "settings.title-heading": "新しいノートをタイトルで始める",
+ "settings.title-heading-desc": "新しいノートは「# 名前」で始まります。Foam、Tolaria、多くの Markdown アプリはこの最初の見出しからノートのタイトルを読み取ります。ノートの名前を変えると見出しも更新されます。",
+ "canvas.edge-delete": "矢印を削除",
+ "canvas.unlink": "このカードの矢印を外す（{n}）",
+ "canvas.save-picture": "画像を保存（JPG）",
+ "canvas.picture-empty": "ボードが空です。描くものがありません。",
+ "canvas.picture-failed": "画像を作成できませんでした：{error}"
 }

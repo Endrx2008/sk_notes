@@ -849,5 +849,12 @@
  "plugins.allow-ok": "启用社区插件",
  "plugins.remove-title": "卸载插件",
  "plugins.remove-question": "卸载 {plugin}？其文件和设置将被删除。",
- "plugins.remove-ok": "卸载"
+ "plugins.remove-ok": "卸载",
+ "settings.title-heading": "新笔记以标题开头",
+ "settings.title-heading-desc": "新笔记以“# 名称”开头。Foam、Tolaria 和大多数 Markdown 应用从这个第一级标题读取笔记的标题；重命名笔记时它会随之更新。",
+ "canvas.edge-delete": "删除箭头",
+ "canvas.unlink": "移除它的箭头（{n}）",
+ "canvas.save-picture": "保存图片（JPG）",
+ "canvas.picture-empty": "白板是空的：没有可绘制的内容。",
+ "canvas.picture-failed": "无法生成图片：{error}"
 }
