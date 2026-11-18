@@ -101,8 +101,8 @@ const CORE_RIBBON = new Set(['switcher', 'graph', 'canvas', 'daily', 'templates'
 function installCreate(app, plus) {
   // a database (.base) is a way of looking at notes made on a computer: a phone opens one, it does not make one
   const KINDS = [
-    ['file-plus', 'file:new', 'cmd.new-note', 'mod-center'],
-    ['canvas', 'canvas:new-file', 'cmd.new-canvas', 'mod-right'],
+    ['file-plus', 'file:new', 'cmd.new-note', 'mod-center mod-level'], // both at the same height
+    ['canvas', 'canvas:new-file', 'cmd.new-canvas', 'mod-right mod-level'],
   ];
   let pop = null;
   let downAt = null;

@@ -559,3 +559,13 @@ body.is-mobile .canvas-edge-hit { stroke-width: calc(34px / var(--canvas-zoom, 1
 .vault-crypt-pane:empty { display: none; }
 .vault-crypt-pane { border-left: 3px solid var(--sk-accent); padding-left: 10px; margin: 4px 0 10px; }
 .vault-crypt-pane .setting-item { padding-left: 0; }
+
+/* Home: today's note, as a small button at the right of "new note" */
+.mobile-home-tile.mod-cta { position: relative; }
+.mobile-home-extra { margin-left: auto; display: flex; align-items: center; justify-content: center; width: 46px; height: 46px; flex-shrink: 0;
+  border: 1px solid var(--sk-border); border-radius: var(--radius-l); background: var(--background-primary-alt); color: var(--sk-accent); }
+.mobile-home-extra:active { background: var(--sk-accent); color: var(--sk-on-accent); border-color: var(--sk-accent); }
+.mobile-home-extra .svg-icon { width: 22px; height: 22px; }
+/* "+": the two bubbles side by side, at the same height */
+.mobile-create { align-items: flex-end; }
+.mobile-create-item.mod-level { margin-bottom: 0; }

@@ -2,7 +2,8 @@
 // Copyright (C) 2026 Enrico Miot
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Home is where everything starts: what to make (a note, a canvas, today's
+// Home is where everything starts: what to make (a note – or today's note, the small button
+// of the same tile –, a canvas,
 // note, a note from a template) and how to look at the vault (graph or file list).
 // The graph and the file list are the two base views of the app: they are not tabs to
 // close. They show in the tab in use, give way to the file the user opens from them, and
@@ -66,17 +67,22 @@ export function renderHome(app, view) {
   const section = (title, items, cls) => {
     box.createDiv({ cls: 'mobile-home-title', text: title });
     const grid = box.createDiv('mobile-home-grid' + (cls ? ' ' + cls : ''));
-    for (const [icon, label, fn, mod] of items) {
+    for (const [icon, label, fn, mod, extra] of items) {
       const tile = grid.createDiv({ cls: 'mobile-home-tile' + (mod ? ' ' + mod : ''), attr: { role: 'button', tabindex: '0' } });
       setIcon(tile.createDiv('mobile-home-icon'), icon);
       tile.createDiv({ cls: 'mobile-home-label', text: label });
       tile.addEventListener('click', fn);
+      // a small button at the right of the tile, for a second thing to make (today's note)
+      if (extra) {
+        const b = tile.createDiv({ cls: 'mobile-home-extra', attr: { role: 'button', tabindex: '0', 'aria-label': extra.label, 'data-no-tooltip': '' } });
+        setIcon(b, extra.icon);
+        b.addEventListener('click', (e) => { e.stopPropagation(); extra.fn(); });
+      }
     }
   };
   section(t('mobile.home.create'), [
-    ['file-plus', t('cmd.new-note'), run('file:new'), 'mod-cta'],
+    ['file-plus', t('cmd.new-note'), run('file:new'), 'mod-cta', { icon: 'calendar-day', label: t('cmd.daily-note'), fn: run('daily-notes') }],
     ['canvas', t('cmd.new-canvas'), run('canvas:new-file')],
-    ['calendar-day', t('cmd.daily-note'), run('daily-notes')],
     ['template', t('mobile.home.template'), () => newNoteFromTemplate(app)],
   ]);
   section(t('mobile.home.view'), [
