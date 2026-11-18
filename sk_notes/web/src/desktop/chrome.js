@@ -1,7 +1,6 @@
 // The frame around the notes (desktop): fewer buttons that do the same thing twice.
-// - Left ribbon: SKAI lives in the right sidebar, not here. The buttons that Home already shows
-//   as tiles (graph, canvas, today's note, templates, database) are hidden while a Home is on
-//   screen and come back when it is not.
+// - Left ribbon: SKAI lives in the right sidebar, not here. While Home is the tab in front the
+//   ribbon is hidden (Home shows it all); notes, canvases and the other pages show it as always.
 // - Sidebar buttons: always outside the sidebar, at the edge of the notes area, so they move
 //   with the sidebar as it opens and closes instead of jumping from one place to another.
 // - "+" of the tabs: a click opens a new tab (Home), as always. Press and pull down: two
@@ -12,8 +11,6 @@
 import { setIcon } from '../core/icons.js';
 import { t } from '../core/i18n.js';
 import { WorkspaceLeaf } from '../ui/workspace.js';
-
-const ON_HOME = ['graph', 'canvas', 'daily', 'templates', 'vault-base'];
 
 export function installChrome(app) {
   app.on('ready', () => {
@@ -27,23 +24,13 @@ function tidyRibbon(app) {
   const ws = app.workspace;
   const ribbon = ws.leftRibbon;
   for (const it of ribbon.items.filter((x) => x.id === 'skai')) ribbon.removeItem(it.el);
-  const homeOnScreen = () => {
-    let shown = false;
-    const walk = (x) => {
-      if (shown || !x) return;
-      if (Array.isArray(x.children) && typeof x.currentTab === 'number') {
-        const leaf = x.children[x.currentTab];
-        if (leaf?.view?.getViewType() === 'empty' && leaf.view.contentEl.querySelector('.pc-home')) shown = true;
-        return;
-      }
-      for (const c of x.children || []) walk(c);
-    };
-    walk(ws.rootSplit);
-    return shown;
-  };
+  // Home in front (the tab last used in the notes area): no ribbon, Home has it all
   const update = () => {
-    const hide = homeOnScreen();
-    for (const it of ribbon.items) if (ON_HOME.includes(it.id)) it.el.toggleClass('pc-on-home', hide);
+    const front = ws.getMostRecentLeaf(ws.rootSplit);
+    const home = front?.view?.getViewType() === 'empty' && !!front.view.contentEl.querySelector('.pc-home');
+    if (document.body.hasClass('pc-home-front') === home) return;
+    document.body.toggleClass('pc-home-front', home);
+    ws.onLayoutResize?.(); // the notes area got wider or narrower
   };
   // after the change has been drawn (Home is drawn when its tab is shown)
   const later = () => requestAnimationFrame(() => setTimeout(update, 0));

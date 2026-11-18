@@ -102,7 +102,8 @@ export class Commands {
       if (!hks.length) continue;
       if (hks.some((hk) => hotkeyMatches(hk, evt))) {
         const cmd = this.commands[id];
-        if (this.isAvailable(cmd)) {
+        // keyCheck(evt): a command may let its key do its usual job at times (Ctrl+C copying)
+        if (this.isAvailable(cmd) && (!cmd.keyCheck || cmd.keyCheck(evt))) {
           this.executeCommand(cmd);
           return true;
         }

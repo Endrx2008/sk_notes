@@ -74,12 +74,12 @@ async function themedLogo(el) {
 }
 
 const TILES = [
-  // [section, command id, icon, label key, extra class, small button: [command id, icon, label key]]
+  // [row, command id, icon, label key, extra class, small button: [command id, icon, label key]]
+  // the file list is not here: it is always open in the left sidebar
   ['create', 'file:new', 'file-plus', 'cmd.new-note', 'mod-cta', ['daily-notes', 'calendar-day', 'cmd.daily-note']],
   ['create', 'canvas:new-file', 'canvas', 'cmd.new-canvas'],
-  ['create', 'file:new-from-template', 'template', 'pc.home.from-template'],
+  ['template', 'file:new-from-template', 'template', 'pc.home.from-template', 'mod-slim'],
   ['view', 'graph:open-here', 'graph', 'pc.home.graph', 'mod-view'],
-  ['view', 'file-explorer:open', 'list', 'pc.home.list', 'mod-view'],
   ['view', 'bases:vault-view', 'database', 'pc.home.database', 'mod-view'],
 ];
 
@@ -110,7 +110,7 @@ export function renderHome(app, view) {
   const left = box.createDiv('pc-home-main');
   const tiles = [];
   const section = (id, title) => {
-    left.createDiv({ cls: 'pc-home-title', text: title });
+    if (title) left.createDiv({ cls: 'pc-home-title', text: title });
     const grid = left.createDiv('pc-home-grid mod-' + id);
     for (const [sec, cmd, icon, label, cls, extra] of TILES) {
       if (sec !== id) continue;
@@ -137,6 +137,7 @@ export function renderHome(app, view) {
     }
   };
   section('create', t('pc.home.create'));
+  section('template', null); // a note from a template: smaller, under the two above
   section('view', t('pc.home.view'));
 
   // the main keys, in one line at the bottom
@@ -159,12 +160,26 @@ export function renderHome(app, view) {
   box.addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const i = tiles.indexOf(document.activeElement);
-    const cols = Math.max(1, Math.round(left.clientWidth / (tiles[0]?.offsetWidth || 1)));
     const go = (j) => { e.preventDefault(); tiles[Math.max(0, Math.min(tiles.length - 1, j))]?.focus(); };
+    // the nearest tile in the row above/below, by position on screen
+    const vertical = (dir) => {
+      if (i < 0) return go(0);
+      const r = tiles[i].getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      let best = -1;
+      let bestD = Infinity;
+      tiles.forEach((tile, j) => {
+        const q = tile.getBoundingClientRect();
+        if (dir > 0 ? q.top < r.bottom - 1 : q.bottom > r.top + 1) return;
+        const d = Math.abs(q.top - r.top) * 4 + Math.abs(q.left + q.width / 2 - cx);
+        if (d < bestD) { bestD = d; best = j; }
+      });
+      if (best >= 0) go(best); else e.preventDefault();
+    };
     if (e.key === 'ArrowRight') go(i < 0 ? 0 : i + 1);
     else if (e.key === 'ArrowLeft') go(i < 0 ? 0 : i - 1);
-    else if (e.key === 'ArrowDown') go(i < 0 ? 0 : i + cols);
-    else if (e.key === 'ArrowUp') go(i < 0 ? 0 : i - cols);
+    else if (e.key === 'ArrowDown') vertical(1);
+    else if (e.key === 'ArrowUp') vertical(-1);
     else if ((e.key === 'Enter' || e.key === ' ') && i >= 0) { e.preventDefault(); tiles[i].click(); }
     else if (/^[1-9]$/.test(e.key) && tiles[Number(e.key) - 1]) { e.preventDefault(); tiles[Number(e.key) - 1].click(); }
     else if (/^\p{L}$/u.test(e.key) && !e.target.closest('input, textarea')) { e.preventDefault(); app.commands.executeCommandById('switcher:open'); }
@@ -184,7 +199,7 @@ export function installHome(app) {
   // default keys of the operations of Home (only where the command has none of its own)
   const DEFAULTS = {
     'home:open': [{ modifiers: ['Mod', 'Shift'], key: 'H' }],
-    'canvas:new-file': [{ modifiers: ['Mod', 'Alt'], key: 'C' }], // (Ctrl+Shift+K deletes a line in the editor)
+    'canvas:new-file': [{ modifiers: ['Mod'], key: 'C' }], // only when there is nothing to copy (see keyCheck below)
     'daily-notes': [{ modifiers: ['Mod', 'Shift'], key: 'D' }],
     'file:new-from-template': [{ modifiers: ['Mod', 'Alt'], key: 'N' }],
     'graph:open-here': [{ modifiers: ['Mod', 'Shift'], key: 'G' }],
@@ -197,6 +212,19 @@ export function installHome(app) {
     for (const [id, hk] of Object.entries(DEFAULTS)) {
       const c = app.commands.commands[id];
       if (c && !(c.hotkeys && c.hotkeys.length) && hk.length) c.hotkeys = hk;
+    }
+    // Ctrl+C makes a canvas only when it would copy nothing: text chosen anywhere, the cursor in
+    // an editor or a field, or a canvas (which copies its cards) keep Ctrl+C as "copy"
+    const canvas = app.commands.commands['canvas:new-file'];
+    if (canvas && !canvas.keyCheck) {
+      canvas.keyCheck = (evt) => {
+        const plainCopy = (evt.ctrlKey || evt.metaKey) && !evt.shiftKey && !evt.altKey && evt.key.toLowerCase() === 'c';
+        if (!plainCopy) return true;
+        if (String(window.getSelection?.() || '').length) return false;
+        if (document.activeElement?.closest?.('input, textarea, select, [contenteditable="true"], .cm-editor')) return false;
+        const front = app.workspace.getMostRecentLeaf(app.workspace.rootSplit);
+        return front?.view?.getViewType() !== 'canvas';
+      };
     }
   };
   apply();
