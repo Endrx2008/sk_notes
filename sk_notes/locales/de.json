@@ -1058,5 +1058,7 @@
  "pc.home.search": "Im Vault suchen",
  "pc.home.commands": "Alle Befehle",
  "pc.home.go-home": "Zum Start",
- "pc.home.edit-keys": "Tastenkürzel ändern…"
+ "pc.home.edit-keys": "Tastenkürzel ändern…",
+ "pc.home.vault": "Geöffneter Vault",
+ "pc.split-right": "Rechts teilen"
 }

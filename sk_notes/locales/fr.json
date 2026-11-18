@@ -1058,5 +1058,7 @@
  "pc.home.search": "Rechercher dans le coffre",
  "pc.home.commands": "Toutes les commandes",
  "pc.home.go-home": "Aller à l'accueil",
- "pc.home.edit-keys": "Modifier les raccourcis…"
+ "pc.home.edit-keys": "Modifier les raccourcis…",
+ "pc.home.vault": "Coffre ouvert",
+ "pc.split-right": "Diviser à droite"
 }

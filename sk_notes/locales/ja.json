@@ -1058,5 +1058,7 @@
  "pc.home.search": "保管庫を検索",
  "pc.home.commands": "すべてのコマンド",
  "pc.home.go-home": "ホームへ",
- "pc.home.edit-keys": "ショートカットを変更…"
+ "pc.home.edit-keys": "ショートカットを変更…",
+ "pc.home.vault": "開いている保管庫",
+ "pc.split-right": "右に分割"
 }

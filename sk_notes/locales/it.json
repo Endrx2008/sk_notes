@@ -1058,5 +1058,7 @@
  "pc.home.search": "Cerca nel vault",
  "pc.home.commands": "Tutti i comandi",
  "pc.home.go-home": "Vai alla Home",
- "pc.home.edit-keys": "Cambia le scorciatoie…"
+ "pc.home.edit-keys": "Cambia le scorciatoie…",
+ "pc.home.vault": "Vault aperto",
+ "pc.split-right": "Affianca a destra"
 }

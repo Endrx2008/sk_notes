@@ -1058,5 +1058,7 @@
  "pc.home.search": "Поиск в хранилище",
  "pc.home.commands": "Все команды",
  "pc.home.go-home": "На главную",
- "pc.home.edit-keys": "Изменить сочетания клавиш…"
+ "pc.home.edit-keys": "Изменить сочетания клавиш…",
+ "pc.home.vault": "Открытое хранилище",
+ "pc.split-right": "Разделить вправо"
 }

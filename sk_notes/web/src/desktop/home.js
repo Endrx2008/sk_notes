@@ -5,7 +5,7 @@
 //           from a template
 //   View:   the graph, the file list, the database of the vault (a view, no file is made)
 // Every tile is a command, so its shortcut is the one set in Settings → Hotkeys and is shown
-// on the tile. On Home: arrows move between tiles, Enter opens, 1–9 open the n-th tile,
+// on the tile. On Home: arrows move between tiles, Enter opens, 1–9 open the n-th tile (not shown),
 // typing a letter starts "go to file".
 
 import { setIcon } from '../core/icons.js';
@@ -91,7 +91,13 @@ export function renderHome(app, view) {
   themedLogo(logo);
   const titles = head.createDiv('pc-home-titles');
   titles.createDiv({ cls: 'pc-home-name', text: 'sk_notes' });
-  titles.createDiv({ cls: 'pc-home-vault', text: app.vault.getName?.() || app.info?.vault?.name || '' });
+  // the vault open now (its folder name), not a version
+  const vaultName = app.vault.getName?.() || app.info?.vault?.name || '';
+  if (vaultName) {
+    const v = titles.createDiv({ cls: 'pc-home-vault', attr: { 'aria-label': t('pc.home.vault') } });
+    setIcon(v.createSpan('pc-home-vault-icon'), 'vault');
+    v.createSpan({ text: vaultName });
+  }
 
   // recent notes: one row of chips, it takes little room
   const files = app.workspace.getLastOpenFiles().map((p) => app.vault.getAbstractFileByPath(p)).filter((f) => f instanceof TFile).slice(0, 8);
@@ -114,14 +120,12 @@ export function renderHome(app, view) {
     const grid = left.createDiv('pc-home-grid mod-' + id);
     for (const [sec, cmd, icon, label, cls, extra] of TILES) {
       if (sec !== id) continue;
-      const n = tiles.length + 1;
       const tile = grid.createDiv({ cls: 'pc-home-tile' + (cls ? ' ' + cls : ''), attr: { role: 'button', tabindex: '0', 'data-command': cmd } });
       setIcon(tile.createDiv('pc-home-icon'), icon);
       const txt = tile.createDiv('pc-home-text');
       txt.createDiv({ cls: 'pc-home-label', text: t(label) });
       const hk = app.commands.hotkeysFor(cmd)[0];
       const keys = txt.createDiv('pc-home-keys');
-      keys.createSpan({ cls: 'pc-home-num', text: String(n) });
       if (hk) keys.createEl('kbd', { text: hotkeyToString(hk) });
       tile.addEventListener('click', () => app.commands.executeCommandById(cmd));
       if (extra) {

@@ -1058,5 +1058,7 @@
  "pc.home.search": "Search in the vault",
  "pc.home.commands": "All commands",
  "pc.home.go-home": "Go to Home",
- "pc.home.edit-keys": "Change the shortcuts…"
+ "pc.home.edit-keys": "Change the shortcuts…",
+ "pc.home.vault": "Vault open now",
+ "pc.split-right": "Split right"
 }

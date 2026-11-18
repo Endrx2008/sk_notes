@@ -1058,5 +1058,7 @@
  "pc.home.search": "Buscar en el vault",
  "pc.home.commands": "Todos los comandos",
  "pc.home.go-home": "Ir al inicio",
- "pc.home.edit-keys": "Cambiar los atajos…"
+ "pc.home.edit-keys": "Cambiar los atajos…",
+ "pc.home.vault": "Vault abierto",
+ "pc.split-right": "Dividir a la derecha"
 }
