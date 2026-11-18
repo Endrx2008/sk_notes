@@ -180,3 +180,5 @@ body.is-desktop .workspace-leaf-content[data-type="empty"] > .view-content { con
   body.is-desktop .pc-home-logo { width: 56px; height: 56px; }
   body.is-desktop .pc-home-help { display: none; }
 }
+/* the only tab is a Home: no close button (closing it would just show it again) */
+body.is-desktop.pc-lone-home .mod-root .workspace-tab-header-inner-close-button { display: none; }

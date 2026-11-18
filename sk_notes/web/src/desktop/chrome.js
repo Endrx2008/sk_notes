@@ -7,10 +7,11 @@
 //   to click; or press, pull down and let go towards one of them. What is made opens in a new
 //   tab of that pane. Escape, or a click elsewhere, closes the bubbles. (Home: Ctrl+T, Ctrl+Shift+H.)
 // - Panes side by side, also while editing: "split right" in the header of every pane and in
-//   the menu of a tab (the new pane shows Home, to choose what to open), Ctrl+Alt+D /
+//   the menu of a tab (the new pane opens the last note used that is not on screen), Ctrl+Alt+D /
 //   Ctrl+Alt+Shift+D, a tab or a file of the list dropped on an edge of a pane.
 // - Closing the last note of a pane closes the pane (the others share its room, like tiling
-//   windows) instead of leaving a Home behind; closing the very last one still shows Home.
+//   windows); panes left with only Home close too while a note is still open. When nothing is
+//   open, one Home is shown, without a close button (closing it would just show it again).
 // - Back/forward arrows of a tab show only when there is somewhere to go (styles in 50-desktop.css).
 
 import { setIcon } from '../core/icons.js';
@@ -26,6 +27,8 @@ export function installChrome(app) {
   installNewBubbles(app);
 }
 
+const isHomeLeaf = (l) => (l._pending ? l._pending.type : (l.view?.getViewType() ?? 'empty')) === 'empty';
+
 function tidyRibbon(app) {
   const ws = app.workspace;
   const ribbon = ws.leftRibbon;
@@ -38,6 +41,9 @@ function tidyRibbon(app) {
       const v = x.children[x.currentTab]?.view;
       return v?.getViewType() === 'empty' && !!v.contentEl.querySelector('.pc-home');
     });
+    const leaves = [];
+    ws.iterateLeaves(ws.rootSplit, (l) => leaves.push(l));
+    document.body.toggleClass('pc-lone-home', leaves.length === 1 && isHomeLeaf(leaves[0]));
     if (document.body.hasClass('pc-home-front') === home) return;
     document.body.toggleClass('pc-home-front', home);
     ws.onLayoutResize?.(); // the notes area got wider or narrower
@@ -62,12 +68,15 @@ function sidebarButtonsOutside(app) {
   ws._updateToggles();
 }
 
-/** A new tab in the pane of `tabsEl` (or the pane in front), shown and focused. */
+/** A tab to make something in, in the pane of `tabsEl` (or the pane in front): its Home, or a new tab. */
 async function newTabIn(app, tabsEl) {
   const ws = app.workspace;
   const tabs = ws._allTabs().find((x) => x.containerEl === tabsEl && x.getRoot?.() === ws.rootSplit)
     || ws.getMostRecentLeaf(ws.rootSplit)?.parent;
   if (!tabs) return;
+  // the Home shown in that pane is used (no Home left behind a new tab)
+  const cur = tabs.children[tabs.currentTab];
+  if (cur && !cur.pinned && cur.view?.getViewType() === 'empty') { ws.setActiveLeaf(cur, { focus: true }); return; }
   const leaf = new WorkspaceLeaf(ws);
   tabs.insertChild(-1, leaf);
   await leaf.setViewState({ type: 'empty' });
@@ -179,12 +188,18 @@ function installTiling(app) {
   const isHome = (l) => (l._pending ? l._pending.type : (l.view?.getViewType() ?? 'empty')) === 'empty';
   const rootPanes = () => ws._allTabs().filter((x) => x.getRoot?.() === ws.rootSplit);
 
-  // a new pane next to `leaf`, showing Home (the user chooses what goes there)
+  // a new pane next to `leaf`, with the last note used that is not on screen already (Home
+  // when there is none): two different notes side by side at once, and closing one leaves
+  // the other, never a Home in its place
   const split = async (leaf, direction) => {
     const base = leaf && leaf.getRoot?.() === ws.rootSplit ? leaf : ws.getMostRecentLeaf(ws.rootSplit);
     if (!base) return null;
+    const shown = new Set();
+    for (const p of rootPanes()) { const f = p.children[p.currentTab]?.view?.file; if (f) shown.add(f.path); }
+    const next = ws.getLastOpenFiles().map((p) => app.vault.getAbstractFileByPath(p)).find((f) => f?.extension && !shown.has(f.path));
     const fresh = ws.createLeafBySplit(base, direction);
-    await fresh.setViewState({ type: 'empty', active: true });
+    if (next) await fresh.openFile(next, { active: true });
+    else await fresh.setViewState({ type: 'empty', active: true });
     ws.setActiveLeaf(fresh, { focus: true });
     return fresh;
   };
@@ -217,9 +232,16 @@ function installTiling(app) {
     const inRoot = this.getRoot?.() === ws.rootSplit;
     const content = !isHome(this);
     await detach.apply(this, args);
-    if (!inRoot || !content || !pane?.parent || !pane.children.length || rootPanes().length < 2) return;
-    if (!pane.children.every(isHome)) return;
-    for (const l of pane.children.slice()) await detach.call(l);
+    if (!inRoot || !content) return;
+    const panes = rootPanes();
+    const homeOnly = panes.filter((p) => p.children.length && p.children.every(isHome));
+    if (homeOnly.length === panes.length) {
+      // nothing else is open: one Home is enough (the pane the closed note was in, if it is left)
+      const keep = homeOnly.includes(pane) ? pane : homeOnly[0];
+      for (const p of homeOnly) if (p !== keep) for (const l of p.children.slice()) await detach.call(l);
+      return;
+    }
+    for (const p of homeOnly) for (const l of p.children.slice()) await detach.call(l);
   };
 
   // a file of the list dropped on an edge of a pane opens there, beside (the middle of an
