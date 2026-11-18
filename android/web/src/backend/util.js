@@ -21,7 +21,7 @@ const encoder = new TextEncoder();
 /** Same rules as the plugin API normalizePath(): '/' separators, no leading or trailing
  * slash, no duplicated slashes, NFC unicode, non-breaking spaces → spaces. */
 export function normalizePath(path) {
-  const p = String(path ?? '').replace(/\\/g, '/').replace(/[  ]/g, ' ');
+  const p = String(path ?? '').replace(/\\/g, '/').replace(/[\u00a0\u202f]/g, ' ');
   const out = p.split('/').filter((x) => x !== '' && x !== '.').join('/');
   return out ? out.normalize('NFC') : '/';
 }

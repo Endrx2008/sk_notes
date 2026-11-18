@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Enrico Miot
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import { isPhone } from './device.js';
 import { BASE_VIEWS, leaveBase, openBase } from './home.js';
 import { setIcon } from '@desktop/core/icons.js';
 import { t } from '@desktop/core/i18n.js';
@@ -222,5 +221,4 @@ export function installNavbar(app) {
     return r;
   };
   update();
-  void isPhone;
 }

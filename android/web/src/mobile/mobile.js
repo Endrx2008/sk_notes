@@ -277,7 +277,6 @@ function syncBars(app) {
   const css = getComputedStyle(document.documentElement);
   const color = css.getPropertyValue('--sk-bg').trim() || '#0d0d0d';
   call('mobile.bars', { color, light: document.body.classList.contains('theme-light') }).catch(() => {});
-  void app;
 }
 
 async function receiveShare(app, d) {

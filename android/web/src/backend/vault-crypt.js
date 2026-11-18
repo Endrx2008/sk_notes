@@ -122,7 +122,7 @@ function newCode() {
   for (let i = 0; i < 24; i++) s += CODE_CHARS[b[i] % 32];
   return s.match(/.{4}/g).join('-');
 }
-const cleanCode = (code) => String(code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/O/g, '0').replace(/[I]/g, '1');
+const cleanCode = (code) => String(code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/O/g, '0').replace(/I/g, '1');
 
 async function wrapRecovery(raw) {
   const code = newCode();

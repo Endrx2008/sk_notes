@@ -56,5 +56,4 @@ export function installSheets(app) {
     }
     return r;
   };
-  void app;
 }

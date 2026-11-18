@@ -212,7 +212,7 @@ export function htmlToMarkdown(src, resourceLink = null) {
 
 // --------------------------------------------------------------------------- reading the source
 const isDir = (p) => native.sync('fs.stat', { path: p })?.type === 'dir';
-const readText = (p) => native.sync('fs.readText', { path: p }).text.replace(/^﻿/, '');
+const readText = (p) => native.sync('fs.readText', { path: p }).text.replace(/^\ufeff/, '');
 const readB64 = (p) => native.sync('fs.readB64', { path: p });
 const text = (path, t) => ({ path, text: t });
 const bin = (path, b64) => ({ path, b64 });

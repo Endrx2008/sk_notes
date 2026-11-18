@@ -159,7 +159,6 @@ public final class MainActivity extends Activity {
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
-        s.setDatabaseEnabled(true);
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         s.setSupportMultipleWindows(false);
@@ -169,7 +168,7 @@ public final class MainActivity extends Activity {
         s.setMediaPlaybackRequiresUserGesture(true);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         s.setTextZoom(savedZoom());
-        if (Build.VERSION.SDK_INT >= 29 && Build.VERSION.SDK_INT < 33) s.setForceDark(WebSettings.FORCE_DARK_OFF); // the page has its own themes
+        if (Build.VERSION.SDK_INT >= 29 && Build.VERSION.SDK_INT < 33) noForceDark(s); // the page has its own themes
         CookieManager.getInstance().setAcceptThirdPartyCookies(web, true); // sites shown inside canvas cards keep their sessions
         web.addJavascriptInterface(bridge, "SkNative");
         web.setWebViewClient(new PageClient());
@@ -285,9 +284,21 @@ public final class MainActivity extends Activity {
     }
 
     // ------------------------------------------------------------------ window
+    /** Android 10-12 only: from 13 the WebView follows the page's own colour scheme instead. */
+    @SuppressWarnings("deprecation")
+    private static void noForceDark(WebSettings s) {
+        s.setForceDark(WebSettings.FORCE_DARK_OFF);
+    }
+
+    /** Android 11-14: the page draws behind the system bars (from 15 it always does). */
+    @SuppressWarnings("deprecation")
+    private void drawBehindBars() {
+        if (Build.VERSION.SDK_INT < 35) getWindow().setDecorFitsSystemWindows(false);
+    }
+
     private void setupInsets() {
         if (Build.VERSION.SDK_INT < 30) return; // older systems fit the window themselves
-        getWindow().setDecorFitsSystemWindows(false);
+        drawBehindBars();
         root.setOnApplyWindowInsetsListener((v, in) -> {
             Insets i = in.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout() | WindowInsets.Type.ime());
             v.setPadding(i.left, i.top, i.right, i.bottom);

@@ -9,13 +9,13 @@
 
 import { native } from './native.js';
 import * as parser from './parser.js';
-import { ApiError, TEXT_EXT, basenameNoExt, breathe, extOf, normalizePath } from './util.js';
+import { ApiError, TEXT_EXT, breathe, extOf, normalizePath } from './util.js';
 
 export const MAX_INDEXED_BYTES = 8 * 1024 * 1024; // bigger notes are listed but not parsed
 const CONTENT_BUDGET = 48 * 1024 * 1024; // characters of note text kept in memory for search
 const READ_BATCH = 60;
 // paths that need no normalisation (fast path of resolve())
-const SIMPLE_PATH = /^[^\\/  ]+(?:\/[^\\/  .][^\\/  ]*)*$/;
+const SIMPLE_PATH = /^[^\\/\u00a0\u202f]+(?:\/[^\\/\u00a0\u202f.][^\\/\u00a0\u202f]*)*$/;
 
 /** What search sees of a file: canvases by the text of their cards and group labels
  * (not their JSON), other text files as they are. */
@@ -430,7 +430,10 @@ export class VaultIndex {
         if (dest) {
           res[dest] = (res[dest] || 0) + 1;
           let set = this.backlinks.get(dest);
-          if (!set) this.backlinks.set(dest, (set = new Set()));
+          if (!set) {
+            set = new Set();
+            this.backlinks.set(dest, set);
+          }
           set.add(path);
         } else unres[target] = (unres[target] || 0) + 1;
       }

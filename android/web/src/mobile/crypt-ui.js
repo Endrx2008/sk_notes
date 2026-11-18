@@ -210,6 +210,7 @@ export function installCryptUi(app, info) {
   }
   app.renderVaultSecurity = (el) => {
     const box = el.createDiv();
-    (info.vault.encrypted ? encryptedSection(app, box, info) : Promise.resolve(plainSection(app, box, info))).catch((e) => box.setText(String(e.message || e)));
+    if (!info.vault.encrypted) { plainSection(app, box, info); return; }
+    encryptedSection(app, box, info).catch((e) => box.setText(String(e.message || e)));
   };
 }

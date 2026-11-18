@@ -17,7 +17,8 @@ function unique(dir, name) {
   let candidate = `${dir}/${name}`;
   let n = 1;
   while (native.sync('fs.exists', { path: candidate })) {
-    candidate = `${dir}/${ext ? `${stem} ${n}.${ext}` : `${stem} ${n}`}`;
+    const name = ext ? `${stem} ${n}.${ext}` : `${stem} ${n}`;
+    candidate = `${dir}/${name}`;
     n += 1;
   }
   return candidate;

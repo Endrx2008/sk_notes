@@ -3,6 +3,7 @@ package org.skorpion.sknotes;
 
 /** A failure with a code the page understands (ENOENT, EACCES, network-error…). */
 final class NativeError extends Exception {
+    private static final long serialVersionUID = 1L;
     final String code;
     final String detail;
 

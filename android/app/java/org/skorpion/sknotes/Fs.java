@@ -36,6 +36,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Random;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -412,7 +413,7 @@ final class Fs {
 
     // ------------------------------------------------------------------ hash
     static JSONObject hash(String algo, byte[] data) throws NativeError, JSONException {
-        String a = String.valueOf(algo).toLowerCase().replace("-", "");
+        String a = String.valueOf(algo).toLowerCase(Locale.ROOT).replace("-", "");
         String name;
         if (a.equals("md5")) name = "MD5";
         else if (Arrays.asList("sha1", "sha224", "sha256", "sha384", "sha512").contains(a)) name = "SHA-" + a.substring(3);

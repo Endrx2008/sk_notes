@@ -194,7 +194,10 @@ class Eval {
 
   pat(t) {
     let p = this.patterns.get(t);
-    if (!p) this.patterns.set(t, (p = compile(t, this.cs)));
+    if (!p) {
+      p = compile(t, this.cs);
+      this.patterns.set(t, p);
+    }
     return p;
   }
 
