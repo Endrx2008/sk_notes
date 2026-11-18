@@ -182,3 +182,10 @@ body.is-desktop .workspace-leaf-content[data-type="empty"] > .view-content { con
 }
 /* the only tab is a Home: no close button (closing it would just show it again) */
 body.is-desktop.pc-lone-home .mod-root .workspace-tab-header-inner-close-button { display: none; }
+/* panes moved like windows: the label that follows the pointer, where a tab will sit */
+body.pc-pane-moving, body.pc-pane-moving * { cursor: grabbing !important; user-select: none !important; }
+.pc-pane-ghost { position: fixed; z-index: 95; pointer-events: none; display: flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--sk-accent);
+  border-radius: var(--radius-m); background: var(--sk-bg3); color: var(--text-normal); font-size: var(--font-ui-small); box-shadow: 0 6px 18px rgba(0,0,0,.35); max-width: 260px; white-space: nowrap; overflow: hidden; }
+.pc-pane-ghost-icon { display: flex; color: var(--sk-accent); }
+.pc-pane-ghost-icon .svg-icon { width: 14px; height: 14px; }
+.pc-tab-insert { position: fixed; z-index: 94; width: 2px; background: var(--sk-accent); pointer-events: none; border-radius: 1px; }

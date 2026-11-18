@@ -857,15 +857,28 @@ export class Workspace extends Events {
       target.setDimension(half);
       item.setDimension(half);
       parent.insertChild(before ? i : i + 1, item);
+    } else if (parent instanceof WorkspaceSplit && !(parent instanceof WorkspaceSidedock) && parent.children.length === 1) {
+      // the only child of its split: the split just turns the other way
+      parent.direction = direction;
+      parent._setDirClass();
+      target.setDimension(50);
+      item.setDimension(50);
+      parent.insertChild(before ? 0 : 1, item);
     } else {
+      // the new split is filled before it takes the target's place: an empty split put in a
+      // split with no other child would be flattened away, and the panes lost with it
       const split = new WorkspaceSplit(this, direction);
       const i = parent.children.indexOf(target);
       split.setDimension(target.dimension);
-      parent.replaceChild(i, split);
       target.setDimension(50);
       item.setDimension(50);
+      parent.children.splice(i, 1, split);
+      split.parent = parent;
+      target.parent = null;
+      target.containerEl?.detach();
       split.insertChild(0, target);
       split.insertChild(before ? 0 : 1, item);
+      parent._render();
     }
     this._updateToggles();
     this.trigger('layout-change');

@@ -6,9 +6,14 @@
 // - "+" of the tabs, like the "+" of the Android app: a click shows two bubbles (note, canvas)
 //   to click; or press, pull down and let go towards one of them. What is made opens in a new
 //   tab of that pane. Escape, or a click elsewhere, closes the bubbles. (Home: Ctrl+T, Ctrl+Shift+H.)
-// - Panes side by side, also while editing: "split right" in the header of every pane and in
-//   the menu of a tab (the new pane opens the last note used that is not on screen), Ctrl+Alt+D /
-//   Ctrl+Alt+Shift+D, a tab or a file of the list dropped on an edge of a pane.
+// - Panes side by side, also while editing: the "new pane on the right" button in the header of
+//   every pane (and Ctrl+Alt+D) adds a pane at the right edge, all panes the same width; it opens
+//   the last note used that is not on screen, or Home. "Split right/down" of the tab menu.
+// - Panes are moved like windows inside the window, never pulled out of it: drag a tab (its
+//   name and x) and let go on the half of a pane where it should go (left, right, top,
+//   bottom), in its middle to become one of its tabs, on a tab bar to sit among those tabs.
+//   Dragging the empty part of a tab bar moves the whole pane, all its tabs. Escape cancels.
+// - A file of the list dropped on an edge of a pane opens there, beside.
 // - Closing the last note of a pane closes the pane (the others share its room, like tiling
 //   windows); panes left with only Home close too while a note is still open. When nothing is
 //   open, one Home is shown, without a close button (closing it would just show it again).
@@ -16,13 +21,14 @@
 
 import { setIcon } from '../core/icons.js';
 import { t } from '../core/i18n.js';
-import { WorkspaceLeaf } from '../ui/workspace.js';
+import { WorkspaceLeaf, WorkspaceSplit, WorkspaceTabs } from '../ui/workspace.js';
 
 export function installChrome(app) {
   app.on('ready', () => {
     tidyRibbon(app);
     sidebarButtonsOutside(app);
     installTiling(app);
+    installPaneMoves(app);
   });
   installNewBubbles(app);
 }
@@ -212,13 +218,46 @@ function installTiling(app) {
     if (!(c.hotkeys && c.hotkeys.length)) c.hotkeys = hotkeys;
   };
   setCmd('workspace:split-vertical', 'vertical', [{ modifiers: ['Mod', 'Alt'], key: 'D' }]);
+  app.commands.commands['workspace:split-vertical'].callback = () => addRight();
   setCmd('workspace:split-horizontal', 'horizontal', [{ modifiers: ['Mod', 'Alt', 'Shift'], key: 'D' }]);
 
-  // "split right" in the header of every pane of the notes area
+  // a new pane at the right edge of the notes area; all panes side by side get the same width
+  const addRight = async () => {
+    const root = ws.rootSplit;
+    const shown = new Set();
+    for (const p of rootPanes()) { const f = p.children[p.currentTab]?.view?.file; if (f) shown.add(f.path); }
+    const next = ws.getLastOpenFiles().map((p) => app.vault.getAbstractFileByPath(p)).find((f) => f?.extension && !shown.has(f.path));
+    const tabs = new WorkspaceTabs(ws);
+    const leaf = new WorkspaceLeaf(ws);
+    tabs.insertChild(0, leaf);
+    if (root.direction !== 'vertical') {
+      if (root.children.length > 1) {
+        // panes stacked one above the other: they become one column, the new pane goes beside it
+        const column = new WorkspaceSplit(ws, 'horizontal');
+        for (const c of root.children) { c.parent = column; column.children.push(c); c.containerEl?.detach(); }
+        column.parent = root;
+        root.children = [column];
+        column._render();
+      }
+      root.direction = 'vertical';
+      root._setDirClass();
+    }
+    for (const c of root.children) c.setDimension(100);
+    tabs.setDimension(100);
+    root.insertChild(-1, tabs);
+    if (next) await leaf.openFile(next, { active: true });
+    else await leaf.setViewState({ type: 'empty', active: true });
+    ws.setActiveLeaf(leaf, { focus: true });
+    ws._updateToggles();
+    ws.trigger('layout-change');
+    ws.requestSaveLayout();
+  };
+
+  // the "new pane on the right" button in the header of every pane of the notes area
   const addButtons = () => ws.iterateLeaves(ws.rootSplit, (l) => {
     const v = l.view;
     if (!v || v._pcSplitBtn || typeof v.addAction !== 'function' || !v.actionsEl) return;
-    v._pcSplitBtn = v.addAction('split-right', t('pc.split-right'), () => split(l, 'vertical'));
+    v._pcSplitBtn = v.addAction('split-right', t('pc.split-right'), () => addRight());
     v._pcSplitBtn.addClass('pc-split-button');
   });
   ws.on('layout-change', addButtons);
@@ -273,4 +312,128 @@ function installTiling(app) {
     ws.setActiveLeaf(leaf, { focus: true });
   }, true);
   document.addEventListener('dragend', () => { ws._pcFileDrop = null; ws._hideDropOverlay(); }, true);
+}
+
+/** Panes moved like windows inside the window, by dragging a tab or the empty part of a tab bar. */
+export function installPaneMoves(app) {
+  const ws = app.workspace;
+  const MOVE = 6;
+  let d = null; // { leaf | pane, x, y, active, ghost, target }
+  const rootPanes = () => ws._allTabs().filter((x) => x.getRoot?.() === ws.rootSplit);
+  const leafOf = (el) => { let found = null; ws.iterateLeaves(ws.rootSplit, (l) => { if (!found && l.tabHeaderEl === el) found = l; }); return found; };
+
+  // the browser's own drag of a tab is not used in the notes area (it can pull a tab out)
+  const noNativeDrag = () => ws.iterateLeaves(ws.rootSplit, (l) => l.tabHeaderEl?.setAttribute('draggable', 'false'));
+  ws.on('layout-change', noNativeDrag);
+  noNativeDrag();
+
+  const clearMarks = () => {
+    ws._hideDropOverlay();
+    for (const el of document.querySelectorAll('.pc-tab-insert')) el.remove();
+  };
+  const end = () => {
+    clearMarks();
+    d?.ghost?.remove();
+    document.body.removeClass('pc-pane-moving');
+    d = null;
+  };
+
+  document.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || e.target.closest?.('.workspace-tab-header-inner-close-button, .workspace-tab-header-new-tab, .workspace-tab-header-tab-list, .sidebar-toggle-button')) return;
+    const header = e.target.closest?.('.mod-root .workspace-tab-header');
+    const bar = !header && e.target.closest?.('.mod-root .workspace-tab-header-container');
+    if (!header && !bar) return;
+    if (header) {
+      const leaf = leafOf(header);
+      if (leaf) d = { leaf, x: e.clientX, y: e.clientY };
+    } else {
+      const pane = rootPanes().find((p) => p.tabHeaderContainerEl === bar);
+      if (pane && pane.children.length) d = { pane, x: e.clientX, y: e.clientY };
+    }
+  }, true);
+
+  const targetAt = (e) => {
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (!el) return null;
+    const bar = el.closest('.mod-root .workspace-tab-header-container');
+    if (bar && d.leaf) {
+      const pane = rootPanes().find((p) => p.tabHeaderContainerEl === bar);
+      if (!pane) return null;
+      let index = pane.children.length;
+      for (let i = 0; i < pane.children.length; i++) {
+        const r = pane.children[i].tabHeaderEl.getBoundingClientRect();
+        if (e.clientX < r.left + r.width / 2) { index = i; break; }
+      }
+      return { pane, zone: 'tabs', index };
+    }
+    const body = el.closest('.mod-root .workspace-tab-container');
+    const pane = body && rootPanes().find((p) => p.tabsContainerEl === body);
+    if (!pane) return null;
+    ws._showDropOverlay(pane, e);
+    return { pane, zone: ws._dropZone };
+  };
+
+  document.addEventListener('mousemove', (e) => {
+    if (!d) return;
+    if (!d.active) {
+      if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < MOVE) return;
+      d.active = true;
+      document.body.addClass('pc-pane-moving');
+      const leaf = d.leaf || d.pane.children[d.pane.currentTab];
+      d.ghost = document.body.createDiv('pc-pane-ghost');
+      setIcon(d.ghost.createSpan('pc-pane-ghost-icon'), leaf.getIcon());
+      d.ghost.createSpan({ text: d.leaf ? leaf.getDisplayText() : `${leaf.getDisplayText()}${d.pane.children.length > 1 ? ` +${d.pane.children.length - 1}` : ''}` });
+    }
+    e.preventDefault();
+    d.ghost.style.left = `${e.clientX + 12}px`;
+    d.ghost.style.top = `${e.clientY + 12}px`;
+    clearMarks();
+    d.target = targetAt(e);
+    if (d.target?.zone === 'tabs') {
+      const { pane, index } = d.target;
+      const ref = pane.children[index]?.tabHeaderEl;
+      const r = (ref || pane.tabsInnerEl).getBoundingClientRect();
+      const mark = document.body.createDiv('pc-tab-insert');
+      Object.assign(mark.style, { left: `${(ref ? r.left : r.right) - 1}px`, top: `${r.top + 4}px`, height: `${r.height - 8}px` });
+    }
+  }, true);
+
+  document.addEventListener('mouseup', () => {
+    if (!d) return;
+    const was = d;
+    const target = was.active ? was.target : null;
+    if (was.active) {
+      const swallow = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+      window.addEventListener('click', swallow, { capture: true, once: true });
+      setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 300);
+    }
+    end();
+    if (!target) return;
+    const { pane, zone } = target;
+    const leaves = was.leaf ? [was.leaf] : was.pane.children.slice();
+    const from = leaves[0].parent;
+    if (zone === 'tabs' || zone === 'center') {
+      if (from === pane && zone === 'center') return; // its own middle: stays where it is
+      let index = zone === 'tabs' ? target.index : pane.children.length;
+      for (const l of leaves) {
+        if (l.parent === pane && pane.children.indexOf(l) < index) index -= 1;
+        ws._moveLeaf(l, pane, index);
+        index += 1;
+      }
+    } else {
+      if (from === pane && pane.children.length === leaves.length) return; // beside itself: nothing changes
+      ws._splitWith(leaves[0], pane, zone);
+      const fresh = leaves[0].parent;
+      for (const l of leaves.slice(1)) ws._moveLeaf(l, fresh, fresh.children.length);
+      ws.setActiveLeaf(leaves[0], { focus: true });
+    }
+    ws._updateToggles();
+    ws.trigger('layout-change');
+    ws.requestSaveLayout();
+    ws.onLayoutResize?.();
+  }, true);
+
+  document.addEventListener('keydown', (e) => {
+    if (d?.active && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); end(); }
+  }, true);
 }
