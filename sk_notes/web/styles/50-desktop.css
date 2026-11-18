@@ -99,16 +99,24 @@ body.is-desktop .vault-manager-item-icon { display: flex; color: var(--sk-accent
 body.is-desktop .vault-manager-item-icon .svg-icon { width: 16px; height: 16px; }
 
 /* ---------------------------------------------------------------- Home (an empty tab), like the Android app's, for a wide window */
-body.is-desktop .pc-home { max-width: 1120px; margin: 0 auto; padding: 36px 40px 48px; outline: none; }
-body.is-desktop .pc-home-head { display: flex; align-items: center; gap: 20px; margin-bottom: 26px; }
+body.is-desktop .pc-home { max-width: 1040px; margin: 0 auto; padding: 32px 40px 40px; outline: none; }
+body.is-desktop .pc-home-head { display: flex; align-items: center; gap: 20px; margin-bottom: 18px; }
 body.is-desktop .pc-home-logo { width: 84px; height: 84px; flex-shrink: 0; color: var(--sk-accent); }
 body.is-desktop .pc-home-logo img, body.is-desktop .pc-home-logo svg { width: 100%; height: 100%; display: block; }
 body.is-desktop .pc-home-name { font-size: 30px; font-weight: 800; color: var(--text-normal); letter-spacing: -.01em; }
 body.is-desktop .pc-home-vault { color: var(--text-muted); margin-top: 2px; }
-body.is-desktop .pc-home-cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 36px; }
-@media (max-width: 900px) { body.is-desktop .pc-home-cols { grid-template-columns: 1fr; } }
+/* recent notes: one row of chips under the title */
+body.is-desktop .pc-home-recent { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow: hidden; margin: 0 0 22px; min-height: 30px;
+  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
+body.is-desktop .pc-home-recent-title { font-size: var(--font-ui-smaller); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-right: 4px; flex-shrink: 0; }
+body.is-desktop .pc-home-recent-item { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; max-width: 220px; padding: 4px 10px; border: 1px solid var(--sk-border);
+  border-radius: 999px; background: var(--sk-bg3); cursor: pointer; outline: none; font-size: var(--font-ui-small); }
+body.is-desktop .pc-home-recent-item:hover, body.is-desktop .pc-home-recent-item:focus { border-color: var(--sk-accent); background: var(--background-modifier-hover); }
+body.is-desktop .pc-home-recent-icon { display: flex; color: var(--text-muted); }
+body.is-desktop .pc-home-recent-icon .svg-icon { width: 13px; height: 13px; }
+body.is-desktop .pc-home-recent-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 body.is-desktop .pc-home-title { font-size: var(--font-ui-smaller); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin: 6px 2px 10px; }
-body.is-desktop .pc-home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 26px; }
+body.is-desktop .pc-home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 24px; }
 body.is-desktop .pc-home-tile { display: flex; align-items: center; gap: 14px; min-height: 76px; padding: 14px 16px; border: 1px solid var(--sk-border); border-radius: var(--radius-l);
   background: var(--sk-bg3); cursor: pointer; outline: none; transition: border-color 80ms, background 80ms; }
 body.is-desktop .pc-home-tile:hover { background: var(--background-modifier-hover); border-color: var(--sk-accent); }
@@ -122,15 +130,34 @@ body.is-desktop .pc-home-text { display: flex; flex-direction: column; gap: 6px;
 body.is-desktop .pc-home-label { font-weight: 600; }
 body.is-desktop .pc-home-keys { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-faint); }
 body.is-desktop .pc-home-num { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; border: 1px solid var(--sk-border); border-radius: 4px; }
+/* today's note: the small calendar button at the right of "new note" */
+body.is-desktop .pc-home-extra { margin-left: auto; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex-shrink: 0; padding: 0;
+  border: 1px solid var(--sk-border); border-radius: var(--radius-l); background: var(--background-primary-alt); color: var(--sk-accent); outline: none; }
+body.is-desktop .pc-home-extra:hover, body.is-desktop .pc-home-extra:focus-visible { background: var(--sk-accent); color: var(--sk-on-accent, #fff); border-color: var(--sk-accent); }
+body.is-desktop .pc-home-extra .svg-icon { width: 22px; height: 22px; }
 body.is-desktop .pc-home kbd { font-family: var(--font-monospace); font-size: 11px; padding: 1px 6px; border: 1px solid var(--sk-border); border-bottom-width: 2px; border-radius: 4px; background: var(--sk-bg2); color: var(--text-muted); }
-body.is-desktop .pc-home-recent { display: flex; flex-direction: column; gap: 2px; margin-bottom: 22px; }
-body.is-desktop .pc-home-recent-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: var(--radius-m); cursor: pointer; outline: none; }
-body.is-desktop .pc-home-recent-item:hover, body.is-desktop .pc-home-recent-item:focus { background: var(--background-modifier-hover); }
-body.is-desktop .pc-home-recent-icon { display: flex; color: var(--text-muted); }
-body.is-desktop .pc-home-recent-icon .svg-icon { width: 15px; height: 15px; }
-body.is-desktop .pc-home-recent-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-body.is-desktop .pc-home-recent-path { color: var(--text-faint); font-size: var(--font-ui-smaller); max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-body.is-desktop .pc-home-empty { color: var(--text-faint); padding: 6px 10px; }
-body.is-desktop .pc-home-help { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--sk-border); border-radius: var(--radius-l); }
-body.is-desktop .pc-home-help-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--text-muted); font-size: var(--font-ui-small); }
-body.is-desktop .pc-home-keys-link { font-size: var(--font-ui-small); margin-top: 4px; }
+/* the main keys, one line at the bottom */
+body.is-desktop .pc-home-help { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding-top: 14px; border-top: 1px solid var(--sk-border); color: var(--text-muted); font-size: var(--font-ui-small); }
+body.is-desktop .pc-home-help-row { display: inline-flex; align-items: center; gap: 6px; }
+body.is-desktop .pc-home-keys-link { font-size: var(--font-ui-small); margin-left: auto; }
+
+/* ---------------------------------------------------------------- frame (desktop/chrome.js) */
+/* ribbon buttons that Home already shows as tiles, while a Home is on screen */
+body.is-desktop .side-dock-ribbon-action.pc-on-home { display: none; }
+/* back/forward of a tab: only when there is somewhere to go */
+body.is-desktop .view-header-nav-buttons button.is-disabled { display: none; }
+/* sidebar buttons at the edge of the notes area: they move with the sidebar */
+body.is-desktop .workspace-split.mod-root .sidebar-toggle-button.mod-left { margin: 0 4px 0 2px; }
+body.is-desktop .workspace-split.mod-root .sidebar-toggle-button.mod-right { margin: 0 2px 0 4px; }
+/* "+" pulled down: two bubbles, like the "+" of the Android app */
+body.pc-new-pulling, body.pc-new-pulling * { cursor: grabbing !important; user-select: none !important; }
+.pc-new-gesture { position: fixed; inset: 0; z-index: 90; pointer-events: none; }
+.pc-new-bubble { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  width: 92px; height: 74px; border: 1px solid var(--sk-border); border-radius: 18px; background: var(--sk-bg3); color: var(--text-normal);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35); font-size: 11px; text-align: center; animation: pc-bubble-in 120ms ease-out; transition: transform 80ms, border-color 80ms, background 80ms; }
+.pc-new-bubble-icon { display: flex; color: var(--sk-accent); }
+.pc-new-bubble-icon .svg-icon { width: 24px; height: 24px; }
+.pc-new-bubble.is-chosen { border-color: var(--sk-accent); background: var(--sk-accent); color: var(--sk-on-accent, #fff); transform: translate(-50%, -50%) scale(1.08); }
+.pc-new-bubble.is-chosen .pc-new-bubble-icon { color: inherit; }
+.pc-new-trail { position: absolute; height: 2px; background: var(--sk-accent); opacity: .6; transform-origin: 0 50%; border-radius: 2px; }
+@keyframes pc-bubble-in { from { opacity: 0; transform: translate(-50%, -80%) scale(.8); } }

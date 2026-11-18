@@ -1,5 +1,5 @@
 // Core features (built-in plugins): views, commands with default hotkeys, ribbon,
-// daily notes, templates, random/unique notes, note composer, workspaces, page
+// daily notes, templates, unique notes, note composer, workspaces, page
 // preview, file recovery, PDF export.
 
 import { call } from '../core/api.js';
@@ -112,7 +112,6 @@ export function registerCoreFeatures(app) {
   cmd('workspace:split-vertical', t('tab.split-right'), { callback: () => ws.activeLeaf && ws.duplicateLeaf(ws.activeLeaf, 'vertical') });
   cmd('workspace:split-horizontal', t('tab.split-down'), { callback: () => ws.activeLeaf && ws.duplicateLeaf(ws.activeLeaf, 'horizontal') });
   cmd('workspace:toggle-pin', t('cmd.toggle-pin'), { callback: () => ws.activeLeaf?.togglePinned() });
-  cmd('workspace:toggle-stacked-tabs', t('tab.stack'), { callback: () => { const p = ws.activeLeaf?.parent; p?.setStacked?.(!p.isStacked); } });
   cmd('workspace:move-to-new-window', t('tab.new-window'), { callback: () => ws.activeLeaf && ws.moveLeafToPopout(ws.activeLeaf) });
 
   // ---------------------------------------------------------------- views
@@ -277,17 +276,13 @@ export function registerCoreFeatures(app) {
     return true;
   } });
 
-  // ---------------------------------------------------------------- daily notes, templates, random, unique
+  // ---------------------------------------------------------------- daily notes, templates, unique
   cmd('daily-notes', t('cmd.daily-note'), { callback: () => openDailyNote(app, 0) });
   cmd('daily-notes:goto-prev', t('cmd.daily-prev'), { callback: () => openDailyNote(app, -1, true) });
   cmd('daily-notes:goto-next', t('cmd.daily-next'), { callback: () => openDailyNote(app, 1, true) });
   cmd('insert-template', t('cmd.insert-template'), { editorCallback: (editor, view) => new TemplateModal(app, (f) => insertTemplate(app, f, editor, view)).open() });
   cmd('insert-current-date', t('cmd.insert-date'), { editorCallback: (e) => e.replaceSelection(window.moment().format(app.settings.get('templateDateFormat') || 'YYYY-MM-DD')) });
   cmd('insert-current-time', t('cmd.insert-time'), { editorCallback: (e) => e.replaceSelection(window.moment().format(app.settings.get('templateTimeFormat') || 'HH:mm')) });
-  cmd('random-note', t('cmd.random-note'), { callback: () => {
-    const files = app.vault.getMarkdownFiles();
-    if (files.length) ws.openFile(files[Math.floor(Math.random() * files.length)], false);
-  } });
   cmd('zk-prefixer', t('cmd.unique-note'), { callback: async () => {
     const name = window.moment().format(app.settings.get('uniqueNotePrefix') || 'YYYYMMDDHHmm');
     const folder = app.vault.getFolderByPath(app.settings.get('uniqueNoteFolder') || '') || app.fileManager.getNewFileParent();
@@ -336,7 +331,6 @@ export function registerCoreFeatures(app) {
   ribbon.addRibbonItemButton('templates', 'template', t('ribbon.templates'), () => app.commands.executeCommandById('insert-template'));
   ribbon.addRibbonItemButton('palette', 'terminal', t('ribbon.palette'), () => app.commands.executeCommandById('command-palette:open'));
   ribbon.addRibbonItemButton('bases', 'database', t('ribbon.base'), () => app.commands.executeCommandById('bases:new-file'));
-  ribbon.addRibbonItemButton('random', 'dice', t('ribbon.random'), () => app.commands.executeCommandById('random-note'));
   ribbon.addRibbonItemButton('skai', 'sparkles', t('ribbon.skai'), () => app.commands.executeCommandById('skai:open'));
   // bottom of the ribbon: vault switcher, help, settings
   const vaultBtn = ribbon.settingsEl.createDiv({ cls: 'clickable-icon side-dock-ribbon-action mod-vault', attr: { 'aria-label': t('ribbon.vaults'), 'data-tooltip-position': 'right' } });

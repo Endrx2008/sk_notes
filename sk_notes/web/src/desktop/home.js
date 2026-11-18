@@ -1,8 +1,9 @@
 // Home (desktop): what an empty tab shows, like the Home of the Android app, laid out for a
 // wide window and for the keyboard.
-//   Create: a note, a canvas, today's note, a note from a template
+//   Recent: the last notes opened, one compact row under the title
+//   Create: a note (today's note is the calendar button of the same tile), a canvas, a note
+//           from a template
 //   View:   the graph, the file list, the database of the vault (a view, no file is made)
-//   Recent: the last notes opened
 // Every tile is a command, so its shortcut is the one set in Settings → Hotkeys and is shown
 // on the tile. On Home: arrows move between tiles, Enter opens, 1–9 open the n-th tile,
 // typing a letter starts "go to file".
@@ -73,10 +74,9 @@ async function themedLogo(el) {
 }
 
 const TILES = [
-  // [section, command id, icon, label key, extra class]
-  ['create', 'file:new', 'file-plus', 'cmd.new-note', 'mod-cta'],
+  // [section, command id, icon, label key, extra class, small button: [command id, icon, label key]]
+  ['create', 'file:new', 'file-plus', 'cmd.new-note', 'mod-cta', ['daily-notes', 'calendar-day', 'cmd.daily-note']],
   ['create', 'canvas:new-file', 'canvas', 'cmd.new-canvas'],
-  ['create', 'daily-notes', 'calendar-day', 'cmd.daily-note'],
   ['create', 'file:new-from-template', 'template', 'pc.home.from-template'],
   ['view', 'graph:open-here', 'graph', 'pc.home.graph', 'mod-view'],
   ['view', 'file-explorer:open', 'list', 'pc.home.list', 'mod-view'],
@@ -93,14 +93,26 @@ export function renderHome(app, view) {
   titles.createDiv({ cls: 'pc-home-name', text: 'sk_notes' });
   titles.createDiv({ cls: 'pc-home-vault', text: app.vault.getName?.() || app.info?.vault?.name || '' });
 
-  const cols = box.createDiv('pc-home-cols');
-  const left = cols.createDiv('pc-home-main');
-  const right = cols.createDiv('pc-home-side');
+  // recent notes: one row of chips, it takes little room
+  const files = app.workspace.getLastOpenFiles().map((p) => app.vault.getAbstractFileByPath(p)).filter((f) => f instanceof TFile).slice(0, 8);
+  if (files.length) {
+    const recent = box.createDiv('pc-home-recent');
+    recent.createSpan({ cls: 'pc-home-recent-title', text: t('pc.home.recent') });
+    for (const f of files) {
+      const chip = recent.createDiv({ cls: 'pc-home-recent-item', attr: { tabindex: '0', role: 'button', 'aria-label': f.path } });
+      setIcon(chip.createSpan('pc-home-recent-icon'), f.extension === 'canvas' ? 'canvas' : f.extension === 'base' ? 'database' : 'file-text');
+      chip.createSpan({ cls: 'pc-home-recent-name', text: f.basename });
+      chip.addEventListener('click', () => app.workspace.getLeaf(false).openFile(f));
+      chip.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); chip.click(); } });
+    }
+  }
+
+  const left = box.createDiv('pc-home-main');
   const tiles = [];
   const section = (id, title) => {
     left.createDiv({ cls: 'pc-home-title', text: title });
     const grid = left.createDiv('pc-home-grid mod-' + id);
-    for (const [sec, cmd, icon, label, cls] of TILES) {
+    for (const [sec, cmd, icon, label, cls, extra] of TILES) {
       if (sec !== id) continue;
       const n = tiles.length + 1;
       const tile = grid.createDiv({ cls: 'pc-home-tile' + (cls ? ' ' + cls : ''), attr: { role: 'button', tabindex: '0', 'data-command': cmd } });
@@ -112,32 +124,29 @@ export function renderHome(app, view) {
       keys.createSpan({ cls: 'pc-home-num', text: String(n) });
       if (hk) keys.createEl('kbd', { text: hotkeyToString(hk) });
       tile.addEventListener('click', () => app.commands.executeCommandById(cmd));
+      if (extra) {
+        const [xcmd, xicon, xlabel] = extra;
+        const xk = app.commands.hotkeysFor(xcmd)[0];
+        const b = tile.createDiv({ cls: 'pc-home-extra clickable-icon', attr: { role: 'button', tabindex: '0', 'data-command': xcmd,
+          'aria-label': t(xlabel) + (xk ? ` (${hotkeyToString(xk)})` : '') } });
+        setIcon(b, xicon);
+        b.addEventListener('click', (e) => { e.stopPropagation(); app.commands.executeCommandById(xcmd); });
+        b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); b.click(); } });
+      }
       tiles.push(tile);
     }
   };
   section('create', t('pc.home.create'));
   section('view', t('pc.home.view'));
 
-  // recent notes: the wide window has room for them
-  right.createDiv({ cls: 'pc-home-title', text: t('pc.home.recent') });
-  const recent = right.createDiv('pc-home-recent');
-  const files = app.workspace.getLastOpenFiles().map((p) => app.vault.getAbstractFileByPath(p)).filter((f) => f instanceof TFile).slice(0, 8);
-  if (!files.length) recent.createDiv({ cls: 'pc-home-empty', text: t('pc.home.no-recent') });
-  for (const f of files) {
-    const row = recent.createDiv({ cls: 'pc-home-recent-item', attr: { tabindex: '0', role: 'button' } });
-    setIcon(row.createSpan('pc-home-recent-icon'), f.extension === 'canvas' ? 'canvas' : f.extension === 'base' ? 'database' : 'file-text');
-    row.createSpan({ cls: 'pc-home-recent-name', text: f.basename });
-    if (f.parent && f.parent.path !== '/') row.createSpan({ cls: 'pc-home-recent-path', text: f.parent.path });
-    row.addEventListener('click', () => app.workspace.getLeaf(false).openFile(f));
-    row.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); row.click(); } });
-  }
-  const help = right.createDiv('pc-home-help');
+  // the main keys, in one line at the bottom
+  const help = box.createDiv('pc-home-help');
   const line = (label, cmd) => {
     const hk = app.commands.hotkeysFor(cmd)[0];
     if (!hk) return;
-    const r = help.createDiv('pc-home-help-row');
-    r.createSpan({ text: label });
+    const r = help.createSpan('pc-home-help-row');
     r.createEl('kbd', { text: hotkeyToString(hk) });
+    r.createSpan({ text: label });
   };
   line(t('pc.home.go-to-file'), 'switcher:open');
   line(t('pc.home.search'), 'global-search:open');

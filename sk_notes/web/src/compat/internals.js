@@ -123,7 +123,7 @@ export function installInternals(app) {
     'command-palette': internal('command-palette', { options: { pinned: s.get('pinnedCommands') || [] } }),
     'note-composer': internal('note-composer', {}), workspaces: internal('workspaces', {}), 'word-count': internal('word-count', {}),
     canvas: internal('canvas', {}), bases: internal('bases', {}), properties: internal('properties', {}), 'file-recovery': internal('file-recovery', {}),
-    switcher: internal('switcher', {}), 'random-note': internal('random-note', {}), 'slash-command': internal('slash-command', {}),
+    switcher: internal('switcher', {}), 'slash-command': internal('slash-command', {}),
   };
   app.internalPlugins.config = Object.fromEntries(Object.keys(app.internalPlugins.plugins).map((k) => [k, true]));
   app.internalPlugins.getEnabledPlugins = () => Object.values(app.internalPlugins.plugins);

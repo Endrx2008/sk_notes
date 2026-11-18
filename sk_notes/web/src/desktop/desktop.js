@@ -1,11 +1,13 @@
 // What only the desktop page has (the Android app has a page of its own, android/web/src/mobile):
 // Git sync with GitHub/GitLab, encrypted vaults in the settings, several files chosen in the
 // file list, community themes/plugins/templates, themes applied (built-in Anna.g_3 included),
-// pictures saved with "Save as", the graph settings closing on a click outside them.
+// pictures saved with "Save as", the graph settings closing on a click outside them, Home and
+// a tidier frame (chrome.js).
 
 import { call } from '../core/api.js';
 import { errorText, t } from '../core/i18n.js';
 import { installCryptUi } from '../ui/crypt-ui.js';
+import { installChrome } from './chrome.js';
 import { installGallery } from './gallery.js';
 import { installHome } from './home.js';
 import { installMultiSelect } from './multiselect.js';
@@ -17,6 +19,7 @@ const BUILT_IN = ['Anna.g_3']; // themes that come with sk_notes (web/themes)
 export function installDesktop(app, info) {
   installHome(app);
   installVaultBase(app);
+  installChrome(app);
   installThemes(app);
   installImages(app);
   installCryptUi(app, info);
