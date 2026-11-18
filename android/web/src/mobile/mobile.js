@@ -213,6 +213,8 @@ function tidyCommands(app) {
   for (const id of gone) app.commands.removeCommand?.(id);
   // no "random note" on Android: neither the command nor its entry in the menu
   app.commands.removeCommand?.('random-note');
+  // no new database files on a phone (existing .base files still open)
+  app.commands.removeCommand?.('bases:new-file');
   const ribbon = app.workspace.leftRibbon;
   for (const it of ribbon.items.filter((x) => x.id === 'random')) ribbon.removeItem(it.el);
   // splits only where there is room for them (tablets)
@@ -253,6 +255,9 @@ function tidyCommands(app) {
     importInto(cur?.parent ? cur.parent.path : '');
   } });
   app.workspace.on('file-menu', (menu, file) => {
+    // no new database files on a phone
+    const base = menu.items.find((it) => it.titleEl?.textContent === t('file.new-base'));
+    if (base) { menu.items.remove(base); base.dom.remove(); }
     if (file instanceof TFolder) {
       menu.addItem((i) => i.setTitle(t('mobile.import-here')).setIcon('upload').setSection('action').onClick(() => importInto(file.path)));
       return;

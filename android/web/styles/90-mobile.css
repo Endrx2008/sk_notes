@@ -519,9 +519,13 @@ body.is-mobile.has-css-theme .view-header .view-actions .view-action {
 
 /* ---------------------------------------------------------------- file list: several rows chosen (long press) */
 .tree-item-self.is-chosen { background: var(--sk-select) !important; box-shadow: inset 3px 0 0 var(--sk-accent); }
-.mobile-select-bar { position: fixed; left: 8px; right: 8px; bottom: calc(var(--navbar-height) + 8px); z-index: 40; display: flex; align-items: center; gap: 2px;
-  padding: 4px 6px; border: 1px solid var(--sk-accent); border-radius: 14px; background: var(--sk-bg2); box-shadow: 0 6px 20px rgba(0, 0, 0, .35); }
-body:not(.is-phone) .mobile-select-bar { left: auto; right: 16px; bottom: 16px; min-width: 300px; }
+.mobile-select-bar { position: fixed; left: 0; right: 0; top: 0; z-index: 80; display: flex; align-items: center; gap: 2px; height: 56px;
+  padding: 0 6px; background: var(--sk-accent); color: var(--sk-on-accent); box-shadow: 0 2px 12px rgba(0, 0, 0, .4); animation: mobile-select-in 120ms ease-out both; }
+@keyframes mobile-select-in { from { transform: translateY(-100%); } to { transform: none; } }
+body:not(.is-phone) .mobile-select-bar { left: auto; right: 16px; top: 12px; height: 52px; min-width: 320px; border-radius: 14px; }
+.mobile-select-bar .mobile-select-action { color: var(--sk-on-accent); }
+.mobile-select-bar .mobile-select-action.mod-danger { color: var(--sk-on-accent); }
+.mobile-select-bar .mobile-select-count { color: var(--sk-on-accent); font-size: 16px; }
 .mobile-select-count { flex: 1; min-width: 0; padding: 0 6px; font-weight: 700; font-size: 14px; }
 .mobile-select-action { width: 44px; height: 42px; padding: 0 !important; border-radius: var(--radius-l); }
 .mobile-select-action .svg-icon { width: 22px; height: 22px; }

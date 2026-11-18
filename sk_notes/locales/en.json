@@ -1046,5 +1046,22 @@
  "pc.themes.builtin": "comes with sk_notes",
  "canvas.web-open": "Open in the browser",
  "canvas.web-reload": "Reload",
- "error.vault-wrong-password": "Wrong password."
+ "error.vault-wrong-password": "Wrong password.",
+ "graph.color-custom": "Custom colour…",
+ "pc.home.title": "Home",
+ "pc.home.create": "Create",
+ "pc.home.view": "View",
+ "pc.home.from-template": "Note from a template",
+ "pc.home.graph": "Graph",
+ "pc.home.list": "File list",
+ "pc.home.database": "Database",
+ "pc.home.all-notes": "All notes",
+ "pc.home.database-reset": "Start again",
+ "pc.home.recent": "Recent",
+ "pc.home.no-recent": "No notes opened yet.",
+ "pc.home.go-to-file": "Go to file",
+ "pc.home.search": "Search in the vault",
+ "pc.home.commands": "All commands",
+ "pc.home.go-home": "Go to Home",
+ "pc.home.edit-keys": "Change the shortcuts…"
 }

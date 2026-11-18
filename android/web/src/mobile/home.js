@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Enrico Miot
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Home is where everything starts: what to make (a note, a canvas, a database, today's
+// Home is where everything starts: what to make (a note, a canvas, today's
 // note, a note from a template) and how to look at the vault (graph or file list).
 // The graph and the file list are the two base views of the app: they are not tabs to
 // close. They show in the tab in use, give way to the file the user opens from them, and
@@ -76,7 +76,6 @@ export function renderHome(app, view) {
   section(t('mobile.home.create'), [
     ['file-plus', t('cmd.new-note'), run('file:new'), 'mod-cta'],
     ['canvas', t('cmd.new-canvas'), run('canvas:new-file')],
-    ['database', t('cmd.new-base'), run('bases:new-file')],
     ['calendar-day', t('cmd.daily-note'), run('daily-notes')],
     ['template', t('mobile.home.template'), () => newNoteFromTemplate(app)],
   ]);

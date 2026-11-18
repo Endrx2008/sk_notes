@@ -1046,5 +1046,22 @@
  "pc.themes.builtin": "incluído no sk_notes",
  "canvas.web-open": "Abrir no navegador",
  "canvas.web-reload": "Recarregar",
- "error.vault-wrong-password": "Palavra-passe errada."
+ "error.vault-wrong-password": "Palavra-passe errada.",
+ "graph.color-custom": "Cor personalizada…",
+ "pc.home.title": "Início",
+ "pc.home.create": "Criar",
+ "pc.home.view": "Ver",
+ "pc.home.from-template": "Nota a partir de um modelo",
+ "pc.home.graph": "Grafo",
+ "pc.home.list": "Lista de ficheiros",
+ "pc.home.database": "Base de dados",
+ "pc.home.all-notes": "Todas as notas",
+ "pc.home.database-reset": "Recomeçar",
+ "pc.home.recent": "Recentes",
+ "pc.home.no-recent": "Ainda não abriu nenhuma nota.",
+ "pc.home.go-to-file": "Ir para um ficheiro",
+ "pc.home.search": "Pesquisar no vault",
+ "pc.home.commands": "Todos os comandos",
+ "pc.home.go-home": "Ir para o início",
+ "pc.home.edit-keys": "Mudar os atalhos…"
 }

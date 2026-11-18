@@ -7,7 +7,10 @@ import { debounce } from '../core/util.js';
 import { Keymap } from '../model/keymap.js';
 import { getAllTags } from '../model/metadata.js';
 import { ItemView } from './base.js';
-import { Setting } from '../ui/kit.js';
+import { Menu, Setting } from '../ui/kit.js';
+
+// colours a note's dot can be given by hand (right click, or a long press on a phone); its size stays the graph's own
+const NODE_COLORS = [['red', '#e5484d'], ['orange', '#f08c2e'], ['yellow', '#e3b341'], ['green', '#39d353'], ['cyan', '#3fc1c9'], ['purple', '#b98bf0']];
 
 // --------------------------------------------------------------- layout worker
 function workerMain() {
@@ -216,6 +219,9 @@ export class GraphView extends ItemView {
       const saved = await this.app.config.read('graph.json').catch(() => null);
       if (saved) { this.options = { ...DEFAULT_OPTIONS, ...saved }; this._buildControls(); }
     }
+    // colours given to single notes by hand: shared by the graph and the local graph
+    const own = await this.app.config.read('graph-colors.json').catch(() => null);
+    this.nodeColors = own && typeof own === 'object' && !Array.isArray(own) ? own : {};
     this.registerDomEvent(window, 'mouseup', this._onMouseUp);
     this.onResize();
     this.build(false);
@@ -323,6 +329,8 @@ export class GraphView extends ItemView {
           if (ok) { nd.color = g.color; break; }
         }
       }
+      const mine = this.nodeColors?.[nd.id]; // a colour given by hand wins over the groups
+      if (mine && /^#[0-9a-f]{6}$/i.test(mine)) nd.color = mine;
     }
     const keepPos = {};
     if (keep && this.pos && this.nodes.length) {
@@ -532,15 +540,24 @@ export class GraphView extends ItemView {
     });
     cv.addEventListener('mousedown', (e) => {
       const [sx, sy] = local(e);
-      drag = { node: this._nodeAt(sx, sy), sx, sy, vx: this.view.x, vy: this.view.y, moved: false };
+      drag = { node: this._nodeAt(sx, sy), sx, sy, vx: this.view.x, vy: this.view.y, moved: false, at: Date.now() };
     });
     this._onMouseUp = (e) => {
       if (!drag) return;
       const d = drag;
       drag = null;
       if (d.node >= 0) this.worker.postMessage({ type: 'drag', i: d.node, x: this.pos[d.node * 2], y: this.pos[d.node * 2 + 1], fix: false });
-      if (!d.moved && d.node >= 0 && e.target === cv) this._open(d.node, e);
+      // a long press (a finger held on a dot to colour it) is not a click
+      if (!d.moved && d.node >= 0 && e.target === cv && Date.now() - d.at < 500) this._open(d.node, e);
     };
+    cv.addEventListener('contextmenu', (e) => {
+      const [sx, sy] = local(e);
+      const i = this._nodeAt(sx, sy);
+      if (i < 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this._colorMenu(i, e);
+    });
     cv.addEventListener('wheel', (e) => {
       e.preventDefault();
       this.autoFit = false;
@@ -554,6 +571,41 @@ export class GraphView extends ItemView {
       this.dirty = true;
     }, { passive: false });
     cv.addEventListener('mouseleave', () => { this.hover = -1; this.dirty = true; });
+  }
+
+  /** The colour of one note's dot: a few colours, one of the user's own, or none. */
+  _colorMenu(i, e) {
+    const nd = this.nodes[i];
+    if (!nd || nd.type === 'tag') return;
+    const cur = this.nodeColors?.[nd.id] || '';
+    const set = async (color) => {
+      const all = { ...(this.nodeColors || {}) };
+      if (color) all[nd.id] = color; else delete all[nd.id];
+      this.nodeColors = all;
+      await this.app.config.write('graph-colors.json', all).catch(() => {});
+      this.rebuild();
+      this.app.workspace.trigger('graph-colors-change');
+    };
+    const m = new Menu();
+    m.addItem((it) => it.setTitle(nd.label || nd.id).setIsLabel(true).setDisabled(true));
+    for (const [name, hex] of NODE_COLORS) {
+      m.addItem((it) => {
+        it.setTitle(t(`canvas.color-${name}`)).setChecked(cur.toLowerCase() === hex).setSection('color').onClick(() => set(hex));
+        it.dom.style.setProperty('--node-color', hex);
+        it.dom.addClass('graph-color-item');
+      });
+    }
+    m.addItem((it) => it.setTitle(t('graph.color-custom')).setIcon('palette').setSection('custom').onClick(() => {
+      const input = createEl('input', { attr: { type: 'color', value: cur || '#e05c00' } });
+      input.style.position = 'fixed';
+      input.style.opacity = '0';
+      document.body.appendChild(input);
+      input.addEventListener('change', () => { set(input.value); input.remove(); });
+      input.addEventListener('blur', () => setTimeout(() => input.remove(), 500));
+      input.click();
+    }));
+    if (cur) m.addItem((it) => it.setTitle(t('canvas.color-none')).setIcon('x').setSection('custom').onClick(() => set('')));
+    m.showAtMouseEvent(e);
   }
 
   async _open(i, e) {

@@ -2,10 +2,12 @@
 // Copyright (C) 2026 Enrico Miot
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// A long press on a file or folder of the list starts a choice: that row is marked, a tap
-// on other rows marks or unmarks them, and a bar at the bottom says how many are chosen and
-// what can be done with them: rename them (one dialog after the other, one per name),
-// delete them (asked once, for all), or, with a single row chosen, open its own menu.
+// A long press on a file or folder of the list starts a choice: that row is marked. Without
+// lifting the finger, sliding it up or down marks every row from the first to the one under
+// the finger (the list scrolls near its edges). Later, a tap on other rows marks or unmarks
+// them. A bar at the top of the screen, above the list even when the list is a drawer, says
+// how many are chosen and what can be done: rename them (one dialog after the other, one per
+// name), delete them (asked once, for all), or, with a single row chosen, open its own menu.
 // The bar's "x", Android's back, or unmarking the last row ends the choice.
 
 import { setIcon } from '@desktop/core/icons.js';
@@ -35,7 +37,8 @@ export function installMultiSelect(app) {
   const toggle = (path) => { if (chosen.has(path)) chosen.delete(path); else chosen.add(path); mark(); };
 
   function build() {
-    bar = app.containerEl.createDiv('mobile-select-bar');
+    // at the top of the screen, above everything: also above the file list when it is a drawer
+    bar = document.body.createDiv('mobile-select-bar');
     const btn = (icon, label, fn, cls = '') => {
       const el = bar.createDiv({ cls: 'clickable-icon mobile-select-action ' + cls, attr: { 'aria-label': label, 'data-no-tooltip': '' } });
       setIcon(el, icon);
@@ -96,6 +99,7 @@ export function installMultiSelect(app) {
   }
 
   // a long press on a row starts the choice (instead of opening the menu of that one file)
+  let sweep = null; // {start, before: rows chosen before the press, last} while the finger slides
   document.addEventListener('contextmenu', (e) => {
     const row = e.target.closest?.(ROW);
     if (!row) return;
@@ -103,9 +107,41 @@ export function installMultiSelect(app) {
     e.stopPropagation();
     const path = row.getAttribute('data-path');
     if (!chosen.has(path)) toggle(path);
+    sweep = { start: path, before: new Set(chosen), last: path };
+    if (navigator.userActivation?.hasBeenActive) navigator.vibrate?.(15); // a short buzz: the choice has started
     // the tap that ends this press must not count as a tap on the row
     swallow = Date.now() + 700;
   }, true);
+
+  const visibleRows = () => [...document.querySelectorAll(ROW)].filter((el) => el.offsetParent !== null);
+  const sweepTo = (path) => {
+    const rows = visibleRows().map((el) => el.getAttribute('data-path'));
+    const a = rows.indexOf(sweep.start);
+    const b = rows.indexOf(path);
+    if (a === -1 || b === -1) return;
+    chosen.clear();
+    for (const p of sweep.before) chosen.add(p);
+    for (let i = Math.min(a, b); i <= Math.max(a, b); i++) chosen.add(rows[i]);
+    sweep.last = path;
+    mark();
+  };
+  document.addEventListener('touchmove', (e) => {
+    if (!sweep || e.touches.length !== 1) return;
+    e.preventDefault(); // the finger chooses rows: the list must not scroll under it
+    const p = e.touches[0];
+    const row = document.elementFromPoint(p.clientX, p.clientY)?.closest?.(ROW);
+    if (row && row.getAttribute('data-path') !== sweep.last) sweepTo(row.getAttribute('data-path'));
+    // near the top or the bottom of the list, it scrolls so that more rows can be reached
+    const list = document.querySelector('.workspace-leaf-content[data-type="file-explorer"] .nav-files-container');
+    if (list) {
+      const r = list.getBoundingClientRect();
+      if (p.clientY < r.top + 48) list.scrollTop -= 14;
+      else if (p.clientY > r.bottom - 48) list.scrollTop += 14;
+    }
+  }, { passive: false, capture: true });
+  const endSweep = () => { if (sweep) { sweep = null; swallow = Date.now() + 400; } };
+  document.addEventListener('touchend', endSweep, true);
+  document.addEventListener('touchcancel', endSweep, true);
   let swallow = 0;
   document.addEventListener('click', (e) => {
     const row = e.target.closest?.(ROW);

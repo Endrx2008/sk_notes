@@ -7,12 +7,16 @@ import { call } from '../core/api.js';
 import { errorText, t } from '../core/i18n.js';
 import { installCryptUi } from '../ui/crypt-ui.js';
 import { installGallery } from './gallery.js';
+import { installHome } from './home.js';
 import { installMultiSelect } from './multiselect.js';
 import { installSync } from './sync.js';
+import { VAULT_BASE, VaultBaseView } from './vault-base.js';
 
 const BUILT_IN = ['Anna.g_3']; // themes that come with sk_notes (web/themes)
 
 export function installDesktop(app, info) {
+  installHome(app);
+  installVaultBase(app);
   installThemes(app);
   installImages(app);
   installCryptUi(app, info);
@@ -20,6 +24,21 @@ export function installDesktop(app, info) {
   installGallery(app);
   installSync(app);
   installGraphControls();
+}
+
+/** The database of the vault is a way of looking at notes, not a file to make: the ribbon
+ * and the menu of a folder open it instead of making a .base file (existing .base files open as always). */
+function installVaultBase(app) {
+  app.viewRegistry.registerView(VAULT_BASE, (leaf) => new VaultBaseView(leaf));
+  app.on('ready', () => {
+    const ribbon = app.workspace.leftRibbon;
+    for (const it of ribbon.items.filter((x) => x.id === 'bases')) ribbon.removeItem(it.el);
+    ribbon.addRibbonItemButton('vault-base', 'database', t('pc.home.database'), () => app.commands.executeCommandById('bases:vault-view'));
+  });
+  app.workspace.on('file-menu', (menu) => {
+    const base = menu.items.find((it) => it.titleEl?.textContent === t('file.new-base'));
+    if (base) { menu.items.remove(base); base.dom.remove(); }
+  });
 }
 
 /** The CSS of the chosen community theme and of the enabled snippets (.sk_notes/themes, .sk_notes/snippets).

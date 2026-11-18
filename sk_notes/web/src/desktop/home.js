@@ -1,0 +1,221 @@
+// Home (desktop): what an empty tab shows, like the Home of the Android app, laid out for a
+// wide window and for the keyboard.
+//   Create: a note, a canvas, today's note, a note from a template
+//   View:   the graph, the file list, the database of the vault (a view, no file is made)
+//   Recent: the last notes opened
+// Every tile is a command, so its shortcut is the one set in Settings → Hotkeys and is shown
+// on the tile. On Home: arrows move between tiles, Enter opens, 1–9 open the n-th tile,
+// typing a letter starts "go to file".
+
+import { setIcon } from '../core/icons.js';
+import { t } from '../core/i18n.js';
+import { TemplateModal, applyTemplateVars } from '../features/core.js';
+import { hotkeyToString } from '../model/keymap.js';
+import { TFile } from '../model/vault.js';
+import { VAULT_BASE } from './vault-base.js';
+
+/** Choose a template, then make a new note with its text. */
+export function newNoteFromTemplate(app) {
+  new TemplateModal(app, async (template) => {
+    try {
+      const folder = app.fileManager.getNewFileParent(app.workspace.getActiveFile()?.path || '');
+      const file = await app.fileManager.createNewMarkdownFile(folder);
+      if (!file) return;
+      await app.vault.modify(file, applyTemplateVars(app, await app.vault.read(template), file.basename));
+      await app.workspace.getLeaf(false).openFile(file);
+    } catch (e) { app.notice(String(e.message || e)); }
+  }).open();
+}
+
+/** The tab in use (Home is shown there), or a new tab. */
+function leafHere(app) {
+  const ws = app.workspace;
+  const leaf = ws.activeLeaf && ws.activeLeaf.getRoot() === ws.rootSplit ? ws.activeLeaf : ws.getMostRecentLeaf(ws.rootSplit);
+  return leaf && !leaf.pinned ? leaf : ws.getLeaf('tab');
+}
+
+export async function openView(app, type) {
+  const leaf = leafHere(app);
+  if (leaf.view?.getViewType() !== type) await leaf.setViewState({ type, active: true });
+  app.workspace.setActiveLeaf(leaf, { focus: true });
+}
+
+/** Go to Home: an empty tab there is, or a new one. */
+export async function openHome(app) {
+  const ws = app.workspace;
+  let empty = null;
+  ws.iterateLeaves(ws.rootSplit, (l) => { if (!empty && l.view?.getViewType() === 'empty') empty = l; });
+  const leaf = empty || ws.getLeaf('tab');
+  if (!empty) await leaf.setViewState({ type: 'empty' });
+  ws.setActiveLeaf(leaf, { focus: true });
+  leaf.view?.contentEl.querySelector('.pc-home-tile')?.focus();
+}
+
+// The logo in the colours of the theme in use: the scorpion takes the accent colour.
+let logoSvg = null;
+async function themedLogo(el) {
+  try {
+    if (logoSvg === null) {
+      const text = await (await fetch('logo-home.svg')).text();
+      logoSvg = text
+        .replace(/<rect width="432" height="432"[^>]*\/>/, '').replace(/<rect x="6" y="6"[^>]*\/>/, '')
+        .replace(/fill="#e05c00"/g, 'style="fill:var(--sk-accent)"')
+        .replace(/fill="#9c3f00"/g, 'style="fill:var(--sk-accent);opacity:.7"')
+        .replace(/ width="432" height="432"/, '').replace('viewBox="0 0 432 432"', 'viewBox="52 44 328 344"');
+    }
+    if (!/^<svg[\s>]/.test(logoSvg)) return;
+    const doc = new DOMParser().parseFromString(logoSvg, 'image/svg+xml');
+    const svg = doc.documentElement;
+    if (svg.nodeName !== 'svg' || doc.querySelector('script, foreignObject')) return;
+    el.empty();
+    el.appendChild(document.importNode(svg, true));
+  } catch { /* the plain picture stays */ }
+}
+
+const TILES = [
+  // [section, command id, icon, label key, extra class]
+  ['create', 'file:new', 'file-plus', 'cmd.new-note', 'mod-cta'],
+  ['create', 'canvas:new-file', 'canvas', 'cmd.new-canvas'],
+  ['create', 'daily-notes', 'calendar-day', 'cmd.daily-note'],
+  ['create', 'file:new-from-template', 'template', 'pc.home.from-template'],
+  ['view', 'graph:open-here', 'graph', 'pc.home.graph', 'mod-view'],
+  ['view', 'file-explorer:open', 'list', 'pc.home.list', 'mod-view'],
+  ['view', 'bases:vault-view', 'database', 'pc.home.database', 'mod-view'],
+];
+
+export function renderHome(app, view) {
+  const box = view.contentEl.createDiv('pc-home');
+  const head = box.createDiv('pc-home-head');
+  const logo = head.createDiv('pc-home-logo');
+  logo.createEl('img', { attr: { src: 'logo-home.svg', alt: '' } });
+  themedLogo(logo);
+  const titles = head.createDiv('pc-home-titles');
+  titles.createDiv({ cls: 'pc-home-name', text: 'sk_notes' });
+  titles.createDiv({ cls: 'pc-home-vault', text: app.vault.getName?.() || app.info?.vault?.name || '' });
+
+  const cols = box.createDiv('pc-home-cols');
+  const left = cols.createDiv('pc-home-main');
+  const right = cols.createDiv('pc-home-side');
+  const tiles = [];
+  const section = (id, title) => {
+    left.createDiv({ cls: 'pc-home-title', text: title });
+    const grid = left.createDiv('pc-home-grid mod-' + id);
+    for (const [sec, cmd, icon, label, cls] of TILES) {
+      if (sec !== id) continue;
+      const n = tiles.length + 1;
+      const tile = grid.createDiv({ cls: 'pc-home-tile' + (cls ? ' ' + cls : ''), attr: { role: 'button', tabindex: '0', 'data-command': cmd } });
+      setIcon(tile.createDiv('pc-home-icon'), icon);
+      const txt = tile.createDiv('pc-home-text');
+      txt.createDiv({ cls: 'pc-home-label', text: t(label) });
+      const hk = app.commands.hotkeysFor(cmd)[0];
+      const keys = txt.createDiv('pc-home-keys');
+      keys.createSpan({ cls: 'pc-home-num', text: String(n) });
+      if (hk) keys.createEl('kbd', { text: hotkeyToString(hk) });
+      tile.addEventListener('click', () => app.commands.executeCommandById(cmd));
+      tiles.push(tile);
+    }
+  };
+  section('create', t('pc.home.create'));
+  section('view', t('pc.home.view'));
+
+  // recent notes: the wide window has room for them
+  right.createDiv({ cls: 'pc-home-title', text: t('pc.home.recent') });
+  const recent = right.createDiv('pc-home-recent');
+  const files = app.workspace.getLastOpenFiles().map((p) => app.vault.getAbstractFileByPath(p)).filter((f) => f instanceof TFile).slice(0, 8);
+  if (!files.length) recent.createDiv({ cls: 'pc-home-empty', text: t('pc.home.no-recent') });
+  for (const f of files) {
+    const row = recent.createDiv({ cls: 'pc-home-recent-item', attr: { tabindex: '0', role: 'button' } });
+    setIcon(row.createSpan('pc-home-recent-icon'), f.extension === 'canvas' ? 'canvas' : f.extension === 'base' ? 'database' : 'file-text');
+    row.createSpan({ cls: 'pc-home-recent-name', text: f.basename });
+    if (f.parent && f.parent.path !== '/') row.createSpan({ cls: 'pc-home-recent-path', text: f.parent.path });
+    row.addEventListener('click', () => app.workspace.getLeaf(false).openFile(f));
+    row.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); row.click(); } });
+  }
+  const help = right.createDiv('pc-home-help');
+  const line = (label, cmd) => {
+    const hk = app.commands.hotkeysFor(cmd)[0];
+    if (!hk) return;
+    const r = help.createDiv('pc-home-help-row');
+    r.createSpan({ text: label });
+    r.createEl('kbd', { text: hotkeyToString(hk) });
+  };
+  line(t('pc.home.go-to-file'), 'switcher:open');
+  line(t('pc.home.search'), 'global-search:open');
+  line(t('pc.home.commands'), 'command-palette:open');
+  line(t('pc.home.go-home'), 'home:open');
+  const keysLink = help.createEl('a', { cls: 'pc-home-keys-link', text: t('pc.home.edit-keys'), href: '#' });
+  keysLink.addEventListener('click', (e) => { e.preventDefault(); app.commands.executeCommandById('app:open-settings'); setTimeout(() => app.setting?.openTabById?.('hotkeys'), 50); });
+
+  // keyboard: arrows between tiles, Enter, digits; a letter starts "go to file"
+  box.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const i = tiles.indexOf(document.activeElement);
+    const cols = Math.max(1, Math.round(left.clientWidth / (tiles[0]?.offsetWidth || 1)));
+    const go = (j) => { e.preventDefault(); tiles[Math.max(0, Math.min(tiles.length - 1, j))]?.focus(); };
+    if (e.key === 'ArrowRight') go(i < 0 ? 0 : i + 1);
+    else if (e.key === 'ArrowLeft') go(i < 0 ? 0 : i - 1);
+    else if (e.key === 'ArrowDown') go(i < 0 ? 0 : i + cols);
+    else if (e.key === 'ArrowUp') go(i < 0 ? 0 : i - cols);
+    else if ((e.key === 'Enter' || e.key === ' ') && i >= 0) { e.preventDefault(); tiles[i].click(); }
+    else if (/^[1-9]$/.test(e.key) && tiles[Number(e.key) - 1]) { e.preventDefault(); tiles[Number(e.key) - 1].click(); }
+    else if (/^\p{L}$/u.test(e.key) && !e.target.closest('input, textarea')) { e.preventDefault(); app.commands.executeCommandById('switcher:open'); }
+  });
+  setTimeout(() => { if (view.leaf === app.workspace.activeLeaf && !document.activeElement?.closest?.('input, textarea, .cm-editor, .modal')) tiles[0]?.focus(); }, 60);
+}
+
+/** Commands of Home (all configurable in Settings → Hotkeys) and their default keys. */
+export function installHome(app) {
+  app.renderHome = (view) => renderHome(app, view);
+  app.homeTitle = t('pc.home.title');
+  const cmd = (id, name, icon, callback) => app.commands.addCommand({ id, name, icon, callback });
+  cmd('home:open', t('pc.home.go-home'), 'home', () => openHome(app));
+  cmd('file:new-from-template', t('pc.home.from-template'), 'template', () => newNoteFromTemplate(app));
+  cmd('graph:open-here', t('pc.home.graph'), 'graph', () => openView(app, 'graph'));
+  cmd('bases:vault-view', t('pc.home.database'), 'database', () => openView(app, VAULT_BASE));
+  // default keys of the operations of Home (only where the command has none of its own)
+  const DEFAULTS = {
+    'home:open': [{ modifiers: ['Mod', 'Shift'], key: 'H' }],
+    'canvas:new-file': [{ modifiers: ['Mod', 'Alt'], key: 'C' }], // (Ctrl+Shift+K deletes a line in the editor)
+    'daily-notes': [{ modifiers: ['Mod', 'Shift'], key: 'D' }],
+    'file:new-from-template': [{ modifiers: ['Mod', 'Alt'], key: 'N' }],
+    'graph:open-here': [{ modifiers: ['Mod', 'Shift'], key: 'G' }],
+    'file-explorer:open': [{ modifiers: ['Mod', 'Shift'], key: 'E' }],
+    'bases:vault-view': [{ modifiers: ['Mod', 'Shift'], key: 'B' }],
+    'sync:commit-and-push': [{ modifiers: ['Mod', 'Alt'], key: 'S' }],
+    'templates:community': [],
+  };
+  const apply = () => {
+    for (const [id, hk] of Object.entries(DEFAULTS)) {
+      const c = app.commands.commands[id];
+      if (c && !(c.hotkeys && c.hotkeys.length) && hk.length) c.hotkeys = hk;
+    }
+  };
+  apply();
+  // Home is drawn again when the app is ready and whenever it is shown, so its tiles show the
+  // keys as they are now (the defaults above, or what the user set in Settings → Hotkeys)
+  const redraw = (leaf) => {
+    const v = leaf?.view;
+    if (v?.getViewType() !== 'empty' || !v.contentEl.querySelector('.pc-home')) return;
+    v.contentEl.empty();
+    renderHome(app, v);
+  };
+  app.on('ready', () => {
+    apply();
+    app.workspace.iterateLeaves(app.workspace.rootSplit, redraw);
+    app.workspace.on('active-leaf-change', redraw);
+  });
+  // the file list, opened from the keyboard, takes the keyboard too (arrows move in it, Enter opens)
+  app.on('ready', () => {
+    const c = app.commands.commands['file-explorer:open'];
+    if (!c || c._pcFocus) return;
+    const open = c.callback;
+    c._pcFocus = true;
+    c.callback = async (...args) => {
+      await open?.(...args);
+      const list = document.querySelector('.workspace-leaf-content[data-type="file-explorer"] .nav-files-container');
+      if (!list) return;
+      list.focus();
+      (list.querySelector('.tree-item-self.is-active') || list.querySelector('.tree-item-self'))?.scrollIntoView({ block: 'nearest' });
+    };
+  });
+}

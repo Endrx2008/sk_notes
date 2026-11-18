@@ -1046,5 +1046,22 @@
  "pc.themes.builtin": "входит в sk_notes",
  "canvas.web-open": "Открыть в браузере",
  "canvas.web-reload": "Обновить",
- "error.vault-wrong-password": "Неверный пароль."
+ "error.vault-wrong-password": "Неверный пароль.",
+ "graph.color-custom": "Свой цвет…",
+ "pc.home.title": "Главная",
+ "pc.home.create": "Создать",
+ "pc.home.view": "Просмотр",
+ "pc.home.from-template": "Заметка из шаблона",
+ "pc.home.graph": "Граф",
+ "pc.home.list": "Список файлов",
+ "pc.home.database": "База данных",
+ "pc.home.all-notes": "Все заметки",
+ "pc.home.database-reset": "Начать заново",
+ "pc.home.recent": "Недавние",
+ "pc.home.no-recent": "Заметки ещё не открывались.",
+ "pc.home.go-to-file": "Перейти к файлу",
+ "pc.home.search": "Поиск в хранилище",
+ "pc.home.commands": "Все команды",
+ "pc.home.go-home": "На главную",
+ "pc.home.edit-keys": "Изменить сочетания клавиш…"
 }

@@ -21,8 +21,9 @@ License: **GPL-3.0-or-later**. sk_notes is not affiliated with Obsidian or Dynal
 | Editor | Live Preview and Source mode, Reading view, syntax highlighting, tasks, tables, code blocks, math (KaTeX), callouts, footnotes, highlights, comments, multiple cursors, folding, find & replace, slash commands |
 | Links | `[[wikilinks]]` with autocomplete, aliases, heading and block links, embeds of notes, sections, images, audio, video and PDF, backlinks and unlinked mentions, outgoing links, page preview |
 | Search | full-text index with `file:`, `path:`, `tag:`, `line:()`, `section:()`, `task-todo:`, `[property:value]`, `OR`, `-`, regex… |
+| Home | an empty tab is Home, as in sk_notes for Android: create (note, canvas, today's note, note from a template), view (graph, file list, the database of the vault — a view, no file is made), recent notes; every tile is a command with a shortcut (Settings → Hotkeys), shown on the tile; arrows, Enter and 1–9 work on Home |
 | Navigation | quick switcher, command palette, nested tags, outline, bookmarks, tabs, split panes, stacked tabs, saved layouts, pop-out windows |
-| Graph | global and local graph, filters, color groups, forces |
+| Graph | global and local graph, filters, color groups, a colour for a single note (right click on its dot), forces |
 | Canvas | `.canvas` files (open JSON Canvas format): cards, notes, media, groups, connections (colour, label, direction, remove all arrows of a card), rename by the title, picture of the whole board (JPG) |
 | Properties | typed property editor and **Bases** (`.base`): table, cards, list and board views with filters and formulas |
 | Organisation | templates, daily notes, unique notes, note composer (merge/extract), word count, random note |

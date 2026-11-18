@@ -1046,5 +1046,22 @@
  "pc.themes.builtin": "incluido en sk_notes",
  "canvas.web-open": "Abrir en el navegador",
  "canvas.web-reload": "Recargar",
- "error.vault-wrong-password": "Contraseña incorrecta."
+ "error.vault-wrong-password": "Contraseña incorrecta.",
+ "graph.color-custom": "Color personalizado…",
+ "pc.home.title": "Inicio",
+ "pc.home.create": "Crear",
+ "pc.home.view": "Ver",
+ "pc.home.from-template": "Nota desde una plantilla",
+ "pc.home.graph": "Grafo",
+ "pc.home.list": "Lista de archivos",
+ "pc.home.database": "Base de datos",
+ "pc.home.all-notes": "Todas las notas",
+ "pc.home.database-reset": "Empezar de nuevo",
+ "pc.home.recent": "Recientes",
+ "pc.home.no-recent": "Aún no se ha abierto ninguna nota.",
+ "pc.home.go-to-file": "Ir a un archivo",
+ "pc.home.search": "Buscar en el vault",
+ "pc.home.commands": "Todos los comandos",
+ "pc.home.go-home": "Ir al inicio",
+ "pc.home.edit-keys": "Cambiar los atajos…"
 }

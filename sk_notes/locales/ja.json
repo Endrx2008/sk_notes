@@ -1046,5 +1046,22 @@
  "pc.themes.builtin": "sk_notes に付属",
  "canvas.web-open": "ブラウザーで開く",
  "canvas.web-reload": "再読み込み",
- "error.vault-wrong-password": "パスワードが違います。"
+ "error.vault-wrong-password": "パスワードが違います。",
+ "graph.color-custom": "カスタムの色…",
+ "pc.home.title": "ホーム",
+ "pc.home.create": "作成",
+ "pc.home.view": "表示",
+ "pc.home.from-template": "テンプレートからノート",
+ "pc.home.graph": "グラフ",
+ "pc.home.list": "ファイル一覧",
+ "pc.home.database": "データベース",
+ "pc.home.all-notes": "すべてのノート",
+ "pc.home.database-reset": "最初からやり直す",
+ "pc.home.recent": "最近",
+ "pc.home.no-recent": "まだノートを開いていません。",
+ "pc.home.go-to-file": "ファイルへ移動",
+ "pc.home.search": "保管庫を検索",
+ "pc.home.commands": "すべてのコマンド",
+ "pc.home.go-home": "ホームへ",
+ "pc.home.edit-keys": "ショートカットを変更…"
 }

@@ -1046,5 +1046,22 @@
  "pc.themes.builtin": "随 sk_notes 提供",
  "canvas.web-open": "在浏览器中打开",
  "canvas.web-reload": "重新加载",
- "error.vault-wrong-password": "密码错误。"
+ "error.vault-wrong-password": "密码错误。",
+ "graph.color-custom": "自定义颜色…",
+ "pc.home.title": "主页",
+ "pc.home.create": "新建",
+ "pc.home.view": "查看",
+ "pc.home.from-template": "从模板新建笔记",
+ "pc.home.graph": "关系图",
+ "pc.home.list": "文件列表",
+ "pc.home.database": "数据库",
+ "pc.home.all-notes": "所有笔记",
+ "pc.home.database-reset": "重新开始",
+ "pc.home.recent": "最近",
+ "pc.home.no-recent": "还没有打开过笔记。",
+ "pc.home.go-to-file": "转到文件",
+ "pc.home.search": "在仓库中搜索",
+ "pc.home.commands": "所有命令",
+ "pc.home.go-home": "转到主页",
+ "pc.home.edit-keys": "更改快捷键…"
 }

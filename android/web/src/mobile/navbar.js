@@ -95,12 +95,12 @@ class TabSwitcher extends Modal {
 
 const CORE_RIBBON = new Set(['switcher', 'graph', 'canvas', 'daily', 'templates', 'palette', 'bases', 'random', 'skai', 'vault', 'help', 'settings']);
 
-/** "+": press it and three bubbles rise above it – database, note, canvas. Slide the finger
+/** "+": press it and two bubbles rise above it – note, canvas. Slide the finger
  * onto one and lift it: that file is made and opened. A plain tap leaves the bubbles up to be
  * tapped; a touch anywhere else puts them away. */
 function installCreate(app, plus) {
+  // a database (.base) is a way of looking at notes made on a computer: a phone opens one, it does not make one
   const KINDS = [
-    ['database', 'bases:new-file', 'cmd.new-base', 'mod-left'],
     ['file-plus', 'file:new', 'cmd.new-note', 'mod-center'],
     ['canvas', 'canvas:new-file', 'cmd.new-canvas', 'mod-right'],
   ];

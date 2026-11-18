@@ -1046,5 +1046,22 @@
  "pc.themes.builtin": "in sk_notes enthalten",
  "canvas.web-open": "Im Browser öffnen",
  "canvas.web-reload": "Neu laden",
- "error.vault-wrong-password": "Falsches Passwort."
+ "error.vault-wrong-password": "Falsches Passwort.",
+ "graph.color-custom": "Eigene Farbe…",
+ "pc.home.title": "Start",
+ "pc.home.create": "Erstellen",
+ "pc.home.view": "Anzeigen",
+ "pc.home.from-template": "Notiz aus einer Vorlage",
+ "pc.home.graph": "Graph",
+ "pc.home.list": "Dateiliste",
+ "pc.home.database": "Datenbank",
+ "pc.home.all-notes": "Alle Notizen",
+ "pc.home.database-reset": "Neu beginnen",
+ "pc.home.recent": "Zuletzt geöffnet",
+ "pc.home.no-recent": "Noch keine Notiz geöffnet.",
+ "pc.home.go-to-file": "Zu Datei wechseln",
+ "pc.home.search": "Im Vault suchen",
+ "pc.home.commands": "Alle Befehle",
+ "pc.home.go-home": "Zum Start",
+ "pc.home.edit-keys": "Tastenkürzel ändern…"
 }

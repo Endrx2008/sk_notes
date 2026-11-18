@@ -75,6 +75,10 @@ keys), `vault-lock.js` (locking by itself), `web/src/mobile/crypt-ui.js` (screen
 
 - File list: a long press starts a choice of several rows (`web/src/mobile/multiselect.js`):
   rename them one dialog after the other, or delete them together.
+- Graph: a long press on a dot gives that note a colour (its size stays the graph's own).
+- File list: a long press then a slide of the finger chooses every note in between; the bar with
+  rename and delete appears at the top of the screen, above the list even when it is a drawer.
+- No new database (.base) files on a phone: existing ones open; on a PC the database is a view.
 - Canvas: a long press on an arrow opens its menu (colour, direction, label, delete); the menu of a
   card can remove all its arrows; a tap on the title of the board renames it; a site typed without
   `https://` gets it; "Save a picture" draws the whole board to a JPG in the vault

@@ -1046,5 +1046,22 @@
  "pc.themes.builtin": "inclus dans sk_notes",
  "canvas.web-open": "Ouvrir dans le navigateur",
  "canvas.web-reload": "Recharger",
- "error.vault-wrong-password": "Mot de passe incorrect."
+ "error.vault-wrong-password": "Mot de passe incorrect.",
+ "graph.color-custom": "Couleur personnalisée…",
+ "pc.home.title": "Accueil",
+ "pc.home.create": "Créer",
+ "pc.home.view": "Afficher",
+ "pc.home.from-template": "Note depuis un modèle",
+ "pc.home.graph": "Graphe",
+ "pc.home.list": "Liste des fichiers",
+ "pc.home.database": "Base de données",
+ "pc.home.all-notes": "Toutes les notes",
+ "pc.home.database-reset": "Recommencer",
+ "pc.home.recent": "Récents",
+ "pc.home.no-recent": "Aucune note ouverte pour l'instant.",
+ "pc.home.go-to-file": "Aller à un fichier",
+ "pc.home.search": "Rechercher dans le coffre",
+ "pc.home.commands": "Toutes les commandes",
+ "pc.home.go-home": "Aller à l'accueil",
+ "pc.home.edit-keys": "Modifier les raccourcis…"
 }

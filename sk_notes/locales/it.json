@@ -1046,5 +1046,22 @@
  "pc.themes.builtin": "incluso in sk_notes",
  "canvas.web-open": "Apri nel browser",
  "canvas.web-reload": "Ricarica",
- "error.vault-wrong-password": "Password errata."
+ "error.vault-wrong-password": "Password errata.",
+ "graph.color-custom": "Colore personalizzato…",
+ "pc.home.title": "Home",
+ "pc.home.create": "Crea",
+ "pc.home.view": "Visualizza",
+ "pc.home.from-template": "Nota da un template",
+ "pc.home.graph": "Grafo",
+ "pc.home.list": "Elenco file",
+ "pc.home.database": "Database",
+ "pc.home.all-notes": "Tutte le note",
+ "pc.home.database-reset": "Ricomincia",
+ "pc.home.recent": "Recenti",
+ "pc.home.no-recent": "Nessuna nota aperta finora.",
+ "pc.home.go-to-file": "Vai a un file",
+ "pc.home.search": "Cerca nel vault",
+ "pc.home.commands": "Tutti i comandi",
+ "pc.home.go-home": "Vai alla Home",
+ "pc.home.edit-keys": "Cambia le scorciatoie…"
 }

@@ -97,3 +97,40 @@ body.is-desktop .crypt-pane:empty { display: none; }
 body.is-desktop .crypt-pane { border-left: 3px solid var(--sk-accent); padding-left: 12px; margin: 4px 0 10px; }
 body.is-desktop .vault-manager-item-icon { display: flex; color: var(--sk-accent); }
 body.is-desktop .vault-manager-item-icon .svg-icon { width: 16px; height: 16px; }
+
+/* ---------------------------------------------------------------- Home (an empty tab), like the Android app's, for a wide window */
+body.is-desktop .pc-home { max-width: 1120px; margin: 0 auto; padding: 36px 40px 48px; outline: none; }
+body.is-desktop .pc-home-head { display: flex; align-items: center; gap: 20px; margin-bottom: 26px; }
+body.is-desktop .pc-home-logo { width: 84px; height: 84px; flex-shrink: 0; color: var(--sk-accent); }
+body.is-desktop .pc-home-logo img, body.is-desktop .pc-home-logo svg { width: 100%; height: 100%; display: block; }
+body.is-desktop .pc-home-name { font-size: 30px; font-weight: 800; color: var(--text-normal); letter-spacing: -.01em; }
+body.is-desktop .pc-home-vault { color: var(--text-muted); margin-top: 2px; }
+body.is-desktop .pc-home-cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 36px; }
+@media (max-width: 900px) { body.is-desktop .pc-home-cols { grid-template-columns: 1fr; } }
+body.is-desktop .pc-home-title { font-size: var(--font-ui-smaller); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin: 6px 2px 10px; }
+body.is-desktop .pc-home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 26px; }
+body.is-desktop .pc-home-tile { display: flex; align-items: center; gap: 14px; min-height: 76px; padding: 14px 16px; border: 1px solid var(--sk-border); border-radius: var(--radius-l);
+  background: var(--sk-bg3); cursor: pointer; outline: none; transition: border-color 80ms, background 80ms; }
+body.is-desktop .pc-home-tile:hover { background: var(--background-modifier-hover); border-color: var(--sk-accent); }
+body.is-desktop .pc-home-tile:focus-visible, body.is-desktop .pc-home-tile:focus { border-color: var(--sk-accent); box-shadow: 0 0 0 2px var(--sk-accent); }
+body.is-desktop .pc-home-tile.mod-cta { border-color: var(--sk-accent); }
+body.is-desktop .pc-home-tile.mod-view { background: var(--background-primary-alt); min-height: 92px; }
+body.is-desktop .pc-home-icon { display: flex; color: var(--sk-accent); flex-shrink: 0; }
+body.is-desktop .pc-home-icon .svg-icon { width: 28px; height: 28px; }
+body.is-desktop .pc-home-tile.mod-view .pc-home-icon .svg-icon { width: 34px; height: 34px; }
+body.is-desktop .pc-home-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+body.is-desktop .pc-home-label { font-weight: 600; }
+body.is-desktop .pc-home-keys { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-faint); }
+body.is-desktop .pc-home-num { display: inline-flex; align-items: center; justify-content: center; min-width: 16px; height: 16px; border: 1px solid var(--sk-border); border-radius: 4px; }
+body.is-desktop .pc-home kbd { font-family: var(--font-monospace); font-size: 11px; padding: 1px 6px; border: 1px solid var(--sk-border); border-bottom-width: 2px; border-radius: 4px; background: var(--sk-bg2); color: var(--text-muted); }
+body.is-desktop .pc-home-recent { display: flex; flex-direction: column; gap: 2px; margin-bottom: 22px; }
+body.is-desktop .pc-home-recent-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: var(--radius-m); cursor: pointer; outline: none; }
+body.is-desktop .pc-home-recent-item:hover, body.is-desktop .pc-home-recent-item:focus { background: var(--background-modifier-hover); }
+body.is-desktop .pc-home-recent-icon { display: flex; color: var(--text-muted); }
+body.is-desktop .pc-home-recent-icon .svg-icon { width: 15px; height: 15px; }
+body.is-desktop .pc-home-recent-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.is-desktop .pc-home-recent-path { color: var(--text-faint); font-size: var(--font-ui-smaller); max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.is-desktop .pc-home-empty { color: var(--text-faint); padding: 6px 10px; }
+body.is-desktop .pc-home-help { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--sk-border); border-radius: var(--radius-l); }
+body.is-desktop .pc-home-help-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; color: var(--text-muted); font-size: var(--font-ui-small); }
+body.is-desktop .pc-home-keys-link { font-size: var(--font-ui-small); margin-top: 4px; }
