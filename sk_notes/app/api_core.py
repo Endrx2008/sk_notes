@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import QApplication, QFileDialog
 from ..core import crypt, i18n
 from ..core.search import QueryError, search, snippets
 from ..core.vault import CONFIG_DIR, VaultError, normalize_path
+from ..plugins.permissions import protected  # what page code may never write: decided with the plugins' permissions
 from . import config
 from .bridge import ApiError, Ctx
 
@@ -31,8 +32,8 @@ def QStandardPathsPictures() -> str:  # noqa: N802
 def process_age() -> float | None:
     """Seconds since this process was created (Linux /proc), or None."""
     try:
-        start_ticks = int(Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()[19])
-        uptime = float(Path("/proc/uptime").read_text().split()[0])
+        start_ticks = int(Path("/proc/self/stat").read_text(encoding="ascii").rsplit(")", 1)[1].split()[19])
+        uptime = float(Path("/proc/uptime").read_text(encoding="ascii").split()[0])
         return uptime - start_ticks / os.sysconf("SC_CLK_TCK")
     except (OSError, ValueError, IndexError):
         return None
@@ -42,16 +43,6 @@ CONFIG_NAME_RE = re.compile(r"^(?:[A-Za-z0-9_.-]+\.json|plugins/[A-Za-z0-9_.-]+/
                             r"snippets/[^/]+\.css|themes/[^/]+/theme\.css)$")
 
 
-# Written only by Python (plugin install, enable, permission dialogs): page code, plugins
-# included, can never change what plugins may do or replace a plugin's code.
-_PROTECTED = re.compile(r"^(permissions\.json|community-plugins\.json|rename-journal\.json(\.tmp)?|plugins(/[^/]+(/(main\.js|manifest\.json|styles\.css))?)?)$")
-
-
-def protected(config_name: str) -> bool:
-    """config_name: path inside .sk_notes/ (e.g. 'plugins/x/main.js')."""
-    # a plugin's folder is its identity: moving another folder there would hand it that
-    # plugin's permissions
-    return bool(_PROTECTED.match(config_name.strip("/"))) or config_name.strip("/") == ""
 
 
 def _plugins_allowed(app) -> bool:

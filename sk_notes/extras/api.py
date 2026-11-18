@@ -115,7 +115,7 @@ def register(app) -> None:
         env = dict(os.environ, GIT_DIR=str(gitdir), GIT_WORK_TREE=str(root), GIT_TERMINAL_PROMPT="0")
         try:
             res = subprocess.run(["git", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "protocol.ext.allow=never", *args], cwd=root, env=env, capture_output=True,  # noqa: S603,S607
-                                 text=True, timeout=timeout)
+                                 text=True, timeout=timeout, check=False)
         except FileNotFoundError as exc:
             raise ApiError("git-missing") from exc
         except subprocess.TimeoutExpired as exc:

@@ -134,7 +134,7 @@ class Vault:
         """Allow edits for a few minutes after the user gave their sudo password (checked with sudo itself)."""
         if not self.protected:
             return
-        r = subprocess.run(["sudo", "-S", "-k", "-p", "", "-v"], input=password + "\n", capture_output=True, text=True, timeout=30)
+        r = subprocess.run(["sudo", "-S", "-k", "-p", "", "-v"], input=password + "\n", capture_output=True, text=True, timeout=30, check=False)
         if r.returncode != 0:
             raise VaultError("wrong-password")
         self._sudo_password, self._unlock_until = password, time.time() + UNLOCK_SECONDS
@@ -149,7 +149,7 @@ class Vault:
         helper = os.environ.get("SKAI_MEMORY_HELPER") or MEMORY_HELPER
         req = json.dumps({"op": op, "path": normalize_path(rel).lstrip("/"), "text": text, "caller": "sk_notes"})
         r = subprocess.run(["sudo", "-S", "-k", "-p", "", helper, "--manual"], input=self._sudo_password + "\n" + req,
-                           capture_output=True, text=True, timeout=30)
+                           capture_output=True, text=True, timeout=30, check=False)
         if r.returncode != 0:
             log.warning("memory write refused: %s", (r.stderr or "").strip()[:200])
             raise VaultError("memory-refused")

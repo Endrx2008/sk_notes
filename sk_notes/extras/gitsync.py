@@ -136,7 +136,7 @@ class GitSync:
         if env:
             e.update(env)
         try:
-            r = subprocess.run(["git", *SAFE, *args], cwd=self.root, env=e, input=input, capture_output=True, timeout=timeout)  # noqa: S603,S607
+            r = subprocess.run(["git", *SAFE, *args], cwd=self.root, env=e, input=input, capture_output=True, timeout=timeout, check=False)  # noqa: S603,S607
         except FileNotFoundError as exc:
             raise SyncError("git-missing") from exc
         except subprocess.TimeoutExpired as exc:
@@ -244,7 +244,7 @@ class GitSync:
                 p = Path(d) / name
                 p.write_bytes(data)
                 paths.append(str(p))
-            r = subprocess.run(["git", "merge-file", "-p", "-q", *paths], capture_output=True)  # noqa: S603,S607
+            r = subprocess.run(["git", "merge-file", "-p", "-q", *paths], capture_output=True, check=False)  # noqa: S603,S607
             return r.stdout if r.returncode == 0 else None
 
     def _merge_flat(self, ours: dict, base: dict, theirs: dict) -> tuple[dict, list]:

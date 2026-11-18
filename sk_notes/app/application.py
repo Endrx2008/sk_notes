@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 import json
 import logging
 import os
@@ -16,17 +15,16 @@ from pathlib import Path
 from PyQt6.QtCore import QFileSystemWatcher, QObject, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import QDesktopServices, QIcon, QKeySequence, QShortcut
 from PyQt6.QtNetwork import QLocalServer
-from PyQt6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox
+from PyQt6.QtWidgets import QApplication, QMainWindow
 from PyQt6.QtWebEngineCore import (QWebEnginePage, QWebEngineProfile, QWebEngineScript, QWebEngineSettings,
                                    QWebEngineUrlRequestInterceptor)
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 
 from ..core import i18n
-from ..core.search import QueryError, search
 from ..core.service import VaultService
-from ..core.vault import VaultError, normalize_path
+from ..core.vault import VaultError
 from . import config, uri as sknotes_uri
-from .bridge import Api, ApiError, Ctx, SchemeHandler
+from .bridge import Api, ApiError, SchemeHandler
 from .watcher import VaultWatcher
 
 log = logging.getLogger(__name__)
