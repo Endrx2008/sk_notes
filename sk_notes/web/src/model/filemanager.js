@@ -46,8 +46,17 @@ export class FileManager {
     folder = folder || this.getNewFileParent();
     const base = (name || t('file.untitled')).replace(/[\\/:]/g, '-');
     const path = await call('vault.availablePath', { folder: folder.path === '/' ? '' : folder.path, base, ext: 'md' });
+    // Foam, Tolaria and most Markdown apps take the title of a note from its first heading,
+    // not from the file name: an empty new note starts with its name as that heading
+    if (!content && this.titleHeading()) content = `# ${path.slice(path.lastIndexOf('/') + 1, -3)}\n\n`;
     await this.vault.create(path, content);
     return this.vault.getFileByPath(path);
+  }
+
+  /** New notes start with "# Name" (setting; on by default on phones and tablets). */
+  titleHeading() {
+    const v = this.app.settings.get('newNoteHeading');
+    return v === undefined ? !!this.app.isMobile : !!v;
   }
 
   async createNewFile(folder, name, ext, content = '') {
@@ -72,7 +81,20 @@ export class FileManager {
   async renameFile(file, newPath) {
     newPath = normalizePath(newPath);
     if (newPath === file.path) return;
-    await call('vault.rename', { path: file.path, newPath, updateLinks: this.app.settings.get('alwaysUpdateLinks') !== false });
+    const oldPath = file.path;
+    const oldName = file instanceof TFile && file.extension === 'md' ? file.basename : null;
+    await call('vault.rename', { path: oldPath, newPath, updateLinks: this.app.settings.get('alwaysUpdateLinks') !== false });
+    // the title heading follows the name, as long as it still was the old name
+    const newName = /\.md$/i.test(newPath) ? newPath.slice(newPath.lastIndexOf('/') + 1, -3) : null;
+    if (oldName && newName && oldName !== newName && this.titleHeading()) {
+      try {
+        const r = await call('vault.read', { path: newPath });
+        const info = getFrontMatterInfo(r.text);
+        const body = r.text.slice(info.contentStart);
+        const m = /^(\s*)# (.*?)[ \t]*(\r?\n|$)/.exec(body);
+        if (!r.readOnly && m && m[2] === oldName) await call('vault.write', { path: newPath, text: r.text.slice(0, info.contentStart) + m[1] + '# ' + newName + m[3] + body.slice(m[0].length) });
+      } catch (e) { console.warn('title heading not updated', e); }
+    }
   }
 
   generateMarkdownLink(file, sourcePath, subpath = '', alias = '') {
@@ -83,7 +105,13 @@ export class FileManager {
       const inner = linktext + (subpath || '') + (alias ? '|' + alias : '');
       return (isEmbed && /^(png|jpe?g|gif|bmp|svg|webp|avif|mp3|wav|ogg|m4a|mp4|webm|pdf)$/.test(file.extension) ? '!' : '') + `[[${inner}]]`;
     }
-    const url = encodeURI(file.path).replace(/\(/g, '%28').replace(/\)/g, '%29') + (subpath ? encodeURI(subpath) : '');
+    // relative to the note that holds the link: what every Markdown app (and Git hosting site) follows
+    const from = String(sourcePath || '').split('/').slice(0, -1);
+    const to = file.path.split('/');
+    let i = 0;
+    while (i < from.length && i < to.length - 1 && from[i] === to[i]) i++;
+    const rel = [...from.slice(i).map(() => '..'), ...to.slice(i)].join('/');
+    const url = encodeURI(rel).replace(/\(/g, '%28').replace(/\)/g, '%29') + (subpath ? encodeURI(subpath) : '');
     return `${isEmbed ? '!' : ''}[${alias || file.basename}](${url})`;
   }
 

@@ -357,10 +357,12 @@ export class MarkdownView extends TextFileView {
     const doc = this.cm.state.doc;
     if (line < 0 || line >= doc.lines) return;
     const l = doc.line(line + 1);
-    const m = /^(\s*(?:[-*+]|\d+[.)])\s+\[)(.)(\])/.exec(l.text);
-    if (!m) return;
+    // also inside quotes and callouts: "> - [ ] task"
+    const m = /^((?:\s*>)*\s*(?:[-*+]|\d+[.)])\s+\[)(.)(\])/.exec(l.text);
+    if (!m) return false;
     const at = l.from + m[1].length;
     this.cm.dispatch({ changes: { from: at, to: at + 1, insert: checked ? 'x' : ' ' } });
+    return true;
   }
 
   _hoverLink(e) {

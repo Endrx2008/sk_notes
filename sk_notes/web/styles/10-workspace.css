@@ -78,8 +78,6 @@ body.hide-ribbon .workspace-ribbon { display: none; }
 .workspace-tabs.mod-top-left-space .workspace-tab-header-container { padding-left: 4px; }
 
 .workspace-tab-container { flex: 1; min-height: 0; position: relative; display: flex; }
-.workspace-tabs.mod-stacked .workspace-tab-container { overflow-x: auto; }
-.workspace-tabs.mod-stacked .workspace-leaf { flex: 0 0 600px; border-left: 1px solid var(--sk-border); box-shadow: -6px 0 12px rgba(0,0,0,.25); }
 .workspace-leaf { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
 .workspace-leaf-content { flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--background-primary); }
 .mod-sidedock .workspace-leaf-content { background: var(--sk-bg); }

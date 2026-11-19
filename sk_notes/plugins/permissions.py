@@ -15,6 +15,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 from pathlib import Path
 
 from PyQt6.QtWidgets import QMessageBox
@@ -212,11 +213,22 @@ def require(app, ctx: Ctx, perm: str, detail: str = "") -> None:
 
 def _plugin_name(app, plugin: str) -> str:
     try:
-        import json
         m = json.loads((app.service.vault.config_dir / "plugins" / plugin / "manifest.json").read_text(encoding="utf-8"))
         return m.get("name") or plugin
     except (OSError, ValueError, AttributeError):
         return plugin
+
+
+# Written only by Python (plugin install, enable, permission dialogs): page code, plugins
+# included, can never change what plugins may do or replace a plugin's code.
+_PROTECTED = re.compile(r"^(permissions\.json|community-plugins\.json|rename-journal\.json(\.tmp)?|plugins(/[^/]+(/(main\.js|manifest\.json|styles\.css))?)?)$")
+
+
+def protected(config_name: str) -> bool:
+    """config_name: path inside .sk_notes/ (e.g. 'plugins/x/main.js')."""
+    # a plugin's folder is its identity: moving another folder there would hand it that
+    # plugin's permissions
+    return bool(_PROTECTED.match(config_name.strip("/"))) or config_name.strip("/") == ""
 
 
 def protected_real(app, real: str, *, write: bool) -> bool:
@@ -224,7 +236,6 @@ def protected_real(app, real: str, *, write: bool) -> bool:
     the machine-local trust store (never), and in the vault the git folder and the files that
     decide what plugins may do (writes) (B3-2). Checking only the typed path was bypassed
     with a symlink such as `gl -> .git`."""
-    from ..app.api_core import protected
     real = os.path.realpath(real)
 
     def inside(base: str) -> str | None:

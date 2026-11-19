@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="webview_missing">sk_notes necesita el componente del sistema «Android System WebView», que falta o está desactivado en este dispositivo.</string>
+    <string name="webview_old">«Android System WebView» de este dispositivo es antiguo (versión %1$d; sk_notes necesita la %2$d o posterior). Actualízalo desde la tienda de aplicaciones o sk_notes podría no iniciarse.</string>
+</resources>

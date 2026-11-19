@@ -7,3 +7,7 @@ __pycache__/
 /dist/
 /qa/tmp/
 sk_notes/web/dist/
+
+# Android build output
+android/build/
+android/dist/

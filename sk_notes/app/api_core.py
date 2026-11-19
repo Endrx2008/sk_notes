@@ -12,20 +12,28 @@ from PyQt6.QtCore import QTimer, QUrl
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import QApplication, QFileDialog
 
-from ..core import i18n
+from ..core import crypt, i18n
 from ..core.search import QueryError, search, snippets
 from ..core.vault import CONFIG_DIR, VaultError, normalize_path
+from ..plugins.permissions import protected  # what page code may never write: decided with the plugins' permissions
 from . import config
 from .bridge import ApiError, Ctx
 
 log = logging.getLogger(__name__)
 
 
+def QStandardPathsPictures() -> str:  # noqa: N802
+    """The Pictures folder, or the home folder when there is none (never the working directory)."""
+    from PyQt6.QtCore import QStandardPaths
+    pics = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.PicturesLocation)
+    return pics if pics and Path(pics).is_dir() else str(Path.home())
+
+
 def process_age() -> float | None:
     """Seconds since this process was created (Linux /proc), or None."""
     try:
-        start_ticks = int(Path("/proc/self/stat").read_text().rsplit(")", 1)[1].split()[19])
-        uptime = float(Path("/proc/uptime").read_text().split()[0])
+        start_ticks = int(Path("/proc/self/stat").read_text(encoding="ascii").rsplit(")", 1)[1].split()[19])
+        uptime = float(Path("/proc/uptime").read_text(encoding="ascii").split()[0])
         return uptime - start_ticks / os.sysconf("SC_CLK_TCK")
     except (OSError, ValueError, IndexError):
         return None
@@ -35,16 +43,6 @@ CONFIG_NAME_RE = re.compile(r"^(?:[A-Za-z0-9_.-]+\.json|plugins/[A-Za-z0-9_.-]+/
                             r"snippets/[^/]+\.css|themes/[^/]+/theme\.css)$")
 
 
-# Written only by Python (plugin install, enable, permission dialogs): page code, plugins
-# included, can never change what plugins may do or replace a plugin's code.
-_PROTECTED = re.compile(r"^(permissions\.json|community-plugins\.json|rename-journal\.json(\.tmp)?|plugins(/[^/]+(/(main\.js|manifest\.json|styles\.css))?)?)$")
-
-
-def protected(config_name: str) -> bool:
-    """config_name: path inside .sk_notes/ (e.g. 'plugins/x/main.js')."""
-    # a plugin's folder is its identity: moving another folder there would hand it that
-    # plugin's permissions
-    return bool(_PROTECTED.match(config_name.strip("/"))) or config_name.strip("/") == ""
 
 
 def _plugins_allowed(app) -> bool:
@@ -87,7 +85,10 @@ def register(app) -> None:
             "languages": i18n.available(),
             "strings": i18n.strings(app.language),
             "theme": app.theme,
-            "vault": {"name": s.vault.name, "path": str(s.vault.root), "protected": s.vault.protected} if s else None,
+            "vault": ({"name": s.vault.name, "path": str(s.vault.root), "protected": s.vault.protected,
+                       "encrypted": app.crypt_session.vault is not None,
+                       "file": str(app.crypt_session.vault.blob) if app.crypt_session.vault else None} if s else None),
+            "locked": app.crypt_session.locked,  # an encrypted vault waiting for its password
             "home": str(Path.home()),
             "zoom": app.settings.zoom,
             "safeMode": app.safe_mode,
@@ -150,9 +151,14 @@ def register(app) -> None:
     @r("vaults.list")
     def vaults_list(p, ctx):
         out = []
+        cs = app.crypt_session
         for path, info in sorted(app.settings.vaults.items(), key=lambda kv: -kv[1].get("ts", 0)):
+            if crypt.is_blob(path):  # an encrypted vault: one file
+                out.append({"path": path, "name": crypt.blob_name(path), "ts": info.get("ts", 0), "exists": Path(path).is_file(),
+                            "current": bool(cs.vault) and str(cs.vault.blob) == path, "encrypted": True})
+                continue
             out.append({"path": path, "name": Path(path).name, "ts": info.get("ts", 0),
-                        "exists": Path(path).is_dir(), "current": str(app.vault_root() or "") == path})
+                        "exists": Path(path).is_dir(), "current": not cs.vault and str(app.vault_root() or "") == path})
         mem = Path(os.environ.get("SKAI_MEMORY_DIR") or "/var/lib/skai/SKAI_ Memory")
         if mem.is_dir() and str(mem) not in app.settings.vaults:  # SKAI's shared memory is always on the list
             out.append({"path": str(mem), "name": mem.name, "ts": 0, "exists": True, "current": str(app.vault_root() or "") == str(mem)})
@@ -161,6 +167,21 @@ def register(app) -> None:
     @r("vaults.open")
     def vaults_open(p, ctx):
         path = str(Path(p["path"]).expanduser())
+        if crypt.is_blob(path) and Path(path).is_file():
+            # an encrypted vault: here if nothing is open, otherwise in a new window that asks for the password
+            if ctx.plugin:
+                raise ApiError("permission-denied")
+            cs = app.crypt_session
+            blob = str(Path(path).resolve())
+            if cs.vault and str(cs.vault.blob) == blob:
+                return {"opened": "already"}
+            if app.service is not None:
+                app.spawn_process(["--vault", blob])
+                return {"opened": "new-window"}
+            if p.get("password") is None:
+                raise ApiError("vault-locked", blob)
+            return cs.in_background(lambda: crypt.unlock_vault(blob, p.get("password"), cs.where(blob)),
+                                    lambda v: {"opened": "here", **cs.attach(v)})
         if not Path(path).is_dir():
             raise ApiError("not-a-folder", path)
         if app.service is None:
@@ -180,6 +201,32 @@ def register(app) -> None:
         target = parent / name
         if target.exists() and any(target.iterdir()):
             raise ApiError("already-exists", str(target))
+        if p.get("password") is not None:
+            # an encrypted vault: one file "<name>.skvault" in that folder
+            if ctx.plugin:
+                raise ApiError("permission-denied")
+            cs = app.crypt_session
+            blob = (parent / f"{name}.{crypt.BLOB_EXT}").resolve()
+            try:
+                crypt.check_password(p["password"])
+            except crypt.CryptError as exc:
+                raise ApiError(exc.code, exc.detail) from exc
+            if blob.exists():
+                raise ApiError("already-exists", str(blob))
+            here = app.service is None
+
+            def done(res):
+                v, code = res
+                if here:
+                    return {"opened": "here", **cs.attach(v), "recovery": code}
+                # another vault is open in this window: the new one opens in its own window
+                v.seal()
+                crypt.wipe(v.where.dir)
+                app.settings.vaults[str(blob)] = {"ts": 0}
+                app.settings.save()
+                app.spawn_process(["--vault", str(blob)])
+                return {"opened": "new-window", "path": str(blob), "recovery": code}
+            return cs.in_background(lambda: crypt.create_vault(blob, p["password"], cs.where(blob)), done)
         target.mkdir(parents=True, exist_ok=True)
         return vaults_open({"path": str(target)}, ctx)
 
@@ -333,8 +380,8 @@ def register(app) -> None:
         if kind == "snippets":
             return sorted(f.name for f in (base / "snippets").glob("*.css")) if (base / "snippets").is_dir() else []
         if kind == "themes":
-            return sorted(d.name for d in (base / "themes").iterdir() if (d / "theme.css").exists()) \
-                if (base / "themes").is_dir() else []
+            found = [d.name for d in (base / "themes").iterdir() if (d / "theme.css").exists()] if (base / "themes").is_dir() else []
+            return sorted({"Anna.g_3", *found})  # Anna.g_3 comes with sk_notes
         raise ApiError("bad-kind")
 
     @r("config.openFolder")
@@ -413,6 +460,33 @@ def register(app) -> None:
             else:
                 raise ApiError("permission-denied", str(target))
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(target)))
+        return True
+
+    @r("image.save")
+    def image_save(p, ctx):
+        """A picture made by a view (a canvas board, the graph): "Save as" of the computer."""
+        if ctx.plugin:
+            raise ApiError("permission-denied")
+        raw = str(p.get("data") or "")
+        data = base64.b64decode(raw.split(",", 1)[1] if raw.startswith("data:") else raw)
+        if not data:
+            raise ApiError("empty")
+        name = re.sub(r'[\\/:*?"<>|\x00]', "-", str(p.get("name") or "image.png"))[:120]
+        start = Path(QStandardPathsPictures()) / name
+        parent = app.windows[0] if app.windows else None
+        target, _ = QFileDialog.getSaveFileName(parent, "", str(start), "*" + Path(name).suffix)
+        if not target:
+            return None
+        Path(target).write_bytes(data)
+        app._last_image = target
+        return target
+
+    @r("image.showFolder")
+    def image_show_folder(p, ctx):
+        """Open the folder of the picture just saved (and only that one)."""
+        if ctx.plugin or not getattr(app, "_last_image", None) or p.get("path") != app._last_image:
+            raise ApiError("permission-denied")
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(Path(app._last_image).parent)))
         return True
 
     @r("system.showInFolder")

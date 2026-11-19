@@ -13,7 +13,6 @@ import re
 import sqlite3
 import threading
 from collections import defaultdict
-from pathlib import PurePosixPath
 
 from . import parser
 from .vault import FileEntry, Vault, normalize_path
@@ -397,7 +396,6 @@ class VaultIndex:
 
 
 def _infer_type(key: str, value) -> str:
-    import re
     if key in ("tags", "tag"):
         return "tags"
     if key in ("aliases", "alias"):

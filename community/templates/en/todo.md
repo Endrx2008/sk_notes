@@ -1,0 +1,10 @@
+# {{title}}
+
+## Now
+- [ ] 
+
+## Soon
+- [ ] 
+
+## Someday
+- [ ] 

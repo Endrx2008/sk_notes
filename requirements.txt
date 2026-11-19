@@ -5,3 +5,5 @@ PyQt6>=6.5
 PyQt6-WebEngine>=6.5
 PyYAML>=6
 numpy>=1.24
+cryptography>=41  # encrypted vaults (.skvault)
+keyring>=24  # Git sync token in the system keyring (an encrypted file is used without one)

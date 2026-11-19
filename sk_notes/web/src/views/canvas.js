@@ -2,7 +2,7 @@
 
 import { resourceUrl } from '../core/api.js';
 import { setIcon } from '../core/icons.js';
-import { t } from '../core/i18n.js';
+import { errorText, t } from '../core/i18n.js';
 import { isImage, isAudio, isVideo, uid } from '../core/util.js';
 import { Component } from '../model/component.js';
 import { TFile } from '../model/vault.js';
@@ -10,10 +10,19 @@ import { renderSections, postProcess, renderEmbed } from '../render/markdown.js'
 import { Menu, setTooltip, promptDialog } from '../ui/kit.js';
 import { QuickSwitcher } from '../ui/palette.js';
 import { TextFileView } from './base.js';
+import { canvasPicture } from './canvas-image.js';
 
 const PRESET = { 1: 'var(--color-red)', 2: 'var(--color-orange)', 3: 'var(--color-yellow)', 4: 'var(--color-green)', 5: 'var(--color-cyan)', 6: 'var(--color-purple)' };
 const colorOf = (c) => (!c ? null : PRESET[c] || c);
 const SIDES = ['top', 'right', 'bottom', 'left'];
+
+/** What the user typed for a site → its address: "example.org/page" becomes "https://example.org/page". */
+export function webAddress(text) {
+  const s = String(text ?? '').trim();
+  if (!s) return '';
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(s) || /^(mailto|tel):/i.test(s)) return s;
+  return 'https://' + s.replace(/^\/+/, '');
+}
 
 export class CanvasView extends TextFileView {
   constructor(leaf) {
@@ -54,9 +63,11 @@ export class CanvasView extends TextFileView {
     tool('file', t('canvas.add-note'), () => this.addFileFromVault(this._center()));
     tool('image', t('canvas.add-media'), () => this.addFileFromVault(this._center(), true));
     tool('globe', t('canvas.add-link'), async () => {
-      const url = await promptDialog(this.app, { title: t('canvas.add-link'), placeholder: 'https://' });
+      const url = webAddress(await promptDialog(this.app, { title: t('canvas.add-link'), placeholder: 'https://' }));
       if (url) this.addNode({ type: 'link', url, ...this._center(), width: 400, height: 300 });
     });
+    // phones and tablets: photos, PDFs and other files straight from the device
+    if (this.app.importFromDevice) tool('upload', t('mobile.import-device'), () => this.addFilesFromDevice(this._center()));
     tool('folder', t('canvas.add-group'), () => this.addGroup());
     // right controls
     const ctr = c.createDiv('canvas-controls');
@@ -72,8 +83,49 @@ export class CanvasView extends TextFileView {
     ctl('refresh', t('canvas.zoom-reset'), () => { this.viewport = { x: 0, y: 0, k: 1 }; this._applyViewport(); });
     ctl('undo', t('canvas.undo'), () => this.undo());
     ctl('redo', t('canvas.redo'), () => this.redo());
+    ctl('image', t('canvas.save-picture'), () => this.savePicture());
     ctl('help', t('canvas.help'), () => this.app.notice(t('canvas.help-text'), 9000));
     this._setupInput();
+    // the name of the board is changed where it is written: a tap on the title edits it
+    this.titleEl.addClass('is-renamable');
+    this.titleEl.addEventListener('click', () => this.renameFromTitle());
+  }
+
+  /** Save a picture (JPEG) of the whole board. */
+  async savePicture() {
+    try {
+      await this.app.saveImage(`${this.file?.basename || 'canvas'}.jpg`, canvasPicture(this), this.file?.path || '');
+    } catch (e) {
+      this.app.notice(e?.message === 'empty' ? t('canvas.picture-empty') : t('canvas.picture-failed', { error: errorText(e) }));
+    }
+  }
+
+  renameFromTitle() {
+    const file = this.file;
+    if (!file || this.titleEl.querySelector('input')) return;
+    const input = createEl('input', { cls: 'view-header-title-input', attr: { type: 'text', spellcheck: 'false', autocapitalize: 'sentences' } });
+    input.value = file.basename;
+    this.titleEl.empty();
+    this.titleEl.appendChild(input);
+    input.focus();
+    input.select();
+    let done = false;
+    const finish = async (save) => {
+      if (done) return;
+      done = true;
+      const name = input.value.trim();
+      this.titleEl.setText(this.getDisplayText());
+      if (!save || !name || name === file.basename) return;
+      const parent = file.parent && file.parent.path !== '/' ? file.parent.path + '/' : '';
+      try { await this.app.fileManager.renameFile(file, `${parent}${name}.${file.extension}`); } catch (e) { this.app.notice(t('notice.rename-failed', { error: errorText(e) })); }
+    };
+    input.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+      if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+    });
+    input.addEventListener('blur', () => finish(true));
+    for (const ev of ['click', 'mousedown', 'dblclick']) input.addEventListener(ev, (e) => e.stopPropagation());
   }
 
   // ---------------------------------------------------------------- data
@@ -163,6 +215,18 @@ export class CanvasView extends TextFileView {
     void media;
   }
 
+  /** Copy files picked on the device into the vault (attachment folder) and add a card for each. */
+  async addFilesFromDevice(pos) {
+    let files;
+    try {
+      files = await this.app.importFromDevice({ sourcePath: this.file?.path || '', mime: ['image/*', 'application/pdf', 'video/*', 'audio/*', 'text/*'] });
+    } catch (e) { this.app.notice(String(e.message || e)); return; }
+    files.forEach((file, i) => {
+      const big = !isImage(file.extension);
+      this.addNode({ type: 'file', file: file.path, x: pos.x + i * 40, y: pos.y + i * 40, width: big ? 400 : 320, height: big ? 400 : 240 });
+    });
+  }
+
   addGroup() {
     const sel = this.canvasData.nodes.filter((n) => this.selection.has(n.id));
     let box = { x: this._center().x, y: this._center().y, width: 500, height: 400 };
@@ -231,16 +295,39 @@ export class CanvasView extends TextFileView {
       else if (isImage(file.extension)) box.createEl('img', { attr: { src: resourceUrl(file.path, file.stat.mtime), draggable: 'false' } });
       else if (isAudio(file.extension)) box.createEl('audio', { attr: { controls: true, src: resourceUrl(file.path) } });
       else if (isVideo(file.extension)) box.createEl('video', { attr: { controls: true, src: resourceUrl(file.path) } });
-      else if (file.extension === 'md') {
+      else if (file.extension === 'pdf') {
+        box.addClass('canvas-pdf');
+        if (this.app.renderPdf) this.app.renderPdf(box, file);
+        else box.createEl('iframe', { cls: 'pdf-container', attr: { src: resourceUrl(file.path, file.stat.mtime) } });
+      } else if (file.extension === 'md') {
         box.addClass('markdown-rendered');
         const span = box.createSpan({ cls: 'internal-embed', attr: { src: file.path + (n.subpath || '') } });
         renderEmbed(this.app, span, this.file?.path || '', this.comp, 1);
       } else box.createDiv({ cls: 'canvas-file', text: file.name });
+    } else if (n.type === 'link' && this.app.embedWeb) {
+      // the page itself, inside the card; the bar above it moves the card and opens the browser
+      const box = content.createDiv('canvas-node-content canvas-web');
+      const bar = box.createDiv('canvas-web-bar');
+      setIcon(bar.createSpan('canvas-web-icon'), 'globe');
+      const url = webAddress(n.url); // a board written by hand or by another app: a site without "https://"
+      bar.createSpan({ cls: 'canvas-web-url', text: url });
+      const reload = bar.createSpan({ cls: 'clickable-icon canvas-web-action', attr: { 'aria-label': t('canvas.web-reload') } });
+      setIcon(reload, 'refresh');
+      const open = bar.createSpan({ cls: 'clickable-icon canvas-web-action', attr: { 'aria-label': t('canvas.web-open') } });
+      setIcon(open, 'globe');
+      open.addEventListener('click', (e) => { e.stopPropagation(); this.app.openExternal(url); });
+      const frame = box.createEl('iframe', { cls: 'canvas-web-frame', attr: { sandbox: 'allow-scripts allow-same-origin allow-forms allow-popups', loading: 'lazy' } });
+      const load = () => this.app.embedWeb(url).then((src) => { frame.src = src; }, (err) => {
+        frame.remove();
+        box.createDiv({ cls: 'canvas-link-note', text: String(err?.message || err) });
+      });
+      reload.addEventListener('click', (e) => { e.stopPropagation(); frame.src = 'about:blank'; load(); });
+      load();
     } else if (n.type === 'link') {
       const box = content.createDiv('canvas-node-content canvas-link');
       setIcon(box.createDiv('canvas-link-icon'), 'globe');
-      const a = box.createEl('a', { cls: 'external-link', text: n.url, href: n.url });
-      a.addEventListener('click', (e) => { e.preventDefault(); this.app.openExternal(n.url); });
+      const a = box.createEl('a', { cls: 'external-link', text: n.url, href: webAddress(n.url) });
+      a.addEventListener('click', (e) => { e.preventDefault(); this.app.openExternal(webAddress(n.url)); });
       box.createDiv({ cls: 'canvas-link-note', text: t('canvas.link-offline') });
     }
     // resize handle and connection points
@@ -378,6 +465,7 @@ export class CanvasView extends TextFileView {
     this.contentEl.style.backgroundPosition = `${x}px ${y}px`;
     this.contentEl.style.backgroundSize = `${20 * k}px ${20 * k}px`;
     this.contentEl.toggleClass('is-zoomed-out', k < 0.4);
+    this.boardEl.style.setProperty('--canvas-zoom', String(k)); // sizes kept constant on screen (the width an arrow is touched on)
   }
 
   zoomBy(f, cx, cy) {
@@ -609,6 +697,15 @@ export class CanvasView extends TextFileView {
     }
     if (n.type === 'group') m.addItem((i) => i.setTitle(t('canvas.group-name')).setIcon('pencil').onClick(() => this.editGroupLabel(n)));
     this._colorMenu(m, n, () => this.render());
+    const tied = this.canvasData.edges.filter((e) => this.selection.has(e.fromNode) || this.selection.has(e.toNode));
+    if (tied.length) {
+      m.addItem((i) => i.setTitle(t('canvas.unlink', { n: tied.length })).setIcon('unlink').setSection('danger').onClick(() => {
+        this._snapshotBefore();
+        this.canvasData.edges = this.canvasData.edges.filter((e) => !tied.includes(e));
+        this._commit();
+        this.renderEdges();
+      }));
+    }
     m.addItem((i) => i.setTitle(t('common.delete')).setIcon('trash').setWarning(true).setSection('danger').onClick(() => this.deleteSelection()));
     m.showAtMouseEvent(e);
   }
@@ -616,6 +713,7 @@ export class CanvasView extends TextFileView {
   _edgeMenu(ev, edge) {
     ev.preventDefault();
     ev.stopPropagation();
+    this.select([edge.id]); // the arrow the menu is about
     const m = new Menu();
     m.addItem((i) => i.setTitle(t('canvas.edge-label')).setIcon('pencil').onClick(async () => {
       const label = await promptDialog(this.app, { title: t('canvas.edge-label'), value: edge.label || '' });
@@ -634,13 +732,19 @@ export class CanvasView extends TextFileView {
       this.renderEdges();
     }));
     this._colorMenu(m, edge, () => this.renderEdges());
-    m.addItem((i) => i.setTitle(t('common.delete')).setIcon('trash').setWarning(true).onClick(() => {
+    m.addItem((i) => i.setTitle(t('canvas.edge-delete')).setIcon('trash').setWarning(true).setSection('danger').onClick(() => {
       this._snapshotBefore();
       this.canvasData.edges.remove(edge);
+      this.selection.delete(edge.id);
       this._commit();
       this.renderEdges();
     }));
     m.showAtMouseEvent(ev);
+  }
+
+  onPaneMenu(menu, source) {
+    menu.addItem((i) => i.setTitle(t('canvas.save-picture')).setIcon('image').onClick(() => this.savePicture()));
+    super.onPaneMenu(menu, source);
   }
 
   onResize() { this._applyViewport(); }

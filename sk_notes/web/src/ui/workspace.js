@@ -218,7 +218,6 @@ export class WorkspaceTabs extends WorkspaceParent {
   constructor(ws, id) {
     super(ws, id);
     this.currentTab = 0;
-    this.isStacked = false;
     this.containerEl = createDiv('workspace-tabs');
     this.tabHeaderContainerEl = this.containerEl.createDiv('workspace-tab-header-container');
     this.tabsInnerEl = this.tabHeaderContainerEl.createDiv('workspace-tab-header-container-inner');
@@ -252,19 +251,10 @@ export class WorkspaceTabs extends WorkspaceParent {
     this.children.forEach((leaf, i) => menu.addItem((it) => it.setTitle(leaf.getDisplayText()).setIcon(leaf.getIcon())
       .setChecked(i === this.currentTab).onClick(() => this.selectTab(leaf))));
     menu.addSeparator();
-    menu.addItem((it) => it.setTitle(this.isStacked ? t('tab.unstack') : t('tab.stack')).setIcon('stack')
-      .onClick(() => this.setStacked(!this.isStacked)));
     menu.addItem((it) => it.setTitle(t('tab.close-all')).setIcon('x')
       .onClick(() => closeLeaves(this.children)));
     const r = anchor.getBoundingClientRect();
     menu.showAtPosition({ x: r.right, y: r.bottom + 4, left: true });
-  }
-
-  setStacked(v) {
-    this.isStacked = !!v;
-    this.containerEl.toggleClass('mod-stacked', this.isStacked);
-    this._render();
-    this.workspace.requestSaveLayout();
   }
 
   _render() {
@@ -276,8 +266,7 @@ export class WorkspaceTabs extends WorkspaceParent {
     this.children.forEach((leaf, i) => {
       const active = i === this.currentTab;
       leaf.tabHeaderEl.toggleClass('is-active', active);
-      leaf.containerEl.toggle(active || this.isStacked);
-      if (this.isStacked) leaf.containerEl.style.left = (i * 40) + 'px';
+      leaf.containerEl.toggle(active);
     });
   }
 
@@ -354,7 +343,7 @@ export class WorkspaceTabs extends WorkspaceParent {
   }
 
   serialize() {
-    return { id: this.id, type: 'tabs', dimension: this.dimension, stacked: this.isStacked || undefined,
+    return { id: this.id, type: 'tabs', dimension: this.dimension,
       currentTab: this.currentTab, children: this.children.map((c) => c.serialize()) };
   }
 }
@@ -450,10 +439,12 @@ export class WorkspaceLeaf extends WorkspaceItem {
       .onClick(() => closeLeaves((this.parent?.children || []).filter((l) => !l.pinned))));
     menu.addItem((i) => i.setTitle(this.pinned ? t('tab.unpin') : t('tab.pin')).setIcon('pin').setSection('action')
       .onClick(() => this.togglePinned()));
-    menu.addItem((i) => i.setTitle(t('tab.split-right')).setIcon('split-right').setSection('action')
-      .onClick(() => ws.duplicateLeaf(this, 'vertical')));
-    menu.addItem((i) => i.setTitle(t('tab.split-down')).setIcon('split-down').setSection('action')
-      .onClick(() => ws.duplicateLeaf(this, 'horizontal')));
+    if (!ws.app?.noSplits?.()) {
+      menu.addItem((i) => i.setTitle(t('tab.split-right')).setIcon('split-right').setSection('action')
+        .onClick(() => ws.duplicateLeaf(this, 'vertical')));
+      menu.addItem((i) => i.setTitle(t('tab.split-down')).setIcon('split-down').setSection('action')
+        .onClick(() => ws.duplicateLeaf(this, 'horizontal')));
+    }
     menu.addItem((i) => i.setTitle(t('tab.new-window')).setIcon('window').setSection('action')
       .onClick(() => ws.moveLeafToPopout(this)));
     const file = this.view instanceof FileView ? this.view.file : null;
@@ -495,6 +486,7 @@ export class WorkspaceLeaf extends WorkspaceItem {
     if (!creator && viewState.type !== 'empty') {
       viewState = { type: 'empty' };
     }
+    // the start page (Home on phones) is never a step of back/forward; base views (graph, file list) are
     if (!fromHistory && this.view && this.view.navigation && this.view.getViewType() !== 'empty') {
       const cur = this._currentNavState();
       if (JSON.stringify(cur.state.state) !== JSON.stringify(viewState.state) || cur.state.type !== viewState.type) {
@@ -865,15 +857,28 @@ export class Workspace extends Events {
       target.setDimension(half);
       item.setDimension(half);
       parent.insertChild(before ? i : i + 1, item);
+    } else if (parent instanceof WorkspaceSplit && !(parent instanceof WorkspaceSidedock) && parent.children.length === 1) {
+      // the only child of its split: the split just turns the other way
+      parent.direction = direction;
+      parent._setDirClass();
+      target.setDimension(50);
+      item.setDimension(50);
+      parent.insertChild(before ? 0 : 1, item);
     } else {
+      // the new split is filled before it takes the target's place: an empty split put in a
+      // split with no other child would be flattened away, and the panes lost with it
       const split = new WorkspaceSplit(this, direction);
       const i = parent.children.indexOf(target);
       split.setDimension(target.dimension);
-      parent.replaceChild(i, split);
       target.setDimension(50);
       item.setDimension(50);
+      parent.children.splice(i, 1, split);
+      split.parent = parent;
+      target.parent = null;
+      target.containerEl?.detach();
       split.insertChild(0, target);
       split.insertChild(before ? 0 : 1, item);
+      parent._render();
     }
     this._updateToggles();
     this.trigger('layout-change');
@@ -1125,7 +1130,6 @@ export class Workspace extends Events {
         parentItem.insertChild(-1, tabs);
         for (const c of data.children || []) build(c, tabs);
         tabs.currentTab = data.currentTab || 0;
-        if (data.stacked) tabs.setStacked(true);
         if (!tabs.children.length) parentItem.removeChild(tabs);
         else tabs._render();
         return tabs;
@@ -1186,7 +1190,7 @@ export class Workspace extends Events {
       // hidden tabs of the main area that are not notes (graph, canvas, base, plugin views)
       // are created when first shown: restoring them all made start-up slow (A-13)
       const tabs = l.parent;
-      const hidden = tabs instanceof WorkspaceTabs && !tabs.isStacked && tabs.children[tabs.currentTab] !== l;
+      const hidden = tabs instanceof WorkspaceTabs && tabs.children[tabs.currentTab] !== l;
       if (hidden && l.getRoot() === this.rootSplit && !['markdown', 'empty'].includes(st.type) && l.id !== layout?.active) {
         l._pending = st;
         l.updateHeader();

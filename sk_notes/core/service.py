@@ -18,7 +18,7 @@ from typing import Callable
 from . import links, trash
 from .history import History
 from .index import TEXT_EXT, VaultIndex, ext_of
-from .vault import CONFIG_DIR, Vault, VaultError, normalize_path
+from .vault import Vault, VaultError, normalize_path
 
 log = logging.getLogger(__name__)
 

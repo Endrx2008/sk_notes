@@ -333,7 +333,7 @@ def register(app) -> None:
         try:
             proc = subprocess.run(cmd if shell else [cmd, *args], shell=shell, cwd=cwd,  # noqa: S602 - user approved
                                   input=base64.b64decode(p["input"]) if p.get("input") else None,
-                                  capture_output=True, timeout=float(p.get("timeout") or 120))
+                                  capture_output=True, timeout=float(p.get("timeout") or 120), check=False)
         except FileNotFoundError as exc:
             return {"code": 127, "stdout": "", "stderr": base64.b64encode(str(exc).encode()).decode(), "error": "ENOENT"}
         except subprocess.TimeoutExpired:

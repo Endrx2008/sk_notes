@@ -50,6 +50,7 @@ class GlobalSettings:
     last_vault: str = ""
     window: dict = field(default_factory=dict)  # geometry
     zoom: float = 1.0
+    crypt_lock_after: int = 5  # minutes without use before an encrypted vault locks (0 = when minimised, -1 = never)
 
     @classmethod
     def load(cls) -> "GlobalSettings":
