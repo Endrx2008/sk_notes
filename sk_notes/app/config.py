@@ -10,7 +10,7 @@ from pathlib import Path
 
 APP_NAME = "sk_notes"
 APP_ID = "skorpion-sk-notes"  # Wayland app_id / X11 class, matches the .desktop file
-VERSION = "0.5.0"
+VERSION = "0.5.1"
 
 # Shared Skorpion files (see docs/research/skorpion-apps.md)
 # shared with the other Skorpion apps; resolved through XDG like every suite config (B-24)
