@@ -5,7 +5,8 @@ computer, note collegate, grafo, canvas, viste a database, plugin della communit
 l'IA locale di Skorpion OS — tutto offline. *English: [README.md](README.md).*
 
 - **I tuoi file, sul tuo computer.** Un vault è una normale cartella di file `.md`. Niente
-  account, niente telemetria. L'unica connessione è verso il servizio locale SKAI (Ollama).
+  account, niente telemetria. La rete serve solo per il servizio locale SKAI (Ollama) e per ciò che
+  chiedi tu: la sincronizzazione Git e gli elenchi della community di plugin, temi e template.
 - **Familiare.** Se hai usato un'altra app di note in Markdown, pannelli, menu e scorciatoie
   sono dove te li aspetti; un vault esistente si apre così com'è e una procedura guidata propone
   di importarne le impostazioni (in sola lettura: i file originali non vengono mai modificati).
@@ -17,20 +18,37 @@ Licenza: **GPL-3.0-or-later**. sk_notes non è affiliato con Obsidian o Dynalist
 
 | Area | Cosa offre |
 |---|---|
-| Vault | apri/crea/cambia vault, esplora file con ordinamenti, trascinamento, rinomina (i link si aggiornano da soli), cestino di sistema o `.trash`, recupero file e cronologia delle versioni |
+| Vault | apri/crea/cambia vault, esplora file con ordinamenti, trascinamento, più file insieme (Ctrl/Maiusc+clic: rinominali uno dopo l'altro, spostali, eliminali), rinomina (i link si aggiornano da soli), cestino di sistema o `.trash`, recupero file e cronologia delle versioni |
 | Editor | Anteprima dal vivo e modalità sorgente, vista di lettura, evidenziazione della sintassi, attività, tabelle, blocchi di codice, formule (KaTeX), callout, note a piè di pagina, evidenziazioni, commenti, cursori multipli, piegatura, trova e sostituisci, comandi slash |
 | Link | `[[wikilink]]` con autocompletamento, alias, link a titoli e blocchi, incorporamento di note, sezioni, immagini, audio, video e PDF, backlink e menzioni non collegate, link in uscita, anteprima al passaggio |
 | Ricerca | indice a testo completo con `file:`, `path:`, `tag:`, `line:()`, `section:()`, `task-todo:`, `[proprietà:valore]`, `OR`, `-`, regex… |
-| Navigazione | apertura rapida, palette dei comandi, tag annidati, struttura, segnalibri, schede, pannelli divisi, schede impilate, layout salvati, finestre separate |
-| Grafo | grafo globale e locale, filtri, gruppi colorati, forze |
-| Canvas | file `.canvas` (formato aperto JSON Canvas): schede, note, media, gruppi, collegamenti |
+| Home | una scheda vuota è la Home, come in sk_notes per Android: il logo con il nome del vault aperto, le note recenti in una riga, crea (nota — con un pulsante calendario per la nota di oggi —, canvas e una barra più piccola per una nota da template), visualizza (grafo, database del vault — una vista, nessun file viene creato; l'elenco dei file è sempre nella barra laterale sinistra); ogni riquadro è un comando con una scorciatoia (Impostazioni → Scorciatoie) mostrata sul riquadro — nota Ctrl+N, canvas Ctrl+C quando non c'è nulla da copiare; frecce e Invio funzionano sulla Home. La barra laterale a sinistra si nasconde finché sullo schermo c'è solo la Home. Il "+" delle schede mostra due bolle (nota, canvas) da cliccare, oppure premi e trascina verso una delle due |
+| Riquadri | il pulsante "nuovo riquadro a destra" nell'intestazione di ogni riquadro (o Ctrl+Alt+D) aggiunge un riquadro sul bordo destro, tutti della stessa larghezza, con l'ultima nota usata non visibile (o la Home). I riquadri si spostano come finestre dentro la finestra, senza mai uscirne: trascina una scheda per il nome e lasciala sulla metà del riquadro dove deve andare (sinistra, destra, sopra, sotto), al centro per unirla alle sue schede, su una barra delle schede per metterla tra quelle; trascina la parte vuota di una barra delle schede per spostare tutto il riquadro; Esc annulla. Un file dell'elenco lasciato sul bordo di un riquadro si apre accanto. Chiudendo l'ultima nota di un riquadro si chiude il riquadro e gli altri si dividono il suo spazio |
+| Navigazione | apertura rapida, palette dei comandi, tag annidati, struttura, segnalibri, schede, pannelli divisi, layout salvati, finestre separate |
+| Grafo | grafo globale e locale, filtri, gruppi colorati, un colore per una singola nota (clic destro sul suo punto), forze |
+| Canvas | file `.canvas` (formato aperto JSON Canvas): schede, note, media, gruppi, collegamenti (colore, etichetta, direzione, rimuovi tutte le frecce di una scheda), rinomina dal titolo, immagine di tutta la lavagna (JPG) |
 | Proprietà | editor delle proprietà con tipi e **Basi** (`.base`): viste tabella, schede, elenco e bacheca con filtri e formule |
-| Organizzazione | template, note giornaliere, note uniche, compositore (unisci/estrai), conteggio parole, nota casuale |
+| Organizzazione | template, note giornaliere, note uniche, compositore (unisci/estrai), conteggio parole |
 | Esporta e importa | esportazione PDF; importazione da cartelle Markdown, Evernote, Notion, Bear/TextBundle, Logseq, Roam, Google Keep, HTML, CSV |
-| Sincronizzazione e pubblicazione (facoltative) | sincronizzazione Git (commit/pull/push, commit automatico), stato di Syncthing, sito statico generato in locale |
-| Plugin | API nativa di sk_notes con permessi espliciti e livello di compatibilità con i plugin della community ([tabella di compatibilità](docs/compatibility.md)) |
+| Sincronizzazione e pubblicazione (facoltative) | sincronizzazione con **GitHub, GitLab o qualsiasi server Git** con un nome e un token: commit, pull e push da soli, unioni senza marcatori di conflitto (l'altra versione resta accanto alla nota); lo stesso vault si apre in sk_notes per Android, in Obsidian con il suo plugin Git, in Foam o in Tolaria. Git a mano e stato di Syncthing; sito statico generato in locale |
+| Cifratura (facoltativa) | un intero vault come un unico file cifrato (`.skvault`, AES-256-GCM, password + codice di recupero), nuovo o da un vault esistente e ritorno; si blocca da solo dopo il tempo scelto; lo stesso file si apre in sk_notes per Android |
+| Plugin e temi | API nativa di sk_notes con permessi espliciti e livello di compatibilità con i plugin della community ([tabella di compatibilità](docs/compatibility.md)); gli elenchi pubblici di plugin, temi e template di note della community, sfogliati e installati con un clic; il tema Anna.g_3 incluso |
 | SKAI | domande sulla nota aperta o su tutto il vault (indice di embedding locale), riassunti, suggerimenti di tag e link, correzione e riscrittura — in streaming, annullabili e mai applicati senza la tua conferma (prima il confronto delle differenze) |
 | Lingue | English, Italiano, Español, Français, Deutsch, Português, Русский, 简体中文, 日本語 |
+
+## SKAI_ Memory
+
+Il pacchetto installa anche la memoria Markdown condivisa di SKAI (`/var/lib/skai/SKAI_ Memory`, vedi `skai_memory/README.md`): ogni app e plugin SKAI si identifica tramite la libreria `skai_memory`, tiene le proprie note in `plugins/<app>/` e può leggere tutte le altre. Per permettere alle app di un utente di scrivere: `sudo usermod -aG skai <utente>`.
+
+## Android
+
+`android/` contiene sk_notes per Android 8.0 o successivi: lo stesso spazio di lavoro del PC in un APK,
+con la sincronizzazione Git e i vault cifrati compatibili con quelli del desktop. Compilazione, firma,
+test e differenze del telefono: [android/README.md](android/README.md) (in inglese).
+
+```sh
+npm ci && sh android/build.sh   # → android/dist/sk_notes-<version>.apk
+```
 
 ## Installazione
 
@@ -105,6 +123,7 @@ entrano mai in conflitto con i3 o Hyprland su Skorpion OS.
 
 - `python3 -m unittest discover tests` — test del nucleo (parser, indice, ricerca, rinomina, cronologia, importatori, traduzioni, permessi)
 - `npm test` — test JavaScript (shim Node.js per i plugin)
+- `cd android && npm test` — backend Android confrontato con quello Python, vault cifrati, sincronizzazione Git con un vero server Git
 - `python3 qa/smoke.py` — smoke test dell'interfaccia sotto Xvfb (da tastiera, Chrome DevTools Protocol)
 - `python3 qa/plugin_compat.py <cartella> [id]` — compatibilità con i plugin della community ([risultati](docs/compatibility.md))
 - `python3 qa/plugin_flows.py` — i flussi principali di Templater, Calendar, Tasks e Dataview

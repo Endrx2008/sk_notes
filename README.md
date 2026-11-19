@@ -39,6 +39,16 @@ License: **GPL-3.0-or-later**. sk_notes is not affiliated with Obsidian or Dynal
 
 The package also installs SKAI's shared Markdown memory (`/var/lib/skai/SKAI_ Memory`, see `skai_memory/README.md`): every SKAI app and plugin identifies itself through the `skai_memory` library, keeps its own notes under `plugins/<app>/` and can read all the others. To let a user's apps write: `sudo usermod -aG skai <user>`.
 
+## Android
+
+`android/` holds sk_notes for Android 8.0 or newer: the same workspace as on the PC in an APK, with
+Git sync and encrypted vaults that open on both. Build, signing, tests and what a phone does its own
+way: [android/README.md](android/README.md).
+
+```sh
+npm ci && sh android/build.sh   # → android/dist/sk_notes-<version>.apk
+```
+
 ## Install
 
 ### Skorpion OS / Debian
@@ -110,6 +120,7 @@ uses the Super key or Alt+F1/Alt+F9, so they never clash with i3 or Hyprland on 
 
 - `python3 -m unittest discover tests` — core tests (parser, index, search, rename, history, importers, i18n, permissions)
 - `npm test` — JavaScript unit tests (Node.js shims for plugins, metadata cache, Bases labels)
+- `cd android && npm test` — Android backend against the Python one, encrypted vaults, Git sync against a real Git server
 - `python3 qa/smoke.py` — UI smoke test under Xvfb (keyboard-driven, Chrome DevTools Protocol)
 - `python3 qa/plugin_compat.py <dir> [ids]` — community plugin compatibility ([results](docs/compatibility.md))
 - `python3 qa/plugin_flows.py` — main flows of Templater, Calendar, Tasks and Dataview
