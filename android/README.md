@@ -68,7 +68,8 @@ keys), `vault-lock.js` (locking by itself), `web/src/mobile/crypt-ui.js` (screen
   `.git` and `.trash` stay out of the file.
 - A file replaced by another device's copy (a sync app) is never overwritten: an open vault keeps
   the other copy beside it, and unsaved notes of this device come back as conflict copies.
-- Files made by 1.2.0 open and are written again in the present form.
+- Files in the first encrypted format (one stream of pieces, no segments) open and are written
+  again in the present form.
 - No Git sync for an encrypted vault (its notes would be readable on the site).
 
 ## Other things a phone does its own way

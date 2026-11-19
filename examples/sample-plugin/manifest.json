@@ -2,7 +2,7 @@
   "id": "sk-sample-plugin",
   "name": "Sample plugin",
   "version": "1.0.0",
-  "minAppVersion": "0.1.0",
+  "minAppVersion": "0.5.0",
   "description": "Example of the sk_notes native plugin API: a status bar counter, a command, a settings tab and a SKAI helper.",
   "author": "Skorpion OS",
   "isDesktopOnly": false,

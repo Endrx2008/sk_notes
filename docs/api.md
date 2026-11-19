@@ -16,7 +16,7 @@ No community plugin runs while *restricted mode* is on (Settings → Community p
   "id": "my-plugin",
   "name": "My plugin",
   "version": "1.0.0",
-  "minAppVersion": "0.1.0",
+  "minAppVersion": "0.5.0",
   "description": "What it does.",
   "author": "You",
   "isDesktopOnly": false,

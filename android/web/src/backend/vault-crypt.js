@@ -322,7 +322,7 @@ async function replay(blob, raw, targets) {
   return { segments: seg, torn: false, end, version: 2 };
 }
 
-/** Files made by sk_notes 1.2.0: one stream of pieces, no segments. Opened, then written again in the new form. */
+/** Files in the first format: one stream of pieces, no segments. Opened, then written again in the new form. */
 async function replayV1(blob, raw, targets, header, bodyAt, size) {
   const key = await dataKey(raw);
   const nonce = b64ToBytes(header.data?.nonce || '');
@@ -484,7 +484,7 @@ export class OpenVault {
           if (foreign) this.foreign = foreign;
           const bulky = this.fileSize > 2 * cur.live + MB; // old versions take more room than the vault
           if (whole || this.needsWhole || !this.manifest || bulky) {
-            // written whole: always in the present form (a file of 1.2.0 says so in its header)
+            // written whole: always in the present form (a file of the first format says so in its header)
             if (this.header.v !== 2) this.header = { ...this.header, v: 2, data: { cipher: 'AES-256-GCM', piece: PIECE, form: 'segments' } };
             const done = await writeWhole(this.blob, this.raw, this.header, this.sources);
             this.segments = 1;

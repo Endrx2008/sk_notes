@@ -244,7 +244,7 @@ test('changes of a session that never saved are kept; a file replaced elsewhere 
   assert.ok(fs.existsSync(blob) && !fs.existsSync(blob + '.tmp'));
 });
 
-test('a vault made by sk_notes 1.2.0 opens and is written in the new form', async () => {
+test('a vault in the first format opens and is written in the new form', async () => {
   const blob = join(tmp, 'Vecchio.skvault');
   fs.copyFileSync(join(here, 'fixtures/v1.skvault'), blob);
   assert.equal((await crypt.readHeader(blob)).header.v, 1);

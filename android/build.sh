@@ -39,7 +39,7 @@ done
 [ -x ../node_modules/.bin/esbuild ] || { echo "run 'npm ci' in the repository root first" >&2; exit 1; }
 
 VERSION=$(node -p "require('./package.json').version")
-# 1.2.3 → 10203
+# 0.5.0 → 500, 1.2.3 → 10203
 CODE=$(echo "$VERSION" | awk -F. '{ printf "%d", $1 * 10000 + $2 * 100 + $3 }')
 OUT="$HERE/build"
 APK="$HERE/dist/sk_notes-$VERSION.apk"

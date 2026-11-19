@@ -404,7 +404,7 @@ def replay(blob: Path, raw: bytes, targets: dict) -> Replayed:
 
 
 def _replay_v1(f, aes, header, body_at, size, targets) -> Replayed:
-    """Files made by sk_notes for Android 1.2.0: one stream of pieces, no segments."""
+    """Files in the first format: one stream of pieces, no segments."""
     nonce = _unb64((header.get("data") or {}).get("nonce"))
     rec = _Records(targets)
     at, index, saw_last = body_at, 0, False

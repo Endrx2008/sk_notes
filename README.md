@@ -46,7 +46,7 @@ Git sync and encrypted vaults that open on both. Build, signing, tests and what 
 way: [android/README.md](android/README.md).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-<version>.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-0.5.0.apk
 ```
 
 ## Install
@@ -54,7 +54,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-<version>.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_0.1.0_all.deb      # package built by tools/build_deb.sh
+sudo apt install ./sk-notes_0.5.0_all.deb      # package built by tools/build_deb.sh
 sk-notes
 ```
 
@@ -69,7 +69,7 @@ python3 main.py                 # or: python3 main.py --vault ~/Notes
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-0.1.0.tar.gz + dist/PKGBUILD (with checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-0.5.0.tar.gz + dist/PKGBUILD (with checksum)
 cd dist && makepkg -si
 ```
 
