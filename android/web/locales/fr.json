@@ -111,8 +111,6 @@
  "sync.syncthing-not-configured": "Une application Syncthing est installée. Ouvrez-la et partagez le dossier du coffre avec votre PC ; sk_notes remarque les changements qu'elle apporte.",
  "skai.offline-panel": "SKAI est hors ligne : le PC défini dans Réglages → SKAI ne répond pas (il doit être sur le même réseau). Le reste de sk_notes fonctionne normalement.",
  "skai.offline-detail": "Aucune réponse de {host}.",
- "skai.error.unreachable": "SKAI est hors ligne : le PC défini dans Réglages → SKAI ne répond pas.",
- "skai.error.no_model": "Aucun modèle d'IA n'est installé sur le PC. Installez-en un là-bas avec SKAI Manager.",
  "skai.error.model_missing": "Le modèle choisi dans Réglages → SKAI n'est pas installé sur le PC : {detail}",
  "error.bad-host": "Ce n'est pas une adresse valide.",
  "error.git-missing": "Git n'est pas disponible sur Android.",

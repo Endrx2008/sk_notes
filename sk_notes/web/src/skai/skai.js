@@ -24,13 +24,15 @@ export class SkaiClient {
   async refreshStatus() {
     if (!this.enabled) { this.app.statusBar?.setSkai('disabled'); return this.status; }
     try { this.status = await call('ai.status'); } catch { this.status = { online: false }; }
-    const detail = this.status.online ? `${this.status.chatModel || '?'} · ${this.status.host}` : t('skai.offline-detail', { host: this.status.host || 'localhost:11434' });
-    this.app.statusBar?.setSkai(this.status.online ? 'online' : 'offline', detail);
+    // Ollama answering without a chat model is "AI unavailable" too, like in every SKAI tool.
+    this.status.available = Boolean(this.status.online && this.status.chatModel);
+    const detail = this.status.available ? `${this.status.chatModel} · ${this.status.host}` : t('skai.offline-panel');
+    this.app.statusBar?.setSkai(this.status.available ? 'online' : 'offline', detail);
     this.app.workspace.trigger('skai-status', this.status);
     return this.status;
   }
 
-  _busy() { this.app.statusBar?.setSkai(this.jobs.size ? 'thinking' : this.status.online ? 'online' : 'offline'); }
+  _busy() { this.app.statusBar?.setSkai(this.jobs.size ? 'thinking' : this.status.available ? 'online' : 'offline'); }
 
   /** Stream a chat. Returns {promise, cancel}. onChunk(fullTextSoFar, piece). */
   chat(messages, { onChunk, json = false, temperature } = {}) {

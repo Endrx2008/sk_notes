@@ -111,8 +111,6 @@
  "sync.syncthing-not-configured": "Eine Syncthing-App ist installiert. Öffne sie und teile den Tresorordner mit deinem PC; sk_notes bemerkt die Änderungen, die sie bringt.",
  "skai.offline-panel": "SKAI ist offline: Der in Einstellungen → SKAI eingestellte PC antwortet nicht (er muss im selben Netzwerk sein). Der Rest von sk_notes funktioniert normal.",
  "skai.offline-detail": "Keine Antwort von {host}.",
- "skai.error.unreachable": "SKAI ist offline: Der in Einstellungen → SKAI eingestellte PC antwortet nicht.",
- "skai.error.no_model": "Auf dem PC ist kein KI-Modell installiert. Installiere dort eines mit SKAI Manager.",
  "skai.error.model_missing": "Das in Einstellungen → SKAI gewählte Modell ist auf dem PC nicht installiert: {detail}",
  "error.bad-host": "Das ist keine gültige Adresse.",
  "error.git-missing": "Git ist unter Android nicht verfügbar.",

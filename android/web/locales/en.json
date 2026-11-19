@@ -111,8 +111,6 @@
  "sync.syncthing-not-configured": "A Syncthing app is installed. Open it and share the vault folder with your PC; sk_notes notices the changes it brings.",
  "skai.offline-panel": "SKAI is offline: the PC set in Settings → SKAI does not answer (it must be on the same network). The rest of sk_notes works normally.",
  "skai.offline-detail": "No answer from {host}.",
- "skai.error.unreachable": "SKAI is offline: the PC set in Settings → SKAI does not answer.",
- "skai.error.no_model": "No AI model is installed on the PC. Install one there with SKAI Manager.",
  "skai.error.model_missing": "The model chosen in Settings → SKAI is not installed on the PC: {detail}",
  "error.bad-host": "This is not a valid address.",
  "error.git-missing": "Git is not available on Android.",

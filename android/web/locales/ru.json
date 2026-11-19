@@ -111,8 +111,6 @@
  "sync.syncthing-not-configured": "Приложение Syncthing установлено. Откройте его и откройте общий доступ к папке хранилища для своего ПК; sk_notes заметит изменения, которые оно принесёт.",
  "skai.offline-panel": "SKAI недоступен: ПК, заданный в Настройки → SKAI, не отвечает (он должен быть в той же сети). Остальные функции sk_notes работают как обычно.",
  "skai.offline-detail": "Нет ответа от {host}.",
- "skai.error.unreachable": "SKAI недоступен: ПК, заданный в Настройки → SKAI, не отвечает.",
- "skai.error.no_model": "На ПК не установлена ни одна модель ИИ. Установите её там с помощью SKAI Manager.",
  "skai.error.model_missing": "Модель, выбранная в Настройки → SKAI, не установлена на ПК: {detail}",
  "error.bad-host": "Это недопустимый адрес.",
  "error.git-missing": "Git недоступен на Android.",

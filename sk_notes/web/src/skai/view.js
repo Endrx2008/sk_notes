@@ -78,8 +78,10 @@ export class SkaiView extends ItemView {
       this.offlineEl.show();
       return;
     }
-    if (st && st.online === false) {
-      this.offlineEl.setText(t('skai.offline-panel'));
+    if (st && st.available === false) {
+      // The shared "AI unavailable" message of every SKAI tool
+      this.offlineEl.createDiv({ cls: 'skai-offline-title', text: t('skai.unavailable-title') });
+      this.offlineEl.createDiv({ cls: 'skai-offline-text', text: t('skai.offline-panel') });
       this.offlineEl.show();
     } else this.offlineEl.hide();
   }

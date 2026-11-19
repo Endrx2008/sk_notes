@@ -111,8 +111,6 @@
  "sync.syncthing-not-configured": "Hay una aplicación Syncthing instalada. Ábrela y comparte la carpeta de la bóveda con tu PC; sk_notes detecta los cambios que trae.",
  "skai.offline-panel": "SKAI está sin conexión: el PC configurado en Ajustes → SKAI no responde (debe estar en la misma red). El resto de sk_notes funciona con normalidad.",
  "skai.offline-detail": "Sin respuesta de {host}.",
- "skai.error.unreachable": "SKAI está sin conexión: el PC configurado en Ajustes → SKAI no responde.",
- "skai.error.no_model": "No hay ningún modelo de IA instalado en el PC. Instala uno allí con SKAI Manager.",
  "skai.error.model_missing": "El modelo elegido en Ajustes → SKAI no está instalado en el PC: {detail}",
  "error.bad-host": "Esta no es una dirección válida.",
  "error.git-missing": "Git no está disponible en Android.",

@@ -111,8 +111,6 @@
  "sync.syncthing-not-configured": "Syncthing アプリがインストールされています。アプリを開いて保管庫のフォルダーを PC と共有してください。sk_notes は同期された変更を検出します。",
  "skai.offline-panel": "SKAI はオフラインです: 設定 → SKAI で指定した PC が応答しません(同じネットワークにある必要があります)。sk_notes のほかの機能は通常どおり使えます。",
  "skai.offline-detail": "{host} から応答がありません。",
- "skai.error.unreachable": "SKAI はオフラインです: 設定 → SKAI で指定した PC が応答しません。",
- "skai.error.no_model": "PC に AI モデルがインストールされていません。PC の SKAI Manager でインストールしてください。",
  "skai.error.model_missing": "設定 → SKAI で選択したモデルが PC にインストールされていません: {detail}",
  "error.bad-host": "有効なアドレスではありません。",
  "error.git-missing": "Android では Git を利用できません。",

@@ -100,8 +100,9 @@ sk_notes si collega a Ollama esattamente come le altre app SK: host e modello ve
 *il modello di chat installato con più parametri*). In sk_notes non c'è un'impostazione separata
 per host o modello, solo un interruttore (Impostazioni → SKAI). Le domande su tutto il vault
 usano il modello di embedding installato, se c'è (per esempio `all-minilm`, `nomic-embed-text`),
-altrimenti la ricerca per parole chiave. Senza Ollama sk_notes funziona normalmente e mostra
-"SKAI offline" nella barra di stato.
+altrimenti la ricerca per parole chiave. Senza Ollama, o senza un modello, sk_notes funziona
+normalmente: la barra di stato dice "IA non disponibile" e il pannello SKAI mostra lo stesso messaggio
+di tutti gli strumenti SKAI ("Le funzioni IA sono disattivate…").
 
 ## Tastiera
 

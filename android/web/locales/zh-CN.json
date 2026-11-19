@@ -111,8 +111,6 @@
  "sync.syncthing-not-configured": "已安装 Syncthing 应用。打开它并把仓库文件夹共享给你的电脑;sk_notes 会发现它带来的更改。",
  "skai.offline-panel": "SKAI 已离线:在 设置 → SKAI 中设置的电脑没有应答(它必须在同一网络中)。sk_notes 的其他功能正常工作。",
  "skai.offline-detail": "{host} 没有应答。",
- "skai.error.unreachable": "SKAI 已离线:在 设置 → SKAI 中设置的电脑没有应答。",
- "skai.error.no_model": "电脑上没有安装任何 AI 模型。请在电脑上用 SKAI Manager 安装一个。",
  "skai.error.model_missing": "在 设置 → SKAI 中选择的模型没有安装在电脑上:{detail}",
  "error.bad-host": "这不是有效的地址。",
  "error.git-missing": "Android 上无法使用 Git。",

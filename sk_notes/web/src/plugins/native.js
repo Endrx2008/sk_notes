@@ -67,7 +67,7 @@ export function makeNativeApi(app, pluginId) {
     search: (query) => call('search.query', { query }, pluginId),
 
     skai: Object.freeze({
-      available: () => !!app.skai?.enabled && !!app.skai?.status?.online,
+      available: () => !!app.skai?.enabled && !!app.skai?.status?.available,
       /** Ask SKAI; resolves to the full answer text. Streamed pieces go to onChunk. */
       ask: (prompt, { system, onChunk } = {}) => {
         if (!app.skai?.enabled) return Promise.reject(new Error('SKAI is turned off'));
