@@ -1,7 +1,6 @@
 # sk_notes – architecture
 
-Status: proposal of Phase 2, adopted on 2026-10-31 (the owner chose to let the
-workflow continue without a stop for approval; see WORKFLOW_STATUS.md).
+Status: adopted on 2026-10-31.
 
 ## Requirements that shape the design
 

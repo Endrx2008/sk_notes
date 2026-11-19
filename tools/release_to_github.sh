@@ -1,6 +1,6 @@
 #!/bin/sh
-# Publish the packages in dist/ as a GitHub release of Endrx2008/sk_notes (sign-in through the website,
-# like tools/push_to_github.sh). Build them first: tools/build_deb.sh and tools/build_tarball.sh.
+# Publish the packages in dist/ as a GitHub release of Endrx2008/sk_notes (sign-in through the website).
+# Build them first: tools/build_deb.sh and tools/build_tarball.sh.
 set -eu
 OWNER=Endrx2008
 REPO=sk_notes

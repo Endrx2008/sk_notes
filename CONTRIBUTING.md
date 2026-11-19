@@ -28,7 +28,7 @@ sk_notes/locales/       translation files
 sk_notes/web/src/       front-end (plain ES modules, bundled with esbuild)
 sk_notes/web/styles/    CSS (concatenated in name order)
 tests/                  Python unit tests       web/tests/   JavaScript unit tests
-qa/                     UI tests (CDP driver), plugin compatibility probe, reports
+qa/                     UI tests (CDP driver), plugin compatibility probe
 ```
 
 ## Build and test

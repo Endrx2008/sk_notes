@@ -17,7 +17,7 @@ prompt is answered "Deny", so features that need the network, external programs 
 files outside the vault are reported as blocked even though they work once the user
 allows them.
 
-Last full run: 2026-10-31 (sk_notes 0.1.0, Qt WebEngine 6.8). 43 of 50 plugins load.
+Last full run: 2026-10-31 (Qt WebEngine 6.8). 43 of 50 plugins load.
 Main flows of Templater, Calendar, Tasks and Dataview are checked by `qa/plugin_flows.py`
 (2026-11-01).
 
