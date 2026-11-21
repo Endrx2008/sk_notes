@@ -4,7 +4,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HERE))
 os.environ["SKAI_MEMORY_NO_SUDO"] = "1"
-from skai_memory import Memory, MemoryError_  # noqa: E402
+from skai_memory import Memory, MemoryError_, snippet  # noqa: E402  pylint: disable=import-error,wrong-import-position
 
 
 class T(unittest.TestCase):
@@ -90,6 +90,16 @@ class T(unittest.TestCase):
         with self.assertRaises(MemoryError_):
             self.mail.write("plugins/skmail/big.md", "x" * 300000)
 
+    def test_snippet_reaches_a_fact_deep_in_a_daily_note(self):
+        filler = "".join(f"The user asked what the weather is like and the answer was that it is sunny ({i}).\n" for i in range(40))
+        for i in range(3):
+            self.mail.remember("2026-11-19", filler)
+        self.mail.remember("2026-11-19", "The user said that the dentist appointment is on Thursday at 15:30.")
+        hit = next(h for h in self.mail.search("what is the day of the dentist appointment?") if h["path"] == "plugins/skmail/2026-11-19.md")
+        self.assertIn("dentist appointment is on Thursday at 15:30", hit["snippet"])
+        # substrings do not count: "is" inside "this", "the" inside "there"
+        self.assertFalse(snippet("this there those\n" * 30 + "budget is 300", {"budget": 2.0, "is": 0.1}).startswith("this"))
+
     def test_manual_mode_needs_sudo(self):
         r = subprocess.run([str(HERE / "skai-memory-write"), "--direct"], input="{}", capture_output=True, text=True,
                            env={**os.environ, "SKAI_MEMORY_NO_SUDO": "0"})
@@ -103,7 +113,8 @@ class T(unittest.TestCase):
                   "try { await m.write('plugins/skalendar.md','x'); console.log('NOT REFUSED'); } catch (e) { console.log('refused'); }") % (str(HERE / "skai_memory.js"), str(self.d))
         out = subprocess.run(["node", "--input-type=module", "-e", script], capture_output=True, text=True, check=True).stdout.splitlines()
         py = self.mail.search("Anna meeting")
-        self.assertEqual([(h["path"], h["score"], h["via"]) for h in json.loads(out[0])], [(h["path"], h["score"], h["via"]) for h in py])
+        self.assertEqual([(h["path"], h["score"], h["via"], h["snippet"]) for h in json.loads(out[0])],
+                         [(h["path"], h["score"], h["via"], h["snippet"]) for h in py])
         key = lambda e: (e["from"], e["to"], e["style"])
         self.assertEqual(sorted(map(key, json.loads(out[1])["edges"])), sorted(map(key, self.mail.graph()["edges"])))
         self.assertEqual(out[2], "refused")

@@ -16,10 +16,10 @@ Python (scripts, LibreOffice `.oxt`; standard library only): `from skai_memory i
 JavaScript (`.xpi`, Node): `import { Memory } from './skai_memory.js'`
 
 ```python
-m = Memory()
-m.search("meeting with Anna", app="skmail")     # best notes + notes they link to; pulled only when needed
-m.remember("skmail", "inbox", "Anna moved it", links=["[[skalendar]]", "https://…", "/etc/os-release"])
-m.graph(); m.links("apps/skmail.md"); m.read("SKAI.md")
+m = Memory("sk_mail")
+m.search("meeting with Anna")                   # best notes + notes they link to; pulled only when needed
+m.remember("inbox", "Anna moved it", links=["[[plugins/sk_office]]", "https://…", "/etc/os-release"])
+m.graph(); m.links("plugins/sk_mail.md"); m.read("SKAI.md")
 ```
 CLI: `skai-memory search <words> [--app NAME] | graph | read <note.md> | remember <app> <chat> <text>`.
 In `.xpi` experiment code pass `ioUtilsFs(IOUtils, spawn)` as `fs`.

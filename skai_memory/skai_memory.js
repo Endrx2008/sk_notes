@@ -1,9 +1,9 @@
 // skai_memory.js - JavaScript twin of skai_memory.py (same methods, same ranking). One file, no dependencies.
 //
 //   import { Memory } from './skai_memory.js';          // ES module (Node, WebExtension pages, Gecko experiments)
-//   const m = new Memory({ app: 'skmail' });           // identifies the app; Node: /var/lib/skai/SKAI_ Memory
+//   const m = new Memory({ app: 'sk_mail' });          // identifies the app; Node: /var/lib/skai/SKAI_ Memory
 //   const hits = await m.search('meeting with Anna');   // reads every app's notes
-//   await m.remember('inbox', 'Anna asked to move the meeting', { links: ['[[skalendar]]'] }); // only plugins/skmail/**
+//   await m.remember('inbox', 'Anna asked to move the meeting', { links: ['[[plugins/sk_office]]'] }); // only plugins/sk_mail/**
 //
 // Outside Node pass the file access you have: new Memory({ fs: { list, read, write } })
 //   list(dir) -> array of { name, isDir }     read(path) -> text     write(path, text, mode) -> void
@@ -15,6 +15,16 @@ const WIKI = /\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]/g;
 const MDLINK = /(?<!!)\[[^\]]*\]\(([^)\s]+)[^)]*\)/g;
 const NAME = /^[a-z0-9][a-z0-9_-]{1,39}$/;
 const WORD = /[\p{L}\p{N}_]{2,}/gu;
+
+// Words that say nothing about where the answer is: they never place the snippet (unless nothing else matches).
+const STOP = new Set(`
+a an and are as at be but by can could did do does for from had has have how i if in into is it its me my no not
+of on or our please say said she so that the their them then there these they this to us was we were what when
+where which who why will with would you your about also just tell know remember
+al alla alle allo ai agli anche che chi ci come con cosa da dal dalla dei del della delle di dove e ed gli ha hai
+ho il in io la le lo ma mi mio mia ne nei nel nella no non o per perché più quale quando quello questa questo se
+si sono su sul sulla tu un una uno va vi sai dimmi ricordi
+`.split(/\s+/).filter(Boolean));
 
 const tokens = (s) => (s.match(WORD) || []).map((w) => w.toLowerCase());
 const stem = (p) => p.split('/').pop().replace(/\.md$/i, '');
@@ -35,6 +45,33 @@ export function edgeStyle(a, b) {
   if (!a.app || !b.app) return 'solid';
   if (a.app !== b.app) return 'dotted';
   return a.kind === 'app' || b.kind === 'app' ? 'solid' : 'dashed';
+}
+
+/** Whole-word match; a word may also extend a term of 4+ letters (meeting -> meetings). */
+const hit = (word, term) => word === term || (term.length >= 4 && word.startsWith(term));
+
+/** The part of `text` that best covers the query: the window holding the most (rarest) query words.
+ *  weights: Map {query word: importance}, e.g. its idf; stopwords count only when nothing else matches.
+ *  Words are matched whole (no substrings); on a tie the later window wins (newest entries are at the bottom). */
+export function snippet(text, weights, width = 240) {
+  let terms = new Map([...weights].filter(([t]) => !STOP.has(t)));
+  if (!terms.size) terms = new Map(weights);
+  const hits = [];
+  for (const m of text.matchAll(WORD)) {
+    const word = m[0].toLowerCase();
+    for (const t of terms.keys()) {
+      if (hit(word, t)) { hits.push([m.index, t]); break; }
+    }
+  }
+  let pos = 0;
+  let best = -1;
+  hits.forEach(([start], i) => {
+    const seen = new Set(hits.slice(i).filter(([p]) => p < start + width - 40).map(([, t]) => t));
+    let score = 0;
+    for (const t of seen) score += terms.get(t);
+    if (score >= best) { best = score; pos = start; }
+  });
+  return text.slice(Math.max(0, pos - 40), pos + width).replace(/\n/g, ' ').trim();
 }
 
 export function slug(text) {
@@ -160,13 +197,11 @@ export class Memory {
       }
       frontier = next;
     }
+    const weights = new Map([...df].map(([t, d]) => [t, Math.log(1 + N / (1 + d))]));
     return [...found.keys()].sort((a, b) => found.get(b)[0] - found.get(a)[0]).slice(0, limit * 2).map((r) => {
       const n = notes.get(r);
-      const low = n.text.toLowerCase();
-      const at = q.map((t) => low.indexOf(t)).filter((i) => i >= 0);
-      const pos = at.length ? Math.min(...at) : 0;
       return { path: r, title: n.title, app: n.app, kind: n.kind, score: Math.round(found.get(r)[0] * 1000) / 1000,
-        via: found.get(r)[1], snippet: n.text.slice(Math.max(0, pos - 40), pos + 160).replace(/\n/g, ' ').trim(), external: n.external };
+        via: found.get(r)[1], snippet: snippet(n.text, weights), external: n.external };
     });
   }
 
