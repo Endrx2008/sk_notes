@@ -316,5 +316,7 @@
  "error.crypt-verify-failed": "Die verschlüsselte Kopie stimmte nicht mit den Notizen überein: Es wurde nichts gelöscht und nichts geändert.",
  "error.already-encrypted": "Dieser Vault ist bereits verschlüsselt.",
  "error.not-encrypted": "Dieser Vault ist nicht verschlüsselt.",
- "error.into-itself-vault": "Ein Vault kann nicht in sich selbst gelegt werden."
+ "error.into-itself-vault": "Ein Vault kann nicht in sich selbst gelegt werden.",
+ "mobile.color.title": "Farbe wählen",
+ "mobile.color.brightness": "Helligkeit"
 }

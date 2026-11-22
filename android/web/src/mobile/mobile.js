@@ -9,6 +9,7 @@
 
 import { call, onBackend } from './api.js';
 import { installBack } from './back.js';
+import { installColorWheel } from './color-wheel.js';
 import { isPhone } from './device.js';
 import { installDrawers } from './drawers.js';
 import { installFolderPicker } from './folder-picker.js';
@@ -33,6 +34,7 @@ export function installMobile(app, info) {
   const ws = app.workspace;
   installFolderPicker(app);
   installSheets(app);
+  installColorWheel(app);
   installTouch(app);
   installSkaiSettings(app);
   installPluginBrowser(app);

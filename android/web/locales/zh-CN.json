@@ -316,5 +316,7 @@
  "error.crypt-verify-failed": "加密副本与笔记不一致：没有删除或更改任何内容。",
  "error.already-encrypted": "这个仓库已经加密。",
  "error.not-encrypted": "这个仓库没有加密。",
- "error.into-itself-vault": "仓库不能放在它自己里面。"
+ "error.into-itself-vault": "仓库不能放在它自己里面。",
+ "mobile.color.title": "选择颜色",
+ "mobile.color.brightness": "亮度"
 }

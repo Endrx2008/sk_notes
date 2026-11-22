@@ -316,5 +316,7 @@
  "error.crypt-verify-failed": "Зашифрованная копия не совпала с заметками: ничего не удалено и не изменено.",
  "error.already-encrypted": "Это хранилище уже зашифровано.",
  "error.not-encrypted": "Это хранилище не зашифровано.",
- "error.into-itself-vault": "Хранилище нельзя поместить внутрь самого себя."
+ "error.into-itself-vault": "Хранилище нельзя поместить внутрь самого себя.",
+ "mobile.color.title": "Выберите цвет",
+ "mobile.color.brightness": "Яркость"
 }

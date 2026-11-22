@@ -316,5 +316,7 @@
  "error.crypt-verify-failed": "La copia cifrada no coincidía con las notas: no se eliminó ni se cambió nada.",
  "error.already-encrypted": "Este vault ya está cifrado.",
  "error.not-encrypted": "Este vault no está cifrado.",
- "error.into-itself-vault": "Un vault no se puede poner dentro de sí mismo."
+ "error.into-itself-vault": "Un vault no se puede poner dentro de sí mismo.",
+ "mobile.color.title": "Elige un color",
+ "mobile.color.brightness": "Brillo"
 }

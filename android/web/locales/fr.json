@@ -316,5 +316,7 @@
  "error.crypt-verify-failed": "La copie chiffrée ne correspondait pas aux notes : rien n'a été supprimé ni modifié.",
  "error.already-encrypted": "Ce coffre est déjà chiffré.",
  "error.not-encrypted": "Ce coffre n'est pas chiffré.",
- "error.into-itself-vault": "Un coffre ne peut pas être placé dans lui-même."
+ "error.into-itself-vault": "Un coffre ne peut pas être placé dans lui-même.",
+ "mobile.color.title": "Choisir une couleur",
+ "mobile.color.brightness": "Luminosité"
 }

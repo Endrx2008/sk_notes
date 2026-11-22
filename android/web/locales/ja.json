@@ -316,5 +316,7 @@
  "error.crypt-verify-failed": "暗号化したコピーがノートと一致しませんでした。何も削除・変更していません。",
  "error.already-encrypted": "この保管庫はすでに暗号化されています。",
  "error.not-encrypted": "この保管庫は暗号化されていません。",
- "error.into-itself-vault": "保管庫をそれ自身の中に置くことはできません。"
+ "error.into-itself-vault": "保管庫をそれ自身の中に置くことはできません。",
+ "mobile.color.title": "色を選ぶ",
+ "mobile.color.brightness": "明るさ"
 }

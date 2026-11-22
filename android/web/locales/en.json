@@ -316,5 +316,7 @@
  "error.crypt-verify-failed": "The encrypted copy did not match the notes: nothing was deleted and nothing was changed.",
  "error.already-encrypted": "This vault is already encrypted.",
  "error.not-encrypted": "This vault is not encrypted.",
- "error.into-itself-vault": "A vault cannot be put inside itself."
+ "error.into-itself-vault": "A vault cannot be put inside itself.",
+ "mobile.color.title": "Choose a colour",
+ "mobile.color.brightness": "Brightness"
 }
