@@ -359,5 +359,19 @@
  "mobile.spell.licence": "licenza {license}",
  "mobile.update.available": "È disponibile {name}.",
  "mobile.update.button": "Aggiorna",
- "mobile.update.to": "Aggiorna a {name}"
+ "mobile.update.to": "Aggiorna a {name}",
+ "mobile.theme.only-dark": "Il tema {theme} è solo scuro: il tema di base non cambierebbe nulla.",
+ "mobile.theme.only-light": "Il tema {theme} è solo chiaro: il tema di base non cambierebbe nulla.",
+ "mobile.theme.only-one": "Il tema {theme} ha un solo aspetto: il tema di base non cambierebbe nulla.",
+ "mobile.fonts.default": "Predefinito del tema",
+ "mobile.fonts.text-desc": "Carattere delle note e dell'interfaccia (solo i caratteri presenti sul telefono).",
+ "mobile.fonts.mono-desc": "Carattere del codice e dei blocchi di codice.",
+ "mobile.foreign.title": "Vault creato con {app}",
+ "mobile.foreign.text": "Stai modificando un vault creato con {app}.",
+ "mobile.foreign.detail": "Le modifiche a note e file si vedranno anche in {app}. Le impostazioni di {app} non vengono mai toccate: quelle di sk_notes restano nella cartella .sk_notes.",
+ "mobile.foreign.never": "Non mostrare più",
+ "mobile.foreign.continue": "Continua",
+ "mobile.foreign.adopted": "Questo vault è stato creato con {app}: sono in uso le sue impostazioni (allegati, nuove note, note giornaliere, modelli, tema, segnalibri, grafo).",
+ "mobile.foreign.plugins": "Plugin della community importabili: {n} (sono codice: scegli tu).",
+ "mobile.foreign.plugins-review": "Controlla i plugin"
 }

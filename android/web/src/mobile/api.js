@@ -41,8 +41,19 @@ if (globalThis.window && globalThis.document) {
 
 /** Asynchronous call: `await call('vault.read', {path})`. `caller` is a plugin's token
  * (only its own shims have it); without one the call is the app's. */
+// A vault made with another app: the first change of a file tells the user once (foreign.js).
+const WRITES = new Set(['vault.write', 'vault.writeBinary', 'vault.create', 'vault.createUnique', 'vault.mkdir', 'vault.rename', 'vault.copy', 'vault.delete']);
+let writeGuard = null;
+/** fn(method, params) runs before the first change of a vault file; it is used once. */
+export function setWriteGuard(fn) { writeGuard = fn; }
+
 export async function call(method, params = {}, caller = null) {
   await startBackend();
+  if (writeGuard && WRITES.has(method) && !String(params?.path ?? params?.from ?? '').startsWith('.sk_notes/')) {
+    const g = writeGuard;
+    writeGuard = null;
+    try { g(method, params); } catch (e) { console.warn(e); }
+  }
   let result;
   try { result = await handle(method, copyIn(params), caller); } catch (e) { throw fail(e); }
   return copy(result);

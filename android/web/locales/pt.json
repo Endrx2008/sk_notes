@@ -359,5 +359,19 @@
  "mobile.spell.licence": "licença {license}",
  "mobile.update.available": "{name} está disponível.",
  "mobile.update.button": "Atualizar",
- "mobile.update.to": "Atualizar para {name}"
+ "mobile.update.to": "Atualizar para {name}",
+ "mobile.theme.only-dark": "O tema {theme} só tem aspeto escuro: o tema base não mudaria nada.",
+ "mobile.theme.only-light": "O tema {theme} só tem aspeto claro: o tema base não mudaria nada.",
+ "mobile.theme.only-one": "O tema {theme} tem um só aspeto: o tema base não mudaria nada.",
+ "mobile.fonts.default": "Predefinida do tema",
+ "mobile.fonts.text-desc": "Tipo de letra das notas e da interface (só os deste telefone).",
+ "mobile.fonts.mono-desc": "Tipo de letra do código e dos blocos de código.",
+ "mobile.foreign.title": "Um cofre criado com {app}",
+ "mobile.foreign.text": "Está a alterar um cofre criado com {app}.",
+ "mobile.foreign.detail": "As alterações a notas e ficheiros também serão vistas no {app}. As definições do {app} nunca são alteradas: as do sk_notes ficam na pasta .sk_notes.",
+ "mobile.foreign.never": "Não mostrar mais",
+ "mobile.foreign.continue": "Continuar",
+ "mobile.foreign.adopted": "Este cofre foi criado com {app}: as suas definições estão em uso (anexos, notas novas, notas diárias, modelos, tema, marcadores, grafo).",
+ "mobile.foreign.plugins": "Plugins da comunidade que se podem importar: {n} (são código: escolhe você).",
+ "mobile.foreign.plugins-review": "Rever plugins"
 }

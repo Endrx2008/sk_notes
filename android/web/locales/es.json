@@ -359,5 +359,19 @@
  "mobile.spell.licence": "licencia {license}",
  "mobile.update.available": "{name} está disponible.",
  "mobile.update.button": "Actualizar",
- "mobile.update.to": "Actualizar a {name}"
+ "mobile.update.to": "Actualizar a {name}",
+ "mobile.theme.only-dark": "El tema {theme} solo tiene aspecto oscuro: el tema base no cambiaría nada.",
+ "mobile.theme.only-light": "El tema {theme} solo tiene aspecto claro: el tema base no cambiaría nada.",
+ "mobile.theme.only-one": "El tema {theme} tiene un solo aspecto: el tema base no cambiaría nada.",
+ "mobile.fonts.default": "Predeterminada del tema",
+ "mobile.fonts.text-desc": "Fuente de las notas y de la interfaz (solo las fuentes de este teléfono).",
+ "mobile.fonts.mono-desc": "Fuente del código y de los bloques de código.",
+ "mobile.foreign.title": "Un vault creado con {app}",
+ "mobile.foreign.text": "Estás modificando un vault creado con {app}.",
+ "mobile.foreign.detail": "Los cambios en notas y archivos también se verán en {app}. Los ajustes de {app} nunca se modifican: los de sk_notes quedan en la carpeta .sk_notes.",
+ "mobile.foreign.never": "No volver a mostrar",
+ "mobile.foreign.continue": "Continuar",
+ "mobile.foreign.adopted": "Este vault se creó con {app}: se usan sus ajustes (adjuntos, notas nuevas, notas diarias, plantillas, tema, marcadores, grafo).",
+ "mobile.foreign.plugins": "Plugins de la comunidad que se pueden importar: {n} (son código: tú decides).",
+ "mobile.foreign.plugins-review": "Revisar plugins"
 }

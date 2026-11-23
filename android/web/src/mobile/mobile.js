@@ -29,6 +29,8 @@ import { t } from '@desktop/core/i18n.js';
 import { installCryptUi } from './crypt-ui.js';
 import { installSpell } from './spell/index.js';
 import { checkUpdate } from './update.js';
+import { installForeign } from './foreign.js';
+import { themeLooks } from './appearance.js';
 import { CommandPalette } from '@desktop/ui/palette.js';
 import { TFile, TFolder } from '@desktop/model/vault.js';
 
@@ -59,7 +61,8 @@ export function installMobile(app, info) {
       let css = BUILT_IN.includes(theme) ? await fetch(`themes/${encodeURIComponent(theme)}/theme.css`).then((r) => (r.ok ? r.text() : null)).catch(() => null) : null;
       if (typeof css !== 'string') css = await call('config.read', { name: `themes/${theme}/theme.css` }).catch(() => null);
       if (typeof css === 'string') parts.push(css);
-    }
+      app.themeLooks = typeof css === 'string' ? themeLooks(css) : { dark: true, light: true }; // one look or both (Appearance offers the base theme only for both)
+    } else app.themeLooks = { dark: true, light: true };
     for (const name of app.settings.get('enabledCssSnippets') || []) {
       const css = await call('config.read', { name: `snippets/${name}` }).catch(() => null);
       if (typeof css === 'string') parts.push(css);
@@ -168,6 +171,7 @@ export function installMobile(app, info) {
     installToolbar(app);
     installBack(app);
     installSpell(app);
+    installForeign(app);
     setTimeout(() => checkUpdate(app), 1500); // after the start, never in its way
     tidyCommands(app);
     syncBars(app);
@@ -215,7 +219,7 @@ function phoneCommands(app) {
 function tidyCommands(app) {
   phoneCommands(app);
   const gone = ['workspace:move-to-new-window', 'workspace:open-in-new-window', 'window:toggle-fullscreen', 'app:toggle-ribbon', 'app:show-debug-info',
-    'window:zoom-in', 'window:zoom-out', 'window:reset-zoom', 'open-with-default-app:show'];
+    'window:zoom-in', 'window:zoom-out', 'window:reset-zoom', 'open-with-default-app:show', 'publish:open'];
   for (const id of gone) app.commands.removeCommand?.(id);
   // no "random note" on Android: neither the command nor its entry in the menu
   app.commands.removeCommand?.('random-note');

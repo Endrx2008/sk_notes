@@ -89,6 +89,23 @@ keys), `vault-lock.js` (locking by itself), `web/src/mobile/crypt-ui.js` (screen
   `https://` gets it; "Save a picture" draws the whole board to a JPG in the vault
   (`views/canvas-image.js`). The graph's "save as image" does the same with a PNG.
 
+## Vaults made with Obsidian (or Logseq)
+
+A folder made with another app opens as it is ("Open a folder as vault"). The first time, the
+settings in its `.obsidian` folder are used straight away (`web/src/backend/migrate.js`, `adopt`):
+attachment folder, where new notes go, link format, daily notes, templates, theme and CSS snippets,
+bookmarks, graph; new notes get no `# Name` heading (that app shows the file name as the title).
+They are copied into `.sk_notes`: `.obsidian` is only read, never written. Community plugins are
+code, so they are not taken by themselves: a notice offers to review them. The first change of a
+file in a session says that the vault belongs to that app too (`web/src/mobile/foreign.js`):
+*Continue*, or *Don't show again* for that vault.
+
+## Settings that differ from the PC
+
+- No "static site" (Settings → Core features) and no command for it.
+- Appearance (`web/src/mobile/appearance.js`): fonts are chosen from a list of those the phone
+  has; the base theme (dark/light) is offered only when the community theme in use has both looks.
+
 ## Spell checker
 
 Settings → Editor → Spell check: off, the phone keyboard's checker, or the sk_notes checker

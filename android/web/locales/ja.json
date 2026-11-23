@@ -359,5 +359,19 @@
  "mobile.spell.licence": "ライセンス {license}",
  "mobile.update.available": "{name} が利用できます。",
  "mobile.update.button": "更新",
- "mobile.update.to": "{name} に更新"
+ "mobile.update.to": "{name} に更新",
+ "mobile.theme.only-dark": "テーマ {theme} はダーク表示のみです。基本テーマを変えても何も変わりません。",
+ "mobile.theme.only-light": "テーマ {theme} はライト表示のみです。基本テーマを変えても何も変わりません。",
+ "mobile.theme.only-one": "テーマ {theme} は表示が1種類だけです。基本テーマを変えても何も変わりません。",
+ "mobile.fonts.default": "テーマの既定",
+ "mobile.fonts.text-desc": "ノートとインターフェースのフォント（このスマートフォンにあるものだけ）。",
+ "mobile.fonts.mono-desc": "コードとコードブロックのフォント。",
+ "mobile.foreign.title": "{app} で作成された保管庫",
+ "mobile.foreign.text": "{app} で作成された保管庫を変更しようとしています。",
+ "mobile.foreign.detail": "ノートやファイルの変更は {app} にも反映されます。{app} の設定は変更されません。sk_notes の設定は .sk_notes フォルダーに保存されます。",
+ "mobile.foreign.never": "今後表示しない",
+ "mobile.foreign.continue": "続ける",
+ "mobile.foreign.adopted": "この保管庫は {app} で作成されました。その設定を使用しています（添付ファイル、新規ノート、デイリーノート、テンプレート、テーマ、ブックマーク、グラフ）。",
+ "mobile.foreign.plugins": "インポートできるコミュニティプラグイン: {n}（コードなので選択はあなた次第です）。",
+ "mobile.foreign.plugins-review": "プラグインを確認"
 }

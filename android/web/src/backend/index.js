@@ -13,6 +13,7 @@ import { loadStrings, registerCore, setFolderPicker } from './routes-core.js';
 import { registerExtras } from './routes-extras.js';
 import { registerGallery } from './routes-gallery.js';
 import { registerPlugins } from './routes-plugins.js';
+import * as migrate from './migrate.js';
 import { registerSpell } from './routes-spell.js';
 import { registerSync } from './routes-sync.js';
 import { registerUpdate } from './routes-update.js';
@@ -213,6 +214,8 @@ async function start() {
       const service = new VaultService(last, emit, vaultDataDir(last));
       state.service = service;
       await service.open();
+      // a vault made with another app: its settings are used at the first opening
+      try { state.adopted = migrate.adopt(service); } catch (e) { console.warn('settings of the other app not taken', e); }
       state.settings.vaults[last] = { ts: Date.now() };
       saveSettings();
     } catch (e) {

@@ -359,5 +359,19 @@
  "mobile.spell.licence": "licence {license}",
  "mobile.update.available": "{name} is available.",
  "mobile.update.button": "Update",
- "mobile.update.to": "Update to {name}"
+ "mobile.update.to": "Update to {name}",
+ "mobile.theme.only-dark": "The theme {theme} has only a dark look: the base theme would change nothing.",
+ "mobile.theme.only-light": "The theme {theme} has only a light look: the base theme would change nothing.",
+ "mobile.theme.only-one": "The theme {theme} has one look only: the base theme would change nothing.",
+ "mobile.fonts.default": "Default of the theme",
+ "mobile.fonts.text-desc": "Font of the notes and of the interface (only fonts this phone has).",
+ "mobile.fonts.mono-desc": "Font of code and code blocks.",
+ "mobile.foreign.title": "A vault made with {app}",
+ "mobile.foreign.text": "You are changing a vault made with {app}.",
+ "mobile.foreign.detail": "Changes to notes and files will also be seen in {app}. The settings of {app} are never changed: those of sk_notes stay in the .sk_notes folder.",
+ "mobile.foreign.never": "Don't show again",
+ "mobile.foreign.continue": "Continue",
+ "mobile.foreign.adopted": "This vault was made with {app}: its settings are in use (attachments, new notes, daily notes, templates, theme, bookmarks, graph).",
+ "mobile.foreign.plugins": "Community plugins that can be imported: {n} (they are code: you choose).",
+ "mobile.foreign.plugins-review": "Review plugins"
 }

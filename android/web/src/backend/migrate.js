@@ -144,3 +144,34 @@ export function apply(service, itemIds) {
   }
   return done;
 }
+
+const ADOPTED = 'adopted.json'; // in .sk_notes: the settings of the other app were taken once
+
+/** The first time a vault made with that app opens here: its settings, themes, snippets,
+ * bookmarks, graph and hotkeys are used straight away (copied into .sk_notes; its own folder
+ * is only read). Community plugins are code: they stay a choice of the user (the migration
+ * dialog). Returns what was taken, or null. */
+export function adopt(service) {
+  const root = service.vault.root;
+  if (!isDir(`${root}/${SOURCE_DIR}`) || exists(`${root}/${CONFIG_DIR}/${ADOPTED}`)) return null;
+  const res = scan(root);
+  const ids = (res.items || []).map((i) => i.id).filter((id) => id !== 'plugins');
+  const done = apply(service, ids);
+  const app = obj(readJson(`${root}/${SOURCE_DIR}/app.json`)) || {};
+  const cfg = obj(service.configRead('app.json', {})) || {};
+  // that app shows the file name as the title of a note: no "# Name" heading in new notes
+  if (app.showInlineTitle !== false && cfg.newNoteHeading === undefined) cfg.newNoteHeading = false;
+  cfg.migrationOffered = true; // nothing left to propose but the plugins (see the page)
+  service.configWrite('app.json', cfg);
+  const plugins = (res.items || []).find((i) => i.id === 'plugins')?.data || [];
+  const info = { at: Date.now(), from: 'Obsidian', taken: done, plugins: plugins.map((p) => p.name || p.id || p.dir) };
+  service.configWrite(ADOPTED, info);
+  return info;
+}
+
+/** The app a vault was made with, when it is not sk_notes: 'Obsidian', 'Logseq' or null. */
+export function foreignApp(root) {
+  if (isDir(`${root}/${SOURCE_DIR}`)) return 'Obsidian';
+  if (exists(`${root}/logseq/config.edn`)) return 'Logseq';
+  return null;
+}

@@ -359,5 +359,19 @@
  "mobile.spell.licence": "Lizenz {license}",
  "mobile.update.available": "{name} ist verfügbar.",
  "mobile.update.button": "Aktualisieren",
- "mobile.update.to": "Auf {name} aktualisieren"
+ "mobile.update.to": "Auf {name} aktualisieren",
+ "mobile.theme.only-dark": "Das Theme {theme} hat nur ein dunkles Aussehen: das Grund-Theme würde nichts ändern.",
+ "mobile.theme.only-light": "Das Theme {theme} hat nur ein helles Aussehen: das Grund-Theme würde nichts ändern.",
+ "mobile.theme.only-one": "Das Theme {theme} hat nur ein Aussehen: das Grund-Theme würde nichts ändern.",
+ "mobile.fonts.default": "Standard des Themes",
+ "mobile.fonts.text-desc": "Schrift der Notizen und der Oberfläche (nur Schriften auf diesem Handy).",
+ "mobile.fonts.mono-desc": "Schrift für Code und Codeblöcke.",
+ "mobile.foreign.title": "Ein mit {app} erstellter Vault",
+ "mobile.foreign.text": "Du änderst einen mit {app} erstellten Vault.",
+ "mobile.foreign.detail": "Änderungen an Notizen und Dateien sind auch in {app} zu sehen. Die Einstellungen von {app} werden nie geändert: die von sk_notes bleiben im Ordner .sk_notes.",
+ "mobile.foreign.never": "Nicht mehr anzeigen",
+ "mobile.foreign.continue": "Weiter",
+ "mobile.foreign.adopted": "Dieser Vault wurde mit {app} erstellt: seine Einstellungen werden verwendet (Anhänge, neue Notizen, Tagesnotizen, Vorlagen, Theme, Lesezeichen, Graph).",
+ "mobile.foreign.plugins": "Importierbare Community-Plugins: {n} (sie sind Code: du entscheidest).",
+ "mobile.foreign.plugins-review": "Plugins prüfen"
 }

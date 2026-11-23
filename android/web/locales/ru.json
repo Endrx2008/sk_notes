@@ -359,5 +359,19 @@
  "mobile.spell.licence": "лицензия {license}",
  "mobile.update.available": "Доступна новая версия: {name}.",
  "mobile.update.button": "Обновить",
- "mobile.update.to": "Обновить до {name}"
+ "mobile.update.to": "Обновить до {name}",
+ "mobile.theme.only-dark": "У темы {theme} есть только тёмный вид: базовая тема ничего не изменит.",
+ "mobile.theme.only-light": "У темы {theme} есть только светлый вид: базовая тема ничего не изменит.",
+ "mobile.theme.only-one": "У темы {theme} только один вид: базовая тема ничего не изменит.",
+ "mobile.fonts.default": "Как в теме",
+ "mobile.fonts.text-desc": "Шрифт заметок и интерфейса (только шрифты этого телефона).",
+ "mobile.fonts.mono-desc": "Шрифт кода и блоков кода.",
+ "mobile.foreign.title": "Хранилище, созданное в {app}",
+ "mobile.foreign.text": "Вы изменяете хранилище, созданное в {app}.",
+ "mobile.foreign.detail": "Изменения заметок и файлов будут видны и в {app}. Настройки {app} никогда не меняются: настройки sk_notes хранятся в папке .sk_notes.",
+ "mobile.foreign.never": "Больше не показывать",
+ "mobile.foreign.continue": "Продолжить",
+ "mobile.foreign.adopted": "Это хранилище создано в {app}: используются его настройки (вложения, новые заметки, ежедневные заметки, шаблоны, тема, закладки, граф).",
+ "mobile.foreign.plugins": "Плагины сообщества для импорта: {n} (это код: решать вам).",
+ "mobile.foreign.plugins-review": "Посмотреть плагины"
 }

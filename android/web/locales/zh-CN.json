@@ -359,5 +359,19 @@
  "mobile.spell.licence": "许可证 {license}",
  "mobile.update.available": "{name} 已推出。",
  "mobile.update.button": "更新",
- "mobile.update.to": "更新到 {name}"
+ "mobile.update.to": "更新到 {name}",
+ "mobile.theme.only-dark": "主题 {theme} 只有深色外观：基础主题不会改变任何东西。",
+ "mobile.theme.only-light": "主题 {theme} 只有浅色外观：基础主题不会改变任何东西。",
+ "mobile.theme.only-one": "主题 {theme} 只有一种外观：基础主题不会改变任何东西。",
+ "mobile.fonts.default": "主题默认",
+ "mobile.fonts.text-desc": "笔记和界面的字体（仅限本手机上的字体）。",
+ "mobile.fonts.mono-desc": "代码和代码块的字体。",
+ "mobile.foreign.title": "用 {app} 创建的仓库",
+ "mobile.foreign.text": "你正在修改用 {app} 创建的仓库。",
+ "mobile.foreign.detail": "对笔记和文件的修改也会在 {app} 中显示。{app} 的设置从不会被修改：sk_notes 的设置保存在 .sk_notes 文件夹中。",
+ "mobile.foreign.never": "不再显示",
+ "mobile.foreign.continue": "继续",
+ "mobile.foreign.adopted": "此仓库是用 {app} 创建的：正在使用它的设置（附件、新笔记、日记、模板、主题、书签、关系图）。",
+ "mobile.foreign.plugins": "可导入的社区插件：{n}（它们是代码：由你决定）。",
+ "mobile.foreign.plugins-review": "查看插件"
 }

@@ -8,7 +8,7 @@ import { native } from './native.js';
 import * as permissions from './permissions.js';
 import { route } from './router.js';
 import { askFolder } from './routes-core.js';
-import { roots, svc, t } from './state.js';
+import { roots, state, svc, t } from './state.js';
 import { ApiError, normpath, textToB64 } from './util.js';
 
 const PICK_MIME = {
@@ -81,6 +81,29 @@ export function registerExtras() {
       if (['settings', 'hotkeys', 'bookmarks', 'graph'].includes(item.id)) item.preview = item.id !== 'bookmarks' ? item.data : null;
     }
     return res;
+  });
+
+  // ------------------------------------------------------------- vaults made with another app
+  const ackFile = () => roots().private + '/foreign-ack.json';
+  const acks = () => { try { const v = JSON.parse(native.sync('fs.readText', { path: ackFile() }).text); return Array.isArray(v) ? v : []; } catch { return []; } };
+
+  /** {app, ack, adopted}: the app the open vault was made with (null for sk_notes), whether the
+   * user asked not to be warned again for it, and what was taken from it at this start. */
+  r('vault.foreign', () => {
+    const root = svc().vault.root;
+    const app = migrate.foreignApp(root);
+    const adopted = state.adopted || null;
+    state.adopted = null; // told once
+    return { app, ack: !app || acks().includes(root), adopted };
+  });
+
+  r('vault.foreignAck', (p, ctx) => {
+    appOnly(ctx);
+    const root = svc().vault.root;
+    const list = acks().filter((x) => x !== root);
+    list.push(root);
+    native.sync('fs.writeText', { path: ackFile(), text: JSON.stringify(list) });
+    return true;
   });
 
   r('migration.apply', (p, ctx) => {

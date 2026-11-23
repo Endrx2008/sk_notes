@@ -359,5 +359,19 @@
  "mobile.spell.licence": "licence {license}",
  "mobile.update.available": "{name} est disponible.",
  "mobile.update.button": "Mettre à jour",
- "mobile.update.to": "Mettre à jour vers {name}"
+ "mobile.update.to": "Mettre à jour vers {name}",
+ "mobile.theme.only-dark": "Le thème {theme} n'a qu'un aspect sombre : le thème de base ne changerait rien.",
+ "mobile.theme.only-light": "Le thème {theme} n'a qu'un aspect clair : le thème de base ne changerait rien.",
+ "mobile.theme.only-one": "Le thème {theme} n'a qu'un seul aspect : le thème de base ne changerait rien.",
+ "mobile.fonts.default": "Par défaut du thème",
+ "mobile.fonts.text-desc": "Police des notes et de l'interface (seulement les polices de ce téléphone).",
+ "mobile.fonts.mono-desc": "Police du code et des blocs de code.",
+ "mobile.foreign.title": "Un coffre créé avec {app}",
+ "mobile.foreign.text": "Vous modifiez un coffre créé avec {app}.",
+ "mobile.foreign.detail": "Les modifications des notes et fichiers seront aussi visibles dans {app}. Les réglages de {app} ne sont jamais modifiés : ceux de sk_notes restent dans le dossier .sk_notes.",
+ "mobile.foreign.never": "Ne plus afficher",
+ "mobile.foreign.continue": "Continuer",
+ "mobile.foreign.adopted": "Ce coffre a été créé avec {app} : ses réglages sont utilisés (pièces jointes, nouvelles notes, notes quotidiennes, modèles, thème, signets, graphe).",
+ "mobile.foreign.plugins": "Plugins de la communauté importables : {n} (c'est du code : vous choisissez).",
+ "mobile.foreign.plugins-review": "Voir les plugins"
 }

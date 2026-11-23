@@ -11,6 +11,7 @@ import { setIcon } from '@desktop/core/icons.js';
 import { t } from '@desktop/core/i18n.js';
 import { Modal } from '@desktop/ui/kit.js';
 import { renderUpdateBar } from './update.js';
+import { renderAppearance, withoutPublish } from './appearance.js';
 
 let settings = null; // the open settings dialog
 
@@ -34,6 +35,11 @@ function adaptSettings(modal) {
   modal.modalEl.insertBefore(bar, modal.modalEl.firstChild);
   back.addEventListener('click', () => { if (!settingsBack()) modal.close(); });
   close.addEventListener('click', () => modal.close());
+  // Android's own Appearance page (fonts from a list, base theme only when it changes something),
+  // and no static website (core page)
+  modal.appearance = (el) => renderAppearance(modal, el);
+  const core = modal.core.bind(modal);
+  modal.core = (el) => { const r = core(el); withoutPublish(el); return r; };
   const openTab = modal.openTabById.bind(modal);
   modal.openTabById = (id) => {
     openTab(id);
