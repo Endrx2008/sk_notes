@@ -18,6 +18,7 @@ const APP_KEYS = {
   showInlineTitle: 'showInlineTitle', spellcheck: 'spellcheck', livePreview: 'livePreview', defaultViewMode: 'defaultViewMode',
   tabSize: 'tabSize', promptDelete: 'promptDelete', trashOption: 'trashOption', foldHeading: 'foldGutter',
   autoPairBrackets: 'autoPair', propertiesInDocument: 'propertiesInDocument',
+  interfaceFontFamily: 'interfaceFont', // in appearance.json there, in app.json here (the PC has no such key)
 };
 const APPEARANCE_KEYS = { baseFontSize: 'baseFontSize', textFontFamily: 'textFont', monospaceFontFamily: 'monospaceFont',
   cssTheme: 'cssTheme', enabledCssSnippets: 'enabledCssSnippets', showRibbon: 'showRibbon' };
@@ -57,6 +58,7 @@ export function scan(vaultRoot) {
   for (const [k, v] of Object.entries(app)) if (Object.hasOwn(APP_KEYS, k)) settings[APP_KEYS[k]] = v;
   if (app.trashOption === 'none') settings.trashOption = 'none';
   for (const [k, v] of Object.entries(appearance)) if (Object.hasOwn(APPEARANCE_KEYS, k)) settings[APPEARANCE_KEYS[k]] = v;
+  if (typeof appearance.interfaceFontFamily === 'string') settings.interfaceFont = appearance.interfaceFontFamily;
   if (appearance.theme === 'obsidian' || appearance.theme === 'moonstone') settings.theme = appearance.theme === 'obsidian' ? 'dark' : 'light';
   for (const [name, keymap] of [
     ['daily-notes.json', { folder: 'dailyNoteFolder', format: 'dailyNoteFormat', template: 'dailyNoteTemplate' }],

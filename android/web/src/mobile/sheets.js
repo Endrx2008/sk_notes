@@ -36,7 +36,7 @@ function adaptSettings(modal) {
   back.addEventListener('click', () => { if (!settingsBack()) modal.close(); });
   close.addEventListener('click', () => modal.close());
   // Android's own Appearance page (fonts from a list, base theme only when it changes something),
-  // and no static website (core page)
+  // and no "Sync and publishing" on the core page (no static site; the sync has its own page)
   modal.appearance = (el) => renderAppearance(modal, el);
   const core = modal.core.bind(modal);
   modal.core = (el) => { const r = core(el); withoutPublish(el); return r; };
@@ -47,7 +47,20 @@ function adaptSettings(modal) {
     const tab = modal.tabs.find((x) => x.id === modal.activeId);
     modal._mobileTitle.setText(tab?.name || t('cmd.settings'));
     modal.paneEl.scrollTop = 0;
+    if (modal.activeId === 'community-plugins') explainPlugins(modal.paneEl);
   };
+}
+
+/** What a plugin is, said once: the first time the plugins page opens. */
+function explainPlugins(pane) {
+  if (localStorage.getItem('skn-plugins-explained')) return;
+  localStorage.setItem('skn-plugins-explained', '1');
+  const box = createDiv('mobile-explain');
+  box.createDiv({ cls: 'mobile-explain-title', text: t('mobile.plugins.what') });
+  box.createEl('p', { text: t('mobile.plugins.what-text') });
+  const ok = box.createEl('button', { text: t('mobile.plugins.what-ok') });
+  ok.addEventListener('click', () => box.remove());
+  pane.insertBefore(box, pane.firstChild);
 }
 
 export function installSheets(app) {

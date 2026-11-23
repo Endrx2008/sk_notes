@@ -102,9 +102,20 @@ file in a session says that the vault belongs to that app too (`web/src/mobile/f
 
 ## Settings that differ from the PC
 
-- No "static site" (Settings → Core features) and no command for it.
+- Core features has no "Sync and publishing" section: no static site (and no command for it), and
+  the sync has its own page, right after it.
 - Appearance (`web/src/mobile/appearance.js`): fonts are chosen from a list of those the phone
-  has; the base theme (dark/light) is offered only when the community theme in use has both looks.
+  has, and there is a third one, the interface font (`interfaceFont` in `.sk_notes/app.json`;
+  Obsidian's `interfaceFontFamily` is taken over). The base theme (dark/light) is offered only
+  when the community theme in use has both looks.
+- No table views (bases): no command to make one, and `.base` files are not drawn as tables (in
+  the file list they go to another app, embedded they are a plain title, a `base` block stays code).
+- The start screen explains what a vault is and what Markdown is (open on the first start, a tap
+  away afterwards); the community plugins page says once what a plugin is.
+- Plainer words in `web/locales/*.json` (they override the PC's strings): a short meaning in
+  brackets after canvas, backlink, embed, callout and tag; "Search for an action" for the command
+  palette; in Italian, "modello" for
+  template.
 
 ## Spell checker
 

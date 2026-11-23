@@ -4,7 +4,8 @@
 //
 // Same options as on the PC, with two differences: the base theme (dark/light) is offered only
 // when the community theme in use has both looks (a theme with one look ignores it), and fonts
-// are chosen from a list of those the phone has, instead of typing their names.
+// are chosen from a list of those the phone has, instead of typing their names. There is one
+// more font than on the PC: the one of the interface (menus, buttons, lists).
 
 import { call } from './api.js';
 import { t } from '@desktop/core/i18n.js';
@@ -42,6 +43,16 @@ function fontOptions(names, generic, current) {
   return opts;
 }
 
+/** The font of menus, buttons and lists (`interfaceFont`, Android only; empty = the theme's). */
+export function applyUiFont(app) {
+  const f = app.settings.get('interfaceFont') || '';
+  const root = document.documentElement;
+  // the base theme writes its own --font-interface-theme on <html>: this goes after it
+  if (f) root.style.setProperty('--font-interface-theme', f);
+  // a community theme may set --font-interface itself, so the choice is also put on <body>
+  if (f) document.body.style.setProperty('--font-interface', f); else document.body.style.removeProperty('--font-interface');
+}
+
 export async function renderAppearance(modal, el) {
   const a = modal.app;
   const s = a.settings;
@@ -57,6 +68,7 @@ export async function renderAppearance(modal, el) {
   new Setting(el).setName(t('settings.font-size')).setDesc(t('settings.font-size-desc')).addSlider((sl) => sl.setLimits(10, 30, 1).setValue(s.get('baseFontSize') || 16).setDynamicTooltip().onChange((v) => s.set('baseFontSize', v)));
   modal.dropdown(el, 'textFont', t('settings.text-font'), t('mobile.fonts.text-desc'), fontOptions(TEXT_FONTS, GENERIC_TEXT, s.get('textFont') || ''));
   modal.dropdown(el, 'monospaceFont', t('settings.mono-font'), t('mobile.fonts.mono-desc'), fontOptions(MONO_FONTS, GENERIC_MONO, s.get('monospaceFont') || ''));
+  modal.dropdown(el, 'interfaceFont', t('mobile.fonts.ui'), t('mobile.fonts.ui-desc'), fontOptions([...new Set([...TEXT_FONTS, ...MONO_FONTS])], [...new Set([...GENERIC_TEXT, ...GENERIC_MONO])], s.get('interfaceFont') || ''));
   for (const sel of el.querySelectorAll('select')) sel.querySelectorAll('option').forEach((o) => { if (o.value && o.value !== 'skai' && o.value !== 'dark' && o.value !== 'light') o.style.fontFamily = o.value; });
   new Setting(el).setName(t('settings.zoom')).setDesc(t('settings.zoom-desc')).addSlider((sl) => sl.setLimits(50, 200, 10).setValue(Math.round((a.info.zoom || 1) * 100)).setDynamicTooltip().onChange((v) => a.changeZoom(v / 100 - (a.info.zoom || 1))));
 
@@ -86,14 +98,14 @@ export async function renderAppearance(modal, el) {
   }
 }
 
-/** The Files page without "static site" (not on Android). */
+/** The core page without "Sync and publishing": no static site on Android, and the sync has
+ * its own page, right after this one. */
 export function withoutPublish(el) {
-  const name = t('settings.publish');
+  const names = new Set([t('settings.publish'), t('settings.git')]);
   for (const item of el.querySelectorAll('.setting-item')) {
-    if (item.querySelector('.setting-item-name')?.textContent.trim() === name) item.remove();
+    if (names.has(item.querySelector('.setting-item-name')?.textContent.trim())) item.remove();
   }
-  // the heading "Sync and publishing" keeps only the sync
-  for (const h of el.querySelectorAll('.setting-item-heading .setting-item-name')) {
-    if (h.textContent.trim() === t('settings.sync-publish')) h.setText(t('settings.git'));
+  for (const h of el.querySelectorAll('.setting-item-heading')) {
+    if (h.querySelector('.setting-item-name')?.textContent.trim() === t('settings.sync-publish')) h.remove();
   }
 }

@@ -30,7 +30,7 @@ import { installCryptUi } from './crypt-ui.js';
 import { installSpell } from './spell/index.js';
 import { checkUpdate } from './update.js';
 import { installForeign } from './foreign.js';
-import { themeLooks } from './appearance.js';
+import { themeLooks, applyUiFont } from './appearance.js';
 import { CommandPalette } from '@desktop/ui/palette.js';
 import { TFile, TFolder } from '@desktop/model/vault.js';
 
@@ -74,6 +74,11 @@ export function installMobile(app, info) {
     document.body.classList.toggle('has-css-theme', !!theme && parts.length > 0); // see "themes" in 90-mobile.css
     app.workspace?.trigger('css-change');
   };
+  // the font of the interface (Appearance): after the base theme, which writes its own
+  const applyAppearance = app.applyAppearance.bind(app);
+  app.applyAppearance = () => { applyAppearance(); applyUiFont(app); };
+  app.settings.on('change', (key) => { if (key === 'interfaceFont') app.applyAppearance(); });
+  applyUiFont(app);
   let cssBusy = false;
   const firstCss = () => { if (!cssBusy) { cssBusy = true; app.loadCss().finally(() => { cssBusy = false; }); } };
   firstCss();
@@ -223,8 +228,14 @@ function tidyCommands(app) {
   for (const id of gone) app.commands.removeCommand?.(id);
   // no "random note" on Android: neither the command nor its entry in the menu
   app.commands.removeCommand?.('random-note');
-  // no new database files on a phone (existing .base files still open)
+  // no table views (bases) on a phone: no command to make one, and a .base file is not drawn as
+  // a table (tapped in the file list it goes to another app, like any file the app cannot show;
+  // embedded in a note it is a plain title; a ```base block stays code)
   app.commands.removeCommand?.('bases:new-file');
+  app.viewRegistry.unregisterExtensions(['base']);
+  app.viewRegistry.unregisterView('bases');
+  app.markdownProcessors.codeBlocks.delete('base');
+  app.renderBaseEmbed = null;
   const ribbon = app.workspace.leftRibbon;
   for (const it of ribbon.items.filter((x) => x.id === 'random')) ribbon.removeItem(it.el);
   // splits only where there is room for them (tablets)
@@ -265,7 +276,7 @@ function tidyCommands(app) {
     importInto(cur?.parent ? cur.parent.path : '');
   } });
   app.workspace.on('file-menu', (menu, file) => {
-    // no new database files on a phone
+    // no table views on a phone
     const base = menu.items.find((it) => it.titleEl?.textContent === t('file.new-base'));
     if (base) { menu.items.remove(base); base.dom.remove(); }
     if (file instanceof TFolder) {

@@ -25,8 +25,13 @@ export function renderVaultManager(container, { onOpened, app, locked = null } =
   const titles = head.createDiv();
   titles.createDiv({ cls: 'vault-manager-title', text: 'sk_notes' });
   titles.createDiv({ cls: 'vault-manager-version', text: t('mobile.tagline') });
+  // what a vault is, for whoever meets the word here for the first time: open on the first
+  // start (no vaults yet), a tap away afterwards
+  const about = container.createEl('details', { cls: 'vault-manager-about' });
+  about.createEl('summary', { text: t('mobile.vaults.what') });
+  for (const k of ['mobile.vaults.what-1', 'mobile.vaults.what-md', 'mobile.vaults.what-2', 'mobile.vaults.what-3']) about.createEl('p', { text: t(k) });
   const actions = container.createDiv('vault-manager-actions');
-  const listTitle = container.createDiv({ cls: 'vault-manager-list-title', text: t('vaults.title') });
+  const listTitle = container.createDiv({ cls: 'vault-manager-list-title', text: t('mobile.vaults.list') });
   const list = container.createDiv('vault-manager-list');
 
   const notify = (msg) => new Notice(msg, 7000);
@@ -41,10 +46,12 @@ export function renderVaultManager(container, { onOpened, app, locked = null } =
   };
 
   let asking = locked; // the encrypted vault whose password is being asked
+  let firstList = true;
   const renderList = async () => {
     list.empty();
     const vaults = await call('vaults.list');
     listTitle.toggle(vaults.length > 0);
+    if (firstList) { firstList = false; about.open = vaults.length === 0; }
     for (const v of vaults) {
       const row = list.createDiv('vault-manager-item' + (v.current ? ' is-active' : '') + (v.exists ? '' : ' is-missing') + (v.encrypted ? ' is-encrypted' : ''));
       setIcon(row.createDiv('vault-manager-item-icon'), v.encrypted ? 'lock' : 'vault');
