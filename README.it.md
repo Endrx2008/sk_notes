@@ -7,6 +7,8 @@ l'IA locale di Skorpion OS — tutto offline. *English: [README.md](README.md).*
 - **I tuoi file, sul tuo computer.** Un vault è una normale cartella di file `.md`. Niente
   account, niente telemetria. La rete serve solo per il servizio locale SKAI (Ollama) e per ciò che
   chiedi tu: la sincronizzazione Git e gli elenchi della community di plugin, temi e template.
+  sk_notes per Android chiede inoltre a GitHub, all'avvio, se esiste una release più recente (una
+  richiesta anonima all'API pubblica), e scarica i dizionari del correttore solo per le lingue che scegli.
 - **Familiare.** Se hai usato un'altra app di note in Markdown, pannelli, menu e scorciatoie
   sono dove te li aspetti; un vault esistente si apre così com'è e una procedura guidata propone
   di importarne le impostazioni (in sola lettura: i file originali non vengono mai modificati).
@@ -25,7 +27,7 @@ Licenza: **GPL-3.0-or-later**. sk_notes non è affiliato con Obsidian o Dynalist
 | Home | una scheda vuota è la Home, come in sk_notes per Android: il logo con il nome del vault aperto, le note recenti in una riga, crea (nota — con un pulsante calendario per la nota di oggi —, canvas e una barra più piccola per una nota da template), visualizza (grafo, database del vault — una vista, nessun file viene creato; l'elenco dei file è sempre nella barra laterale sinistra); ogni riquadro è un comando con una scorciatoia (Impostazioni → Scorciatoie) mostrata sul riquadro — nota Ctrl+N, canvas Ctrl+C quando non c'è nulla da copiare; frecce e Invio funzionano sulla Home. La barra laterale a sinistra si nasconde finché sullo schermo c'è solo la Home. Il "+" delle schede mostra due bolle (nota, canvas) da cliccare, oppure premi e trascina verso una delle due |
 | Riquadri | il pulsante "nuovo riquadro a destra" nell'intestazione di ogni riquadro (o Ctrl+Alt+D) aggiunge un riquadro sul bordo destro, tutti della stessa larghezza, con l'ultima nota usata non visibile (o la Home). I riquadri si spostano come finestre dentro la finestra, senza mai uscirne: trascina una scheda per il nome e lasciala sulla metà del riquadro dove deve andare (sinistra, destra, sopra, sotto), al centro per unirla alle sue schede, su una barra delle schede per metterla tra quelle; trascina la parte vuota di una barra delle schede per spostare tutto il riquadro; Esc annulla. Un file dell'elenco lasciato sul bordo di un riquadro si apre accanto. Chiudendo l'ultima nota di un riquadro si chiude il riquadro e gli altri si dividono il suo spazio |
 | Navigazione | apertura rapida, palette dei comandi, tag annidati, struttura, segnalibri, schede, pannelli divisi, layout salvati, finestre separate |
-| Grafo | grafo globale e locale, filtri, gruppi colorati, un colore per una singola nota (clic destro sul suo punto), forze |
+| Grafo | grafo globale e locale, filtri, gruppi colorati, un colore per una o più note (clic destro — sul telefono una pressione lunga — su ogni punto, poi il colore), forze |
 | Canvas | file `.canvas` (formato aperto JSON Canvas): schede, note, media, gruppi, collegamenti (colore, etichetta, direzione, rimuovi tutte le frecce di una scheda), rinomina dal titolo, immagine di tutta la lavagna (JPG) |
 | Proprietà | editor delle proprietà con tipi e **Basi** (`.base`): viste tabella, schede, elenco e bacheca con filtri e formule |
 | Organizzazione | template, note giornaliere, note uniche, compositore (unisci/estrai), conteggio parole |
@@ -43,11 +45,13 @@ Il pacchetto installa anche la memoria Markdown condivisa di SKAI (`/var/lib/ska
 ## Android
 
 `android/` contiene sk_notes per Android 8.0 o successivi: lo stesso spazio di lavoro del PC in un APK,
-con la sincronizzazione Git e i vault cifrati compatibili con quelli del desktop. Compilazione, firma,
+con la sincronizzazione Git e i vault cifrati compatibili con quelli del desktop, un correttore
+ortografico con le lingue scaricate solo quando le scegli e un avviso quando su GitHub c'è una release
+più recente. Compilazione, firma,
 test e differenze del telefono: [android/README.md](android/README.md) (in inglese).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-0.5.4.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-1.0.0.apk
 ```
 
 ## Installazione
@@ -55,7 +59,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-0.5.4.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_0.5.4_all.deb      # pacchetto creato da tools/build_deb.sh
+sudo apt install ./sk-notes_1.0.0_all.deb      # pacchetto creato da tools/build_deb.sh
 sk-notes
 ```
 
@@ -70,7 +74,7 @@ python3 main.py                 # oppure: python3 main.py --vault ~/Note
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-0.5.4.tar.gz + dist/PKGBUILD (con checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-1.0.0.tar.gz + dist/PKGBUILD (con checksum)
 cd dist && makepkg -si
 ```
 

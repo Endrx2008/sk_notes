@@ -76,7 +76,11 @@ keys), `vault-lock.js` (locking by itself), `web/src/mobile/crypt-ui.js` (screen
 
 - File list: a long press starts a choice of several rows (`web/src/mobile/multiselect.js`):
   rename them one dialog after the other, or delete them together.
-- Graph: a long press on a dot gives that note a colour (its size stays the graph's own).
+- Graph: a long press on a dot gives that note a colour (its size stays the graph's own); a long
+  press on more dots selects them all (a ring around each) and the colour goes to every one. A tap on
+  the empty graph or back ends the choice.
+- Back: closes what is on top, goes back in the tab, then to Home; only a back from Home leaves the
+  app. Of the graph and the file list, only the one opened last is a step of back.
 - File list: a long press then a slide of the finger chooses every note in between; the bar with
   rename and delete appears at the top of the screen, above the list even when it is a drawer.
 - No new database (.base) files on a phone: existing ones open; on a PC the database is a view.
@@ -84,6 +88,26 @@ keys), `vault-lock.js` (locking by itself), `web/src/mobile/crypt-ui.js` (screen
   card can remove all its arrows; a tap on the title of the board renames it; a site typed without
   `https://` gets it; "Save a picture" draws the whole board to a JPG in the vault
   (`views/canvas-image.js`). The graph's "save as image" does the same with a PNG.
+
+## Spell checker
+
+Settings → Editor → Spell check: off, the phone keyboard's checker, or the sk_notes checker
+(`web/src/mobile/spell/`, `web/src/backend/routes-spell.js`). Nothing of the sk_notes checker is in
+the APK but its glue code (`dist/spell-worker.js`, about 57 KB): the engine (Hunspell built for
+WebAssembly, npm `hunspell-wasm` 0.3.0) is downloaded with the first language and installed only if
+it has the SHA-256 written in `routes-spell.js`; the dictionaries (90 languages, licence shown for
+each) come from one fixed commit of [wooorm/dictionaries](https://github.com/wooorm/dictionaries).
+They live in the app's private storage, not in the vault. The checker runs in a worker: wavy
+underline, suggestions on tap, personal dictionary, optional autocorrect (only nearly certain fixes;
+backspace right after brings the typed word back). Code, links, tags, math and frontmatter are skipped.
+
+## Updates
+
+At every start the app asks the public GitHub API for the latest release of this repository
+(`web/src/backend/routes-update.js`, one anonymous request). When it is newer, a notice with an
+**Update** button appears once; ignored, it does not come back, but an orange "Update to …" button
+stays at the bottom of the settings. Both open the release's APK in the browser, which downloads it
+and hands it to Android's installer.
 
 ## Sync with GitHub, GitLab or another Git server
 

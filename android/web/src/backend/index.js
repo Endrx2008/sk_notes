@@ -15,6 +15,7 @@ import { registerGallery } from './routes-gallery.js';
 import { registerPlugins } from './routes-plugins.js';
 import { registerSpell } from './routes-spell.js';
 import { registerSync } from './routes-sync.js';
+import { registerUpdate } from './routes-update.js';
 import { VaultService } from './service.js';
 import * as crypt from './vault-crypt.js';
 import { installAutoLock } from './vault-lock.js';
@@ -164,6 +165,7 @@ async function start() {
     registerGallery();
     registerSync();
     registerSpell();
+    registerUpdate();
     registerMobile();
     registered = true;
   }

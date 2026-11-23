@@ -356,5 +356,8 @@
  "mobile.spell.engine-desc": "Hunspell {version} (WebAssembly), {size}.",
  "mobile.spell.engine-missing": "Не загружен.",
  "mobile.spell.engine-ready": "Загружен.",
- "mobile.spell.licence": "лицензия {license}"
+ "mobile.spell.licence": "лицензия {license}",
+ "mobile.update.available": "Доступна новая версия: {name}.",
+ "mobile.update.button": "Обновить",
+ "mobile.update.to": "Обновить до {name}"
 }

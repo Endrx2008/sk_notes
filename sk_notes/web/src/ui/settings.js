@@ -128,7 +128,7 @@ class SettingsModal extends Modal {
       // phones and tablets: sync with GitHub, GitLab or another Git server
       ...(a.renderSyncSettings ? [{ id: 'sync', name: t('mobile.sync.title'), icon: 'cloud', group: 'options', render: (el) => a.renderSyncSettings(el) }] : []),
       // Android: the spell checker with downloadable languages
-      ...(a.renderSpellSettings ? [{ id: 'spell', name: t('mobile.spell.title'), icon: 'type', group: 'options', render: (el) => a.renderSpellSettings(el) }] : []),
+      ...(a.renderSpellSettings ? [{ id: 'spell', name: a.spellTabName, icon: 'type', group: 'options', render: (el) => a.renderSpellSettings(el) }] : []),
       { id: 'skai', name: t('settings.skai'), icon: 'sparkles', group: 'options', render: (el) => a.skai?.renderSettings(el) || el.setText(t('skai.unavailable')) },
       { id: 'community-plugins', name: t('settings.community'), icon: 'puzzle', group: 'options', render: (el) => a.plugins?.renderSettings(el, this) },
     ];

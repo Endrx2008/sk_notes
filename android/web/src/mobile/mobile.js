@@ -28,6 +28,7 @@ import { installVersions } from './versions.js';
 import { t } from '@desktop/core/i18n.js';
 import { installCryptUi } from './crypt-ui.js';
 import { installSpell } from './spell/index.js';
+import { checkUpdate } from './update.js';
 import { CommandPalette } from '@desktop/ui/palette.js';
 import { TFile, TFolder } from '@desktop/model/vault.js';
 
@@ -167,6 +168,7 @@ export function installMobile(app, info) {
     installToolbar(app);
     installBack(app);
     installSpell(app);
+    setTimeout(() => checkUpdate(app), 1500); // after the start, never in its way
     tidyCommands(app);
     syncBars(app);
     // a link sk_notes was started with (from another app or a home-screen shortcut)

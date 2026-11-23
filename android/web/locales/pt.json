@@ -356,5 +356,8 @@
  "mobile.spell.engine-desc": "Hunspell {version} (WebAssembly), {size}.",
  "mobile.spell.engine-missing": "Não transferido.",
  "mobile.spell.engine-ready": "Transferido.",
- "mobile.spell.licence": "licença {license}"
+ "mobile.spell.licence": "licença {license}",
+ "mobile.update.available": "{name} está disponível.",
+ "mobile.update.button": "Atualizar",
+ "mobile.update.to": "Atualizar para {name}"
 }

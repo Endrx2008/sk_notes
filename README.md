@@ -5,7 +5,7 @@ linked notes, graph, canvas, database views, community plugins, and **SKAI**, th
 of Skorpion OS — all offline. *Italiano: [README.it.md](README.it.md).*
 
 - **Your files, your computer.** A vault is a normal folder of `.md` files. No account, no
-  telemetry. The network is used only for the local SKAI service (Ollama) and for what you ask: Git sync, and the community directories of plugins, themes and templates.
+  telemetry. The network is used only for the local SKAI service (Ollama) and for what you ask: Git sync, and the community directories of plugins, themes and templates. sk_notes for Android also asks GitHub, at start, whether a newer release exists (one anonymous request to the public API), and downloads spell-check dictionaries only when you choose a language.
 - **Familiar.** If you used another Markdown knowledge-base app, panels, menus and shortcuts
   are where you expect them; an existing vault opens as it is, and a wizard offers to import
   its settings (read-only — the original files are never changed).
@@ -24,7 +24,7 @@ License: **GPL-3.0-or-later**. sk_notes is not affiliated with Obsidian or Dynal
 | Home | an empty tab is Home, as in sk_notes for Android: the logo with the name of the open vault, recent notes in one row, create (note — with a calendar button for today's note —, canvas, and a smaller bar for a note from a template), view (graph, database of the vault — a view, no file is made; the file list is always in the left sidebar); every tile is a command with a shortcut (Settings → Hotkeys) shown on the tile — note Ctrl+N, canvas Ctrl+C when there is nothing to copy; arrows and Enter work on Home. The left ribbon hides while only Home is on screen. The "+" of the tabs shows two bubbles (note, canvas) to click, or press and pull towards one |
 | Panes | the "new pane on the right" button in every pane's header (or Ctrl+Alt+D) adds a pane at the right edge, all the same width, with the last note used that is not on screen (or Home). Panes move like windows inside the window, never pulled out: drag a tab by its name and let go on the half of a pane where it should go (left, right, top, bottom), in its middle to join its tabs, on a tab bar to sit among those tabs; drag the empty part of a tab bar to move the whole pane; Escape cancels. A file of the list dropped on an edge of a pane opens beside. Closing the last note of a pane closes the pane and the others share its room |
 | Navigation | quick switcher, command palette, nested tags, outline, bookmarks, tabs, split panes, saved layouts, pop-out windows |
-| Graph | global and local graph, filters, color groups, a colour for a single note (right click on its dot), forces |
+| Graph | global and local graph, filters, color groups, a colour for one note or several (right click — on a phone a long press — on each dot, then pick the colour), forces |
 | Canvas | `.canvas` files (open JSON Canvas format): cards, notes, media, groups, connections (colour, label, direction, remove all arrows of a card), rename by the title, picture of the whole board (JPG) |
 | Properties | typed property editor and **Bases** (`.base`): table, cards, list and board views with filters and formulas |
 | Organisation | templates, daily notes, unique notes, note composer (merge/extract), word count |
@@ -42,11 +42,12 @@ The package also installs SKAI's shared Markdown memory (`/var/lib/skai/SKAI_ Me
 ## Android
 
 `android/` holds sk_notes for Android 8.0 or newer: the same workspace as on the PC in an APK, with
-Git sync and encrypted vaults that open on both. Build, signing, tests and what a phone does its own
-way: [android/README.md](android/README.md).
+Git sync and encrypted vaults that open on both, a spell checker whose languages are downloaded only
+when chosen, and a notice when a newer release is on GitHub. Build, signing, tests and what a phone
+does its own way: [android/README.md](android/README.md).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-0.5.4.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-1.0.0.apk
 ```
 
 ## Install
@@ -54,7 +55,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-0.5.4.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_0.5.4_all.deb      # package built by tools/build_deb.sh
+sudo apt install ./sk-notes_1.0.0_all.deb      # package built by tools/build_deb.sh
 sk-notes
 ```
 
@@ -69,7 +70,7 @@ python3 main.py                 # or: python3 main.py --vault ~/Notes
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-0.5.4.tar.gz + dist/PKGBUILD (with checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-1.0.0.tar.gz + dist/PKGBUILD (with checksum)
 cd dist && makepkg -si
 ```
 

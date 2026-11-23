@@ -588,3 +588,11 @@ body.is-mobile .canvas-edge-hit { stroke-width: calc(34px / var(--canvas-zoom, 1
 .color-wheel-swatch { width: 40px; height: 40px; border-radius: var(--radius-m); border: 1px solid var(--sk-border); flex: none; }
 .color-wheel-hex { flex: 1; font-family: var(--font-monospace); text-transform: lowercase; }
 .mobile-color-wheel .modal-button-container { width: 100%; }
+
+/* ---------------------------------------------------------------- a newer sk_notes (update.js) */
+.mobile-update-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 12px 12px; padding: 14px 16px; border-radius: 10px; background: #e05c00; color: #ffffff; font-weight: 600; font-size: 15px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mobile-update-bar:active { background: #c75200; }
+.mobile-update-bar .svg-icon, .mobile-update-button .svg-icon { width: 20px; height: 20px; color: #ffffff; }
+.mobile-update-icon { display: flex; }
+.mobile-update-notice { display: flex; flex-direction: column; gap: 10px; }
+.mobile-update-button { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; background: #e05c00 !important; color: #ffffff !important; font-weight: 600; }

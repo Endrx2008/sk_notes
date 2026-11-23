@@ -10,6 +10,7 @@ import { isPhone } from './device.js';
 import { setIcon } from '@desktop/core/icons.js';
 import { t } from '@desktop/core/i18n.js';
 import { Modal } from '@desktop/ui/kit.js';
+import { renderUpdateBar } from './update.js';
 
 let settings = null; // the open settings dialog
 
@@ -53,6 +54,7 @@ export function installSheets(app) {
     if (isSettings) { // opening draws the first section; a phone starts from the list
       this.modalEl.removeClass('is-detail');
       this._mobileTitle.setText(t('cmd.settings'));
+      renderUpdateBar(app, this.modalEl); // a newer sk_notes: the orange button at the bottom
     }
     return r;
   };

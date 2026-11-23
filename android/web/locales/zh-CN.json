@@ -356,5 +356,8 @@
  "mobile.spell.engine-desc": "Hunspell {version}（WebAssembly），{size}。",
  "mobile.spell.engine-missing": "未下载。",
  "mobile.spell.engine-ready": "已下载。",
- "mobile.spell.licence": "许可证 {license}"
+ "mobile.spell.licence": "许可证 {license}",
+ "mobile.update.available": "{name} 已推出。",
+ "mobile.update.button": "更新",
+ "mobile.update.to": "更新到 {name}"
 }
