@@ -127,6 +127,8 @@ class SettingsModal extends Modal {
       { id: 'core', name: t('settings.core'), icon: 'layers', group: 'options', render: (el) => this.core(el) },
       // phones and tablets: sync with GitHub, GitLab or another Git server
       ...(a.renderSyncSettings ? [{ id: 'sync', name: t('mobile.sync.title'), icon: 'cloud', group: 'options', render: (el) => a.renderSyncSettings(el) }] : []),
+      // Android: the spell checker with downloadable languages
+      ...(a.renderSpellSettings ? [{ id: 'spell', name: t('mobile.spell.title'), icon: 'type', group: 'options', render: (el) => a.renderSpellSettings(el) }] : []),
       { id: 'skai', name: t('settings.skai'), icon: 'sparkles', group: 'options', render: (el) => a.skai?.renderSettings(el) || el.setText(t('skai.unavailable')) },
       { id: 'community-plugins', name: t('settings.community'), icon: 'puzzle', group: 'options', render: (el) => a.plugins?.renderSettings(el, this) },
     ];
@@ -250,7 +252,9 @@ class SettingsModal extends Modal {
     this.toggle(el, 'lineWrap', t('settings.wrap'), t('settings.wrap-desc'));
     this.dropdown(el, 'propertiesInDocument', t('settings.properties'), t('settings.properties-desc'), { visible: t('settings.visible'), hidden: t('settings.hidden'), source: t('settings.as-source') });
     this.heading(el, t('settings.editor.behaviour'));
-    this.toggle(el, 'spellcheck', t('settings.spellcheck'), t('settings.spellcheck-desc'));
+    // Android: a choice (off, the keyboard's checker, the downloadable one of sk_notes) instead of a switch
+    if (this.app.renderSpellChoice) this.app.renderSpellChoice(el, this);
+    else this.toggle(el, 'spellcheck', t('settings.spellcheck'), t('settings.spellcheck-desc'));
     this.toggle(el, 'autoPair', t('settings.autopair'), t('settings.autopair-desc'));
     this.toggle(el, 'foldGutter', t('settings.fold'), t('settings.fold-desc'));
     this.toggle(el, 'slashCommands', t('settings.slash'), t('settings.slash-desc'));

@@ -1045,6 +1045,7 @@
  "canvas.web-reload": "Recargar",
  "error.vault-wrong-password": "Contraseña incorrecta.",
  "graph.color-custom": "Color personalizado…",
+ "graph.selected-count": "{n} notas seleccionadas",
  "pc.home.title": "Inicio",
  "pc.home.create": "Crear",
  "pc.home.view": "Ver",

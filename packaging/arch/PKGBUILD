@@ -3,7 +3,7 @@
 # tools/build_tarball.sh and already contains the built web front-end, so no Node.js
 # is needed here.
 pkgname=sk-notes
-pkgver=0.5.3
+pkgver=0.5.4
 pkgrel=1
 pkgdesc="Markdown notes and knowledge base for Skorpion OS, with local AI (SKAI)"
 arch=('any')

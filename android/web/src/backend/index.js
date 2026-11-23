@@ -13,6 +13,7 @@ import { loadStrings, registerCore, setFolderPicker } from './routes-core.js';
 import { registerExtras } from './routes-extras.js';
 import { registerGallery } from './routes-gallery.js';
 import { registerPlugins } from './routes-plugins.js';
+import { registerSpell } from './routes-spell.js';
 import { registerSync } from './routes-sync.js';
 import { VaultService } from './service.js';
 import * as crypt from './vault-crypt.js';
@@ -162,6 +163,7 @@ async function start() {
     registerExtras();
     registerGallery();
     registerSync();
+    registerSpell();
     registerMobile();
     registered = true;
   }

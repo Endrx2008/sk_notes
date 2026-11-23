@@ -1045,6 +1045,7 @@
  "canvas.web-reload": "重新加载",
  "error.vault-wrong-password": "密码错误。",
  "graph.color-custom": "自定义颜色…",
+ "graph.selected-count": "已选择 {n} 篇笔记",
  "pc.home.title": "主页",
  "pc.home.create": "新建",
  "pc.home.view": "查看",

@@ -1045,6 +1045,7 @@
  "canvas.web-reload": "再読み込み",
  "error.vault-wrong-password": "パスワードが違います。",
  "graph.color-custom": "カスタムの色…",
+ "graph.selected-count": "{n} 件のノートを選択",
  "pc.home.title": "ホーム",
  "pc.home.create": "作成",
  "pc.home.view": "表示",

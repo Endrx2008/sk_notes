@@ -1,7 +1,7 @@
 {
   "name": "sk_notes-android",
   "private": true,
-  "version": "0.5.3",
+  "version": "0.5.4",
   "type": "module",
   "description": "sk_notes for Android: web workspace + in-app backend, packaged as an APK",
   "license": "GPL-3.0-or-later",

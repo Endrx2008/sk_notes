@@ -1045,6 +1045,7 @@
  "canvas.web-reload": "Neu laden",
  "error.vault-wrong-password": "Falsches Passwort.",
  "graph.color-custom": "Eigene Farbe…",
+ "graph.selected-count": "{n} Notizen ausgewählt",
  "pc.home.title": "Start",
  "pc.home.create": "Erstellen",
  "pc.home.view": "Anzeigen",

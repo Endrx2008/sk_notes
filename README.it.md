@@ -47,7 +47,7 @@ con la sincronizzazione Git e i vault cifrati compatibili con quelli del desktop
 test e differenze del telefono: [android/README.md](android/README.md) (in inglese).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-0.5.3.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-0.5.4.apk
 ```
 
 ## Installazione
@@ -55,7 +55,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-0.5.3.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_0.5.3_all.deb      # pacchetto creato da tools/build_deb.sh
+sudo apt install ./sk-notes_0.5.4_all.deb      # pacchetto creato da tools/build_deb.sh
 sk-notes
 ```
 
@@ -70,7 +70,7 @@ python3 main.py                 # oppure: python3 main.py --vault ~/Note
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-0.5.3.tar.gz + dist/PKGBUILD (con checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-0.5.4.tar.gz + dist/PKGBUILD (con checksum)
 cd dist && makepkg -si
 ```
 

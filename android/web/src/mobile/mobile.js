@@ -27,6 +27,7 @@ import { installTouch } from './touch.js';
 import { installVersions } from './versions.js';
 import { t } from '@desktop/core/i18n.js';
 import { installCryptUi } from './crypt-ui.js';
+import { installSpell } from './spell/index.js';
 import { CommandPalette } from '@desktop/ui/palette.js';
 import { TFile, TFolder } from '@desktop/model/vault.js';
 
@@ -165,6 +166,7 @@ export function installMobile(app, info) {
     installNavbar(app);
     installToolbar(app);
     installBack(app);
+    installSpell(app);
     tidyCommands(app);
     syncBars(app);
     // a link sk_notes was started with (from another app or a home-screen shortcut)
@@ -275,10 +277,25 @@ function markBaseViews(app) {
 }
 
 /** Android's status and navigation bars take the colour of the app. */
+/** A CSS colour as #rrggbb ('' for one that is not opaque or not a colour). */
+function hexColor(value) {
+  const c = document.createElement('canvas').getContext('2d');
+  c.fillStyle = '#000001';
+  c.fillStyle = String(value || '').trim();
+  const v = c.fillStyle;
+  return /^#[0-9a-f]{6}$/i.test(v) && v !== '#000001' ? v : '';
+}
+
 function syncBars(app) {
   const css = getComputedStyle(document.documentElement);
-  const color = css.getPropertyValue('--sk-bg').trim() || '#0d0d0d';
+  const body = getComputedStyle(document.body);
+  const pick = (...names) => { for (const n of names) { const v = hexColor(body.getPropertyValue(n) || css.getPropertyValue(n)); if (v) return v; } return ''; };
+  const color = pick('--sk-bg', '--background-primary') || '#0d0d0d';
   call('mobile.bars', { color, light: document.body.classList.contains('theme-light') }).catch(() => {});
+  // the loading screen of the next start takes the same colours (web/splash.js)
+  try {
+    localStorage.setItem('skn-splash', JSON.stringify({ bg: color, accent: pick('--sk-accent', '--interactive-accent'), track: pick('--sk-border', '--background-modifier-border') }));
+  } catch { /* no storage: the default loading screen */ }
 }
 
 async function receiveShare(app, d) {

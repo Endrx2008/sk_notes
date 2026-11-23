@@ -84,6 +84,21 @@ const result = await build({
   define: { __SKN_VERSION__: JSON.stringify(JSON.parse(readFileSync(join(here, 'package.json'), 'utf8')).version) },
 });
 
+// The spell checker's worker: the glue code of Hunspell (WebAssembly) and its wrapper. The
+// .wasm itself is not packed: the app downloads it when the user installs a dictionary.
+await build({
+  entryPoints: [join(mobileWeb, 'src', 'mobile', 'spell', 'worker.js')],
+  bundle: true,
+  format: 'iife',
+  target: 'chrome111',
+  outfile: join(dist, 'spell-worker.js'),
+  minify: !dev,
+  legalComments: 'none',
+  logLevel: 'error',
+  external: ['module', 'fs', 'fs/promises', 'path', 'url', 'worker_threads'], // only on Node, never reached here
+  define: { 'import.meta.url': 'self.location.href' }, // the glue resolves names against it (the .wasm itself is handed over)
+});
+
 if (!patched.api || !patched.platform || !patched.vaults || patched.vaultUrl < 3) {
   console.error('the desktop sources changed: a build-time replacement did not apply', patched);
   process.exit(1);
@@ -115,7 +130,19 @@ for (const f of readdirSync(join(katexDist, 'fonts')).filter((x) => x.endsWith('
 // the logo of the Android app: the scorpion over an open book (icon/make_icon.py), not the desktop "S"
 cpSync(join(mobileWeb, 'logo.svg'), join(dist, 'logo.svg'));
 cpSync(join(mobileWeb, 'logo.svg'), join(out, 'logo.svg'));
-cpSync(join(mobileWeb, 'index.html'), join(out, 'index.html'));
+// the loading screen: the logo drawn inline without its tile, in the accent colour of the last
+// theme (web/splash.js sets --splash-accent; same drawing as mobile/logo.js)
+{
+  const logo = readFileSync(join(mobileWeb, 'logo.svg'), 'utf8')
+    .replace(/<rect width="432" height="432"[^>]*\/>/, '').replace(/<rect x="6" y="6"[^>]*\/>/, '')
+    .replace(/fill="#e05c00"/g, 'style="fill:var(--splash-accent,#e05c00)"')
+    .replace(/fill="#9c3f00"/g, 'style="fill:var(--splash-accent,#e05c00);opacity:.7"')
+    .replace(/ width="432" height="432"/, '').replace('viewBox="0 0 432 432"', 'viewBox="52 44 328 344" class="sk-splash-logo" aria-hidden="true"');
+  const html = readFileSync(join(mobileWeb, 'index.html'), 'utf8');
+  if (!html.includes('<img src="logo.svg" alt="">') || !logo.startsWith('<svg')) { console.error('loading screen: logo not found'); process.exit(1); }
+  writeFileSync(join(out, 'index.html'), html.replace('<img src="logo.svg" alt="">', logo.trim()));
+  cpSync(join(mobileWeb, 'splash.js'), join(out, 'splash.js'));
+}
 
 // Community templates: the copy the app carries (the list on GitHub is used when it answers)
 cpSync(join(root, 'community', 'templates'), join(out, 'community', 'templates'), { recursive: true, filter: (src) => !src.endsWith('README.md') });

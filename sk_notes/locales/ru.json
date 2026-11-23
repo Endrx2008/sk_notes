@@ -1045,6 +1045,7 @@
  "canvas.web-reload": "Обновить",
  "error.vault-wrong-password": "Неверный пароль.",
  "graph.color-custom": "Свой цвет…",
+ "graph.selected-count": "Выбрано заметок: {n}",
  "pc.home.title": "Главная",
  "pc.home.create": "Создать",
  "pc.home.view": "Просмотр",

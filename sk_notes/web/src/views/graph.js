@@ -172,6 +172,7 @@ export class GraphView extends ItemView {
     this.view = { x: 0, y: 0, k: 1 };
     this.autoFit = true; // follow the layout until the user pans or zooms
     this.hover = -1;
+    this.selected = new Set(); // ids of the dots chosen by a long press (coloured together)
     this.dirty = true;
     this.rebuild = debounce(() => this.build(true), 400, true);
     this._buildControls();
@@ -485,6 +486,14 @@ export class GraphView extends ItemView {
       c.beginPath();
       c.arc(sx, sy, r, 0, Math.PI * 2);
       c.fill();
+      if (this.selected.has(nd.id)) {
+        c.globalAlpha = 1;
+        c.strokeStyle = col.hl;
+        c.lineWidth = 2.5;
+        c.beginPath();
+        c.arc(sx, sy, r + 4, 0, Math.PI * 2);
+        c.stroke();
+      }
     }
     // labels
     const fade = 0.6 + this.options.textFadeMultiplier * 0.3;
@@ -549,6 +558,8 @@ export class GraphView extends ItemView {
       if (d.node >= 0) this.worker.postMessage({ type: 'drag', i: d.node, x: this.pos[d.node * 2], y: this.pos[d.node * 2 + 1], fix: false });
       // a long press (a finger held on a dot to colour it) is not a click
       if (!d.moved && d.node >= 0 && e.target === cv && Date.now() - d.at < 500) this._open(d.node, e);
+      // a tap on the empty canvas ends the choice of dots
+      else if (!d.moved && d.node < 0 && e.target === cv) this.clearSelection();
     };
     cv.addEventListener('contextmenu', (e) => {
       const [sx, sy] = local(e);
@@ -556,6 +567,9 @@ export class GraphView extends ItemView {
       if (i < 0) return;
       e.preventDefault();
       e.stopPropagation();
+      // a long press chooses the dot; one more on another dot adds it: the colour goes to all
+      const nd = this.nodes[i];
+      if (nd.type !== 'tag') { this.selected.add(nd.id); this.dirty = true; }
       this._colorMenu(i, e);
     });
     cv.addEventListener('wheel', (e) => {
@@ -573,21 +587,37 @@ export class GraphView extends ItemView {
     cv.addEventListener('mouseleave', () => { this.hover = -1; this.dirty = true; });
   }
 
-  /** The colour of one note's dot: a few colours, one of the user's own, or none. */
+  /** Forget the dots chosen by long press; true when there were some (Android's back ends the choice). */
+  clearSelection() {
+    if (!this.selected.size) return false;
+    this.selected.clear();
+    this.dirty = true;
+    return true;
+  }
+
+  /** The colour of the chosen dots (one, or all chosen by long press): a few colours, one of
+   * the user's own, or none. */
   _colorMenu(i, e) {
     const nd = this.nodes[i];
     if (!nd || nd.type === 'tag') return;
-    const cur = this.nodeColors?.[nd.id] || '';
+    const known = new Set(this.nodes.map((n) => n.id));
+    for (const id of this.selected) if (!known.has(id)) this.selected.delete(id); // gone since
+    const ids = this.selected.size ? [...this.selected] : [nd.id];
+    const colors = new Set(ids.map((id) => (this.nodeColors?.[id] || '').toLowerCase()));
+    const cur = colors.size === 1 ? [...colors][0] : '';
+    const anyColor = ids.some((id) => this.nodeColors?.[id]);
     const set = async (color) => {
       const all = { ...(this.nodeColors || {}) };
-      if (color) all[nd.id] = color; else delete all[nd.id];
+      for (const id of ids) { if (color) all[id] = color; else delete all[id]; }
       this.nodeColors = all;
+      this.clearSelection();
       await this.app.config.write('graph-colors.json', all).catch(() => {});
       this.rebuild();
       this.app.workspace.trigger('graph-colors-change');
     };
     const m = new Menu();
-    m.addItem((it) => it.setTitle(nd.label || nd.id).setIsLabel(true).setDisabled(true));
+    const title = ids.length > 1 ? t('graph.selected-count', { n: ids.length }) : nd.label || nd.id;
+    m.addItem((it) => it.setTitle(title).setIsLabel(true).setDisabled(true));
     for (const [name, hex] of NODE_COLORS) {
       m.addItem((it) => {
         it.setTitle(t(`canvas.color-${name}`)).setChecked(cur.toLowerCase() === hex).setSection('color').onClick(() => set(hex));
@@ -604,7 +634,7 @@ export class GraphView extends ItemView {
       input.addEventListener('blur', () => setTimeout(() => input.remove(), 500));
       input.click();
     }));
-    if (cur) m.addItem((it) => it.setTitle(t('canvas.color-none')).setIcon('x').setSection('custom').onClick(() => set('')));
+    if (anyColor) m.addItem((it) => it.setTitle(t('canvas.color-none')).setIcon('x').setSection('custom').onClick(() => set('')));
     m.showAtMouseEvent(e);
   }
 

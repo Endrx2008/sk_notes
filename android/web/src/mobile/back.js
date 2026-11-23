@@ -4,12 +4,12 @@
 //
 // Back closes what is on top, in this order: a menu or suggestion list, a dialog (the
 // settings go back to their list first), an open drawer, then it goes back in the history
-// of the note. With nothing left to close, sk_notes goes to the background.
+// of the note, then to Home. Only from Home does sk_notes go to the background.
 
 import { native } from '../backend/native.js';
 import { call } from './api.js';
 import { drawerOpen } from './drawers.js';
-import { BASE_VIEWS } from './home.js';
+import { BASE_VIEWS, dropBaseSteps } from './home.js';
 import { settingsBack } from './sheets.js';
 import { closeGraphControls } from './touch.js';
 
@@ -37,10 +37,14 @@ export function goBack(app) {
   if (drawer) { drawer.collapse(); return true; }
   const ws = app.workspace;
   const leaf = ws.activeLeaf && ws.activeLeaf.getRoot() === ws.rootSplit ? ws.activeLeaf : ws.getMostRecentLeaf(ws.rootSplit);
-  if (leaf?.history.canBack()) { leaf.history.back(); return true; }
-  // the graph or the file list opened from Home: Android's back returns to Home (the arrows
-  // of the bar do not: Home is not one of their steps)
-  if (leaf && BASE_VIEWS.includes(leaf.view?.getViewType())) {
+  if (!leaf) return false;
+  if (leaf.view?.clearSelection?.()) return true; // dots of the graph chosen by long press
+  // only the base view opened last is a step of back (graph then list: back shows the list, then Home)
+  if (BASE_VIEWS.includes(leaf.view?.getViewType())) dropBaseSteps(leaf);
+  if (leaf.history.canBack()) { leaf.history.back(); return true; }
+  // nothing left to go back to: Android's back returns to Home first (the arrows of the bar
+  // do not: Home is not one of their steps); a second back from Home leaves the app
+  if ((leaf.view?.getViewType() || 'empty') !== 'empty') {
     leaf.history.backHistory = [];
     leaf.history.forwardHistory = [];
     leaf.setViewState({ type: 'empty' }, null, true);

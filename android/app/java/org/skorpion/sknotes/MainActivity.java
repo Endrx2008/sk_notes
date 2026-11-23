@@ -9,12 +9,14 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.Insets;
 import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
@@ -114,6 +116,8 @@ public final class MainActivity extends Activity {
 
     // the open vault, read from the settings the backend writes
     private final Object vaultLock = new Object();
+    private static final String LOOK_PREFS = "look";
+    private int bg = 0xff0d0d0d; // background of the window: the colour of the theme in use
     private long vaultStamp = -1;
     private String vaultRoot = null;
 
@@ -123,8 +127,12 @@ public final class MainActivity extends Activity {
         super.onCreate(saved);
         dark = isNight(getResources().getConfiguration());
         root = new FrameLayout(this);
-        root.setBackgroundColor(0xff0d0d0d);
+        // the colour of the last theme used (saved by setBars): no dark flash before a light theme
+        SharedPreferences look = getSharedPreferences(LOOK_PREFS, MODE_PRIVATE);
+        bg = look.getInt("bg", 0xff0d0d0d);
+        root.setBackgroundColor(bg);
         setContentView(root);
+        applyBars(bg, look.getBoolean("light", false));
         setupInsets();
         if (saved == null) {
             // copies of picked and shared files of earlier runs
@@ -154,7 +162,7 @@ public final class MainActivity extends Activity {
                     .setPositiveButton(android.R.string.ok, (d, w) -> finish()).show();
             return false;
         }
-        web.setBackgroundColor(0xff0d0d0d);
+        web.setBackgroundColor(bg);
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
@@ -308,28 +316,34 @@ public final class MainActivity extends Activity {
         });
     }
 
-    @SuppressWarnings("deprecation")
     void setBars(final String color, final boolean light) {
-        ui.post(() -> {
-            int c;
-            try {
-                c = Color.parseColor(color);
-            } catch (IllegalArgumentException e) {
-                return;
-            }
-            root.setBackgroundColor(c);
-            getWindow().setStatusBarColor(c);
-            getWindow().setNavigationBarColor(c);
-            if (Build.VERSION.SDK_INT >= 30) {
-                WindowInsetsController ctl = getWindow().getInsetsController();
-                int mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
-                if (ctl != null) ctl.setSystemBarsAppearance(light ? mask : 0, mask);
-            } else {
-                View decor = getWindow().getDecorView();
-                int flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-                decor.setSystemUiVisibility(light ? decor.getSystemUiVisibility() | flags : decor.getSystemUiVisibility() & ~flags);
-            }
-        });
+        final int c;
+        try {
+            c = Color.parseColor(color);
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+        // kept for the next start: the window shows this colour before the page is drawn
+        getSharedPreferences(LOOK_PREFS, MODE_PRIVATE).edit().putInt("bg", c).putBoolean("light", light).apply();
+        ui.post(() -> applyBars(c, light));
+    }
+
+    @SuppressWarnings("deprecation")
+    private void applyBars(int c, boolean light) {
+        bg = c;
+        root.setBackgroundColor(c);
+        getWindow().setBackgroundDrawable(new ColorDrawable(c));
+        getWindow().setStatusBarColor(c);
+        getWindow().setNavigationBarColor(c);
+        if (Build.VERSION.SDK_INT >= 30) {
+            WindowInsetsController ctl = getWindow().getInsetsController();
+            int mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+            if (ctl != null) ctl.setSystemBarsAppearance(light ? mask : 0, mask);
+        } else {
+            View decor = getWindow().getDecorView();
+            int flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            decor.setSystemUiVisibility(light ? decor.getSystemUiVisibility() | flags : decor.getSystemUiVisibility() & ~flags);
+        }
     }
 
     @SuppressWarnings("deprecation")

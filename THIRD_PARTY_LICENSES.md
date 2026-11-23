@@ -89,3 +89,10 @@ used as a reference for names and signatures only; no file of that package is in
 | yaml | 2.8.0 | ISC | github:eemeli/yaml |
 
 KaTeX fonts are distributed with KaTeX under the MIT license.
+
+## Android app: spell checker (downloaded on request)
+
+| Component | Version | License | Use |
+|---|---|---|---|
+| hunspell-wasm (Hunspell for WebAssembly) | 0.3.0 | LGPL-2.0 / GPL-2.0 / MPL-1.1 | Its glue code is bundled (`dist/spell-worker.js`); the engine `hunspell.wasm` is downloaded only when the user installs a language, and checked against a fixed SHA-256. https://github.com/rotemdan/hunspell-wasm |
+| Hunspell dictionaries (wooorm/dictionaries, commit 8cfea40) | — | per language (shown in the app) | Downloaded only for the languages the user chooses; not shipped. https://github.com/wooorm/dictionaries |

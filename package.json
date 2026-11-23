@@ -1,7 +1,7 @@
 {
   "name": "sk_notes-web",
   "private": true,
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "Web front-end of sk_notes (bundled into sk_notes/web/dist)",
   "license": "GPL-3.0-or-later",
   "scripts": {
@@ -23,6 +23,7 @@
     "@lezer/lr": "1.4.12",
     "@lezer/markdown": "1.4.3",
     "buffer": "6.0.3",
+    "hunspell-wasm": "0.3.0",
     "isomorphic-git": "1.44.14",
     "katex": "0.16.22",
     "markdown-it": "14.1.0",

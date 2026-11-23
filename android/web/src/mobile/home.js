@@ -43,6 +43,16 @@ export async function leaveBase(app, keep) {
   }
 }
 
+/** Forget the base views among the steps of the tab: only the one shown now stays a step of
+ * back (graph after the list: back returns to the file under them, or Home, not to the list). */
+export function dropBaseSteps(leaf) {
+  const h = leaf.history;
+  if (!h) return;
+  const keep = (s) => !BASE_VIEWS.includes(s?.state?.type);
+  h.backHistory = h.backHistory.filter(keep);
+  h.forwardHistory = h.forwardHistory.filter(keep);
+}
+
 /** Show a base view (graph or file list) in the tab in use. */
 export async function openBase(app, type) {
   const ws = app.workspace;
@@ -51,6 +61,7 @@ export async function openBase(app, type) {
   if (!leaf || leaf.pinned) leaf = ws.getLeaf('tab');
   await leaveBase(app, leaf);
   if (leaf.view?.getViewType() !== type) await leaf.setViewState({ type, active: true });
+  dropBaseSteps(leaf);
   if (leaf.view) leaf.view.navigation = true; // leaving it for a file is a step "back" undoes
   ws.setActiveLeaf(leaf, { focus: false });
 }
