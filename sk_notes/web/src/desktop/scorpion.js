@@ -448,8 +448,8 @@ class ScorpionPet {
   }
 }
 
-/** A scorpion seen from above, head towards +x: claws in front, four legs a side, the tail
- * curled over its back with the sting. Legs move while it walks; the tail taps while it works. */
+/** A scorpion seen from above, head towards +x: claws in front, four legs a side, and two tails
+ * like the Skorpion OS logo. Legs move while it walks; the tails sway faster while it works. */
 export function drawScorpion(c, x, y, angle, now, { walking = false, color = '#e05c00', working = false, scale = 1.5 } = {}) {
   c.save();
   c.translate(x, y);
@@ -498,20 +498,28 @@ export function drawScorpion(c, x, y, angle, now, { walking = false, color = '#e
   c.stroke();
   c.fillStyle = 'rgba(0,0,0,.7)';
   c.beginPath(); c.arc(9.5, -1.2, 0.7, 0, Math.PI * 2); c.arc(9.5, 1.2, 0.7, 0, Math.PI * 2); c.fill();
-  // tail: five segments curling over the back, and the sting
-  const sway = Math.sin(now * (working ? 10 : 3)) * (working ? 1.4 : 0.6);
-  const pts = [[-7.5, 0], [-11, 0.6], [-14, -0.8], [-15.2, -4 + sway * 0.3], [-13.4, -7.2 + sway * 0.6], [-10.2, -8.6 + sway]];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const [ax, ay] = pts[i];
+  // two tails, as in the Skorpion OS logo: from the end of the body each goes back towards the
+  // middle, then out to its side and forward again, the sting at its tip turned inwards. They
+  // sway (faster while it works), one a little after the other.
+  for (const side of [-1, 1]) {
+    const sway = Math.sin(now * (working ? 10 : 3) + (side > 0 ? 0.9 : 0)) * (working ? 1.3 : 0.5);
+    const pts = [[-7.5, side * 1.2], [-11.2, side * 2.4], [-14, side * 4.6], [-15.4, side * 7.8],
+      [-14.4 + sway * 0.3, side * 11], [-11.6 + sway * 0.6, side * 13.2], [-8.4 + sway, side * 13.6]];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [ax, ay] = pts[i];
+      c.fillStyle = color;
+      c.strokeStyle = dark;
+      c.lineWidth = 0.8;
+      c.beginPath(); c.arc(ax, ay, 2.1 - i * 0.17, 0, Math.PI * 2); c.fill(); c.stroke();
+    }
+    const [sx, sy] = pts[pts.length - 1];
     c.fillStyle = color;
-    c.beginPath(); c.arc(ax, ay, 2.4 - i * 0.22, 0, Math.PI * 2); c.fill(); c.stroke();
+    c.beginPath(); c.arc(sx, sy, 1.6, 0, Math.PI * 2); c.fill(); c.stroke();
+    // the sting: forward and bent towards the body
+    c.strokeStyle = dark;
+    c.lineWidth = 1.1;
+    c.beginPath(); c.moveTo(sx + 1.1, sy); c.quadraticCurveTo(sx + 3.4, sy - side * 0.2, sx + 3.6, sy - side * 2.4); c.stroke();
   }
-  const [sx, sy] = pts[pts.length - 1];
-  c.fillStyle = color;
-  c.beginPath(); c.arc(sx, sy, 1.7, 0, Math.PI * 2); c.fill(); c.stroke();
-  c.strokeStyle = dark;
-  c.lineWidth = 1.1;
-  c.beginPath(); c.moveTo(sx + 1.2, sy); c.quadraticCurveTo(sx + 3.6, sy + 0.4, sx + 3.4, sy + 2.6); c.stroke();
   c.restore();
 }
 

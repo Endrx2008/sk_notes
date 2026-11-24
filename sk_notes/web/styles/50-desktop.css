@@ -195,6 +195,12 @@ body.sk-memory-mode .pc-split-button,
 body.sk-memory-mode .workspace-tab-header-new-tab,
 body.sk-memory-mode .skai-modes,
 body.sk-memory-mode .skai-actions,
-body.sk-memory-mode .nav-action-button.mod-memory-hidden { display: none !important; }
+body.sk-memory-mode .nav-action-button.mod-memory-hidden,
+body.sk-memory-mode .workspace-ribbon.mod-left,
+body.sk-memory-mode .sidebar-toggle-button,
+body.sk-memory-mode .workspace-tab-header-tab-list,
+body.sk-memory-mode .mod-left-split .workspace-tab-header-container,
+body.sk-memory-mode .mod-right-split .workspace-tab-header-container,
+body.sk-memory-mode .mod-root .workspace-tab-header-container { display: none !important; }
 .skai-memory-actions { margin: 6px 0 0; padding-left: 20px; font-size: var(--font-ui-small); color: var(--text-muted); }
 .skai-memory-note { font-size: var(--font-ui-smaller); color: var(--text-faint); margin-top: 4px; }

@@ -253,6 +253,7 @@ export class GraphView extends ItemView {
     this.canvas.style.width = r.width + 'px';
     this.canvas.style.height = r.height + 'px';
     this.dpr = dpr;
+    if (this.autoFit) this._fit(); // the view got bigger or smaller: the dots still fill it
     this.dirty = true;
   }
 
@@ -447,8 +448,12 @@ export class GraphView extends ItemView {
       if (x < minX) minX = x; if (x > maxX) maxX = x;
       if (y < minY) minY = y; if (y > maxY) maxY = y;
     }
-    const pad = 40;
-    const k = Math.clamp(Math.min((w - pad * 2) / Math.max(1, maxX - minX), (h - pad * 2) / Math.max(1, maxY - minY)), 0.05, 1.5);
+    // SKAI_ Memory on the PC (a graph to look at, the whole screen): the dots fill the view, also when
+    // they are few; elsewhere a small graph stays at its natural size. Room is left for the labels
+    // and, in the memory, for the scorpion's house at the bottom left.
+    const big = !!this.app.memoryMode && !this.local;
+    const pad = big ? 70 : 40;
+    const k = Math.clamp(Math.min((w - pad * 2) / Math.max(1, maxX - minX), (h - pad * 2) / Math.max(1, maxY - minY)), 0.05, big ? 6 : 1.5);
     this.view = { x: (minX + maxX) / 2, y: (minY + maxY) / 2, k };
   }
 

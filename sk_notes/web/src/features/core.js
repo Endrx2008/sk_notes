@@ -375,6 +375,10 @@ class LazyView extends Component {
   }
   async open(parentEl) {
     const Cls = await this._loader();
+    // replaced while its code was loading (two opens of the same leaf at start): the newer view
+    // owns the leaf, this one must not draw itself in it too (it was left there for good, a
+    // second graph under the first)
+    if (this._closed || (this.leaf.view && this.leaf.view !== this)) return;
     const real = new Cls(this.leaf);
     this._real = real;
     this.leaf.view = real;
@@ -388,7 +392,7 @@ class LazyView extends Component {
   setEphemeralState() {}
   getDisplayText() { return ''; }
   getIcon() { return 'file'; }
-  async close() { this.unload(); }
+  async close() { this._closed = true; this.unload(); }
   onResize() {}
 }
 
@@ -654,7 +658,7 @@ class PagePreview {
   }
 
   async show(targetEl, linktext, sourcePath, isPath) {
-    const { path, subpath } = (await import('../model/metadata.js')).parseLinktext(linktext);
+    const { path } = (await import('../model/metadata.js')).parseLinktext(linktext);
     const file = isPath ? this.app.vault.getFileByPath(linktext) : this.app.metadataCache.getFirstLinkpathDest(path, sourcePath);
     if (!(file instanceof TFile) || file.extension !== 'md' || !targetEl.isConnected) return;
     this.hide();
