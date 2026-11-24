@@ -189,3 +189,12 @@ body.pc-pane-moving, body.pc-pane-moving * { cursor: grabbing !important; user-s
 .pc-pane-ghost-icon { display: flex; color: var(--sk-accent); }
 .pc-pane-ghost-icon .svg-icon { width: 14px; height: 14px; }
 .pc-tab-insert { position: fixed; z-index: 94; width: 2px; background: var(--sk-accent); pointer-events: none; border-radius: 1px; }
+
+/* SKAI_ Memory on the PC (desktop/memory-mode.js): no panes, no new tabs, no tools for note taking */
+body.sk-memory-mode .pc-split-button,
+body.sk-memory-mode .workspace-tab-header-new-tab,
+body.sk-memory-mode .skai-modes,
+body.sk-memory-mode .skai-actions,
+body.sk-memory-mode .nav-action-button.mod-memory-hidden { display: none !important; }
+.skai-memory-actions { margin: 6px 0 0; padding-left: 20px; font-size: var(--font-ui-small); color: var(--text-muted); }
+.skai-memory-note { font-size: var(--font-ui-smaller); color: var(--text-faint); margin-top: 4px; }

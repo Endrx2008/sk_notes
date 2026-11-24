@@ -57,6 +57,18 @@ class T(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual((self.d / "plugins/skalendar.md").read_text(), "# edited\n")
 
+    def test_skai_herself_may_edit_every_note(self):
+        helper = [str(HERE / "skai-memory-write"), "--direct"]
+        for path in ("plugins/skalendar.md", "SKAI.md", "plugins/skmail/new.md"):
+            req = {"op": "write", "path": path, "text": "# by SKAI\n", "caller": "skai", "dir": str(self.d)}
+            r = subprocess.run(helper, input=json.dumps(req), capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertEqual((self.d / path).read_text(), "# by SKAI\n")
+        for bad in ({"op": "register", "caller": "skai"}, {"op": "write", "path": "../x.md", "caller": "skai"},
+                    {"op": "write", "path": ".hidden.md", "caller": "skai"}, {"op": "write", "path": "x.txt", "caller": "skai"}):
+            r = subprocess.run(helper, input=json.dumps({"text": "x", "dir": str(self.d), **bad}), capture_output=True, text=True)
+            self.assertNotEqual(r.returncode, 0, bad)
+
     def test_graph_edge_styles(self):
         g = self.mail.graph()
         st = {(e["from"], e["to"]): e["style"] for e in g["edges"]}

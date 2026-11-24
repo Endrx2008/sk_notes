@@ -214,8 +214,10 @@ def register(app) -> None:
                     svc.history.snapshot(path, data.decode("utf-8"), reason="external", force=True)
                 except (UnicodeDecodeError, Exception):  # noqa: BLE001 - history is a nicety here
                     pass
+        memory = svc.vault.protected  # SKAI_ Memory: not writable, so the repository is kept aside and files only go up
         return GitSync(root(), cfg["url"], cfg.get("branch") or "main", author_of(cfg.get("provider", ""), cfg.get("user", ""), cfg["url"]),
-                       (cfg.get("user") or "git", token), before_overwrite=before)
+                       (cfg.get("user") or "git", token), before_overwrite=before,
+                       git_dir=_config_path(root()).parent / "memory-git" if memory else None, upload_only=memory)
 
     def run_round() -> dict:
         if not running.acquire(blocking=False):

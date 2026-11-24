@@ -39,6 +39,8 @@ License: **GPL-3.0-or-later**. sk_notes is not affiliated with Obsidian or Dynal
 
 The package also installs SKAI's shared Markdown memory (`/var/lib/skai/SKAI_ Memory`, see `skai_memory/README.md`): every SKAI app and plugin identifies itself through the `skai_memory` library, keeps its own notes under `plugins/<app>/` and can read all the others. To let a user's apps write: `sudo usermod -aG skai <user>`.
 
+On the PC, sk_notes opens SKAI_ Memory as a window on the memory, not as a notebook: the graph in the middle, the files on the left and SKAI on the right, who reads and changes the memory when asked in plain words (each change is shown first; no sudo password). No Home, no tools for taking notes, no panes or windows, no settings — the look of the interface is the same in every vault of the computer. Git only uploads the memory; the version history stays.
+
 ## Android
 
 `android/` holds sk_notes for Android 8.0 or newer: the same workspace as on the PC in an APK, with
@@ -47,7 +49,7 @@ when chosen, and a notice when a newer release is on GitHub. Build, signing, tes
 does its own way: [android/README.md](android/README.md).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.0.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.1.apk
 ```
 
 ## Install
@@ -55,7 +57,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.0.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_1.2.0_all.deb      # package built by tools/build_deb.sh
+sudo apt install ./sk-notes_1.2.1_all.deb      # package built by tools/build_deb.sh
 sk-notes
 ```
 
@@ -70,7 +72,7 @@ python3 main.py                 # or: python3 main.py --vault ~/Notes
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-1.2.0.tar.gz + dist/PKGBUILD (with checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-1.2.1.tar.gz + dist/PKGBUILD (with checksum)
 cd dist && makepkg -si
 ```
 

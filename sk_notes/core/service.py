@@ -398,6 +398,27 @@ class VaultService:
                       {"file": st.to_json(), "metadata": meta, "external": True,
                        **self._links_payload([path] if known else None)})
 
+    def skai_change(self, op: str, path: str, text: str = "") -> dict:
+        """SKAI_ Memory: write, append to or delete a note because the user asked SKAI to (and
+        confirmed it). The note as it was goes into the version history first."""
+        path = normalize_path(path)
+        if op not in ("write", "append", "delete") or ext_of(path) != "md":
+            raise VaultError("memory-unsupported")
+        with self.lock:
+            if self.vault.exists(path):
+                try:
+                    self.history.snapshot(path, self.vault.read_text(path), reason="skai", force=True)
+                except OSError:
+                    pass
+            self.vault.skai_change(op, path, text)
+            self.external_change(path)  # the page and the index know at once (the watcher too, a moment later)
+            if op != "delete":
+                try:
+                    self.history.snapshot(path, self.vault.read_text(path), reason="skai")
+                except OSError:
+                    pass
+        return {"path": path, "exists": self.vault.exists(path)}
+
     def external_read(self, paths: list[str]) -> None:
         """SKAI_ Memory only: notes another program read (an app of SKAI looking something up).
         The page shows SKAI's scorpion going to them; many at once is a scan of the whole memory."""

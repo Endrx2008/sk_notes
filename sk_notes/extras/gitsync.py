@@ -115,14 +115,19 @@ class Result:
 
 class GitSync:
     def __init__(self, root: Path, url: str, branch: str = "main", author: tuple[str, str] = ("sk_notes", "sk_notes@localhost"),
-                 auth: tuple[str, str] | None = None, before_overwrite=None):
+                 auth: tuple[str, str] | None = None, before_overwrite=None, git_dir: Path | None = None,
+                 upload_only: bool = False):
         self.root = Path(root)
+        # SKAI_ Memory: the vault is not writable, so the repository lives elsewhere (git_dir) and
+        # the files only go up (upload_only): what is on the server never overwrites the memory
+        self.git_dir = Path(git_dir) if git_dir else self.root / ".git"
+        self.upload_only = upload_only
         self.url, self.branch, self.author, self.auth = url, branch or "main", author, auth
         self.before_overwrite = before_overwrite  # (path, old bytes) before a note is replaced or removed
 
     # ------------------------------------------------------------- running git
     def _env(self, remote: bool) -> dict:
-        env = dict(os.environ, GIT_DIR=str(self.root / ".git"), GIT_WORK_TREE=str(self.root), GIT_TERMINAL_PROMPT="0",
+        env = dict(os.environ, GIT_DIR=str(self.git_dir), GIT_WORK_TREE=str(self.root), GIT_TERMINAL_PROMPT="0",
                    GIT_ASKPASS="/bin/false", SSH_ASKPASS="/bin/false", LC_ALL="C")
         env.pop("GIT_INDEX_FILE", None)
         if remote and self.auth:
@@ -158,16 +163,23 @@ class GitSync:
     # ------------------------------------------------------------- set up
     def ensure(self) -> None:
         """A repository with the remote "origin" at our address (an existing .git is kept)."""
-        gitdir = self.root / ".git"
+        gitdir = self.git_dir
         if gitdir.is_symlink() or (gitdir.exists() and not gitdir.is_dir()):
             raise SyncError("sync-failed", ".git is not a folder")
         if not gitdir.exists():
+            gitdir.parent.mkdir(parents=True, exist_ok=True)
             self.git("init", "-q", "-b", self.branch)
         remotes = self.out("remote").split()
         if "origin" in remotes:
             self.git("remote", "set-url", "origin", self.url)
         else:
             self.git("remote", "add", "origin", self.url)
+        if self.git_dir != self.root / ".git":
+            # the vault cannot take a .gitignore: the same rules go in the repository itself
+            ex = self.git_dir / "info" / "exclude"
+            ex.parent.mkdir(parents=True, exist_ok=True)
+            ex.write_text(DEFAULT_IGNORE + ".audit.log\n", encoding="utf-8")
+            return
         gi = self.root / ".gitignore"
         if not gi.exists():
             gi.write_text(DEFAULT_IGNORE, encoding="utf-8")
@@ -362,7 +374,49 @@ class GitSync:
         return changed, conflicts + late, head != remote
 
     # ------------------------------------------------------------- the whole round
+    def upload(self) -> dict:
+        """Upload only (SKAI_ Memory): commit the files as they are and send them. When the server
+        has commits this computer does not, they stay in the history (a merge keeping these files)
+        but never change the files here."""
+        self.ensure()
+        out = Result()
+        last_error = None
+        for _attempt in range(3):
+            branches, _default = self.remote_info()
+            remote = branches.get(self.branch)
+            committed, out.too_big = self.commit_local()
+            out.committed = out.committed or committed
+            local = self.rev("HEAD")
+            if not local or local == remote:
+                last_error = None
+                break
+            if remote:
+                if self.git("cat-file", "-e", f"{remote}^{{commit}}", check=False).returncode != 0:
+                    self.git("fetch", "-q", "--no-tags", self.url, f"+refs/heads/{self.branch}:refs/remotes/origin/{self.branch}", remote=True)
+                if self.git("merge-base", "--is-ancestor", remote, local, check=False).returncode != 0:
+                    name, email = self.author
+                    tree = self.out("rev-parse", f"{local}^{{tree}}")
+                    head = self.out("-c", f"user.name={name}", "-c", f"user.email={email}", "commit-tree", tree, "-p", local, "-p", remote,
+                                    "-m", "SKAI_ Memory from this computer (the server's other changes stay in the history)")
+                    self.git("update-ref", f"refs/heads/{self.branch}", head)
+                    self.git("read-tree", head)
+            try:
+                self.git("push", "-q", self.url, f"HEAD:refs/heads/{self.branch}", remote=True)
+                self.git("update-ref", f"refs/remotes/origin/{self.branch}", "HEAD", check=False)
+                out.pushed = True
+                last_error = None
+                break
+            except SyncError as exc:
+                if exc.code != "sync-rejected":
+                    raise
+                last_error = exc
+        if last_error:
+            raise last_error
+        return out.as_dict()
+
     def sync(self) -> dict:
+        if self.upload_only:
+            return self.upload()
         self.ensure()
         out = Result()
         last_error = None

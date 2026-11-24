@@ -14,6 +14,7 @@ import { installGallery } from './gallery.js';
 import { installHome } from './home.js';
 import { installMultiSelect } from './multiselect.js';
 import { installScorpion } from './scorpion.js';
+import { installMemoryMode } from './memory-mode.js';
 import { installSync } from './sync.js';
 import { VAULT_BASE, VaultBaseView } from './vault-base.js';
 
@@ -32,6 +33,7 @@ export function installDesktop(app, info) {
   installGraphControls();
   installSettingsWheel(app);
   installScorpion(app);
+  installMemoryMode(app); // last: it takes away what the parts above added for note taking
 }
 
 /** The database of the vault is a way of looking at notes, not a file to make: the ribbon

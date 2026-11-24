@@ -9,6 +9,7 @@ import os
 import threading
 import shutil
 import subprocess
+import sys
 import stat as statmod
 import time
 import unicodedata
@@ -163,6 +164,25 @@ class Vault:
             log.warning("memory write refused: %s", (r.stderr or "").strip()[:200])
             raise VaultError("memory-refused")
         self._unlock_until = time.time() + UNLOCK_SECONDS  # active use keeps it open
+
+    def skai_change(self, op: str, rel: str, text: str = "") -> None:
+        """SKAI_ Memory: a change SKAI makes because the user asked her in the chat (op write,
+        append or delete). Goes through the helper as SKAI herself (``--skai``, caller "skai"):
+        no sudo password, the user confirmed the change in the page."""
+        if not self.protected:
+            raise VaultError("memory-unsupported")
+        rel = normalize_path(rel).lstrip("/")
+        req = {"op": op, "path": rel, "text": text, "caller": "skai"}
+        if os.environ.get("SKAI_MEMORY_NO_SUDO") == "1":  # tests / single-user setups: the helper of this checkout
+            helper = os.environ.get("SKAI_MEMORY_HELPER") or str(Path(__file__).resolve().parents[2] / "skai_memory" / "skai-memory-write")
+            cmd = [sys.executable, helper, "--direct"]
+            req["dir"] = str(self.root)
+        else:
+            cmd = ["sudo", "-n", os.environ.get("SKAI_MEMORY_HELPER") or MEMORY_HELPER, "--skai"]
+        r = subprocess.run(cmd, input=json.dumps(req), capture_output=True, text=True, timeout=30, check=False)
+        if r.returncode != 0:
+            log.warning("SKAI memory change refused: %s", (r.stderr or "").strip()[:200])
+            raise VaultError("memory-refused")
 
     def _no_protected(self) -> None:
         if self.protected:

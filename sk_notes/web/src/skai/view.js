@@ -10,6 +10,7 @@ import { MarkdownView } from '../views/markdown.js';
 import { ItemView } from '../views/base.js';
 import { ButtonComponent, Menu } from '../ui/kit.js';
 import { confirmDiff, buildIndex } from './skai.js';
+import { memoryTurn } from './memory-chat.js';
 
 export class SkaiView extends ItemView {
   constructor(leaf) {
@@ -87,7 +88,7 @@ export class SkaiView extends ItemView {
   }
 
   _placeholder() {
-    this.textarea.placeholder = this.mode === 'vault' ? t('skai.ask-vault') : t('skai.ask-note');
+    this.textarea.placeholder = this.app.memoryMode ? t('skai.memory.placeholder') : this.mode === 'vault' ? t('skai.ask-vault') : t('skai.ask-note');
   }
 
   clear() {
@@ -165,6 +166,7 @@ export class SkaiView extends ItemView {
     if (!q || this.current) return;
     this.textarea.value = '';
     this._bubble('user', q);
+    if (this.app.memoryMode) { await memoryTurn(this, q); return; } // SKAI_ Memory on the PC: she reads and changes it
     const sys = [this.client.system()];
     let context = '';
     let sources = [];

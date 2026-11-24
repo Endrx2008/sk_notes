@@ -27,6 +27,8 @@ In `.xpi` experiment code pass `ioUtilsFs(IOUtils, spawn)` as `fs`.
 ## Protection
 Files are root-owned 0644: everybody reads, nobody else writes. Changes go through `skai-memory-write`:
 * `--skai` (SKAI and her apps): sudoers lets group `skai` run exactly this command without a password.
+  An app changes only its own notes; SKAI herself (caller `skai`, the chat of sk_notes the user asks to
+  edit the memory) may change every note.
 * `--manual` (sk_notes editor): sudo asks the password; the app first asks the user's consent.
 It refuses paths outside the vault, `..`, symlinks, non-`.md` files and notes over 256 KB, and logs to `.audit.log`.
 

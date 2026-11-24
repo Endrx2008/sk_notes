@@ -239,7 +239,7 @@ export function installSync(app) {
     for (const ev of ['modify', 'create', 'delete', 'rename']) app.vault.on(ev, changed);
     await refresh();
     if (st.linked && st.auto) setTimeout(() => syncNow(), 2000);
-    else if (!st.linked && !st.offered && !st.encrypted) offer();
+    else if (!st.linked && !st.offered && !st.encrypted && !app.memoryMode) offer(); // SKAI_ Memory: Git only uploads, no offer
   });
   onBackend('sync', () => { if (!busy) refresh(); });
   window.addEventListener('focus', () => { if (st.linked && st.auto && Date.now() - lastTry > AFTER_FOCUS) syncNow(); });

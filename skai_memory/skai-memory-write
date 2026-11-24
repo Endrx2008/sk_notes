@@ -3,7 +3,9 @@
 
 Reads ONE JSON request on stdin: {"op": "write"|"append"|"delete", "path": "apps/x.md", "text": "...", "caller": "..."}
 and applies it inside the vault. Modes (first argument):
-  --skai    called by SKAI / its apps through sudo (NOPASSWD for group 'skai', exactly this argument)
+  --skai    called by SKAI / its apps through sudo (NOPASSWD for group 'skai', exactly this argument);
+            an app may change only its own notes, SKAI herself (caller "skai": the chat of sk_notes
+            the user asks to edit the memory) may change every note
   --manual  called by sk_notes for a human edit: sudo asks the password, the app asked the consent
   --direct  no privilege change (tests; refuses to run unless SKAI_MEMORY_NO_SUDO=1)
 Refuses: paths outside the vault, '..', symlinks, anything but *.md, files over 256 KB, other ops.
@@ -41,10 +43,13 @@ if len(text.encode()) > MAX:
 caller = str(req.get("caller", ""))
 if mode != "--manual":
     # An app may change only its own memory: plugins/<caller>.md and plugins/<caller>/**.
-    # (--manual, the human at sk_notes after sudo, may change anything.)
+    # (--manual, the human at sk_notes after sudo, may change anything; so may SKAI herself,
+    # caller "skai", asked by the user in the chat of sk_notes.)
     if not NAME.match(caller):
         sys.exit("refused: unknown caller")
-    if op != "register" and not (rel == f"plugins/{caller}.md" or rel.startswith(f"plugins/{caller}/")):
+    if caller == "skai" and op == "register":
+        sys.exit("refused: skai is not an app")
+    if caller != "skai" and op != "register" and not (rel == f"plugins/{caller}.md" or rel.startswith(f"plugins/{caller}/")):
         sys.exit(f"refused: {caller} may only change its own notes (plugins/{caller}.md, plugins/{caller}/)")
 os.makedirs(root, mode=0o755, exist_ok=True)
 target = os.path.join(root, *parts)

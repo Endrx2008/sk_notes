@@ -208,3 +208,44 @@ class GitSyncTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(shutil.which("git"), "git not installed")
+class MemoryUploadTests(unittest.TestCase):
+    """SKAI_ Memory: a vault sk_notes cannot write; its files only go up to the server."""
+
+    def test_upload_only_never_touches_the_vault(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            bare = d / "m.git"
+            git(d, "init", "-q", "--bare", "-b", "main", str(bare))
+            pc2 = d / "pc2"
+            git(d, "clone", "-q", str(bare), str(pc2))
+            (pc2 / "server-only.md").write_text("from elsewhere\n")
+            git(pc2, "add", "-A")
+            git(pc2, "commit", "-q", "-m", "elsewhere")
+            git(pc2, "push", "-q", "origin", "HEAD:main")
+            vault = d / "SKAI_ Memory"
+            (vault / "plugins").mkdir(parents=True)
+            (vault / "SKAI.md").write_text("# SKAI\n")
+            (vault / "plugins/sk_mail.md").write_text("# sk_mail\n")
+            (vault / ".audit.log").write_text("uid=1000\n")
+            for p in (vault / "plugins", vault):
+                p.chmod(0o555)
+            try:
+                g = GitSync(vault, str(bare), "main", ("anna", "anna@example.org"), None, git_dir=d / "data" / "memory-git", upload_only=True)
+                res = g.sync()
+                self.assertTrue(res["pushed"])
+                self.assertEqual(res["pulled"], 0)
+                self.assertFalse((vault / ".git").exists())
+                self.assertFalse((vault / ".gitignore").exists())
+                self.assertFalse((vault / "server-only.md").exists())
+                files = git(bare, "ls-tree", "-r", "--name-only", "main").split()
+                self.assertEqual(sorted(files), ["SKAI.md", "plugins/sk_mail.md"])  # no audit log, no server file
+                log = git(bare, "log", "--format=%s", "main")
+                self.assertIn("elsewhere", log)  # the server's commit stays in the history
+                # nothing new: nothing sent; a change: one more commit
+                self.assertFalse(GitSync(vault, str(bare), "main", ("a", "a@b"), None, git_dir=d / "data" / "memory-git", upload_only=True).sync()["committed"])
+            finally:
+                for p in (vault, vault / "plugins"):
+                    p.chmod(0o755)

@@ -1,7 +1,7 @@
 {
   "name": "sk_notes-web",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Web front-end of sk_notes (bundled into sk_notes/web/dist)",
   "license": "GPL-3.0-or-later",
   "scripts": {

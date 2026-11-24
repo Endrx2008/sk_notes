@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import logging
 import os
 import re
@@ -265,6 +266,16 @@ def register(app) -> None:
             raise ApiError(str(exc), "") from exc
         return {"unlocked": True}
 
+    @r("memory.skai", slow=True)
+    def memory_skai(p, ctx):
+        # only the page itself (the SKAI chat, after the user confirmed the change), never a plugin
+        if ctx.plugin:
+            raise ApiError("permission-denied")
+        try:
+            return svc().skai_change(str(p.get("op", "")), str(p.get("path", "")), str(p.get("text", "")))
+        except VaultError as exc:
+            raise ApiError(str(exc), "") from exc
+
     @r("memory.lock")
     def memory_lock(p, ctx):
         svc().vault.lock()
@@ -349,6 +360,44 @@ def register(app) -> None:
         return True
 
     # ------------------------------------------------------------- vault config (.sk_notes/*)
+    # The look of the interface is the same in every vault of this computer: appearance.json lives
+    # in the user's config folder, and themes and CSS snippets found in a vault are copied there,
+    # so every vault (SKAI_ Memory included) can use them. Everything else stays per vault.
+    def ui_dir() -> Path:
+        return config.config_dir() / "interface"
+
+    def ui_appearance_read():
+        g = ui_dir() / "appearance.json"
+        try:
+            return json.loads(g.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            pass
+        mine = svc().config_read("appearance.json", None)  # the first vault opened gives its look to all
+        if isinstance(mine, dict):
+            ui_appearance_write(mine)
+        return mine
+
+    def ui_appearance_write(data) -> None:
+        g = ui_dir() / "appearance.json"
+        g.parent.mkdir(parents=True, exist_ok=True)
+        tmp = g.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(g)
+
+    def ui_css(name: str) -> str | None:
+        mine = svc().vault.config_dir / name
+        shared = ui_dir() / name
+        if mine.is_file():
+            text = mine.read_text(encoding="utf-8")
+            try:
+                if not shared.is_file() or shared.read_text(encoding="utf-8") != text:
+                    shared.parent.mkdir(parents=True, exist_ok=True)
+                    shared.write_text(text, encoding="utf-8")
+            except OSError:
+                pass
+            return text
+        return shared.read_text(encoding="utf-8") if shared.is_file() else None
+
     @r("config.read")
     def config_read(p, ctx):
         name = p["name"]
@@ -358,7 +407,11 @@ def register(app) -> None:
             raise ApiError("permission-denied", name)
         path = svc().vault.config_dir / name
         if name.endswith(".css"):
+            if name.startswith(("themes/", "snippets/")):
+                return ui_css(name)
             return path.read_text(encoding="utf-8") if path.exists() else None
+        if name == "appearance.json":
+            return ui_appearance_read()
         return svc().config_read(name, None)
 
     @r("config.write")
@@ -370,6 +423,9 @@ def register(app) -> None:
             raise ApiError("permission-denied", name)
         if ctx.plugin and not name.startswith(f"plugins/{ctx.plugin}/"):
             raise ApiError("permission-denied", name)
+        if name == "appearance.json":
+            ui_appearance_write(p.get("data"))
+            return True
         svc().config_write(name, p.get("data"))
         return True
 
@@ -377,10 +433,11 @@ def register(app) -> None:
     def config_list(p, ctx):
         kind = p.get("kind")
         base = svc().vault.config_dir
+        shared = ui_dir()
         if kind == "snippets":
-            return sorted(f.name for f in (base / "snippets").glob("*.css")) if (base / "snippets").is_dir() else []
+            return sorted({f.name for b in (base, shared) if (b / "snippets").is_dir() for f in (b / "snippets").glob("*.css")})
         if kind == "themes":
-            found = [d.name for d in (base / "themes").iterdir() if (d / "theme.css").exists()] if (base / "themes").is_dir() else []
+            found = [d.name for b in (base, shared) if (b / "themes").is_dir() for d in (b / "themes").iterdir() if (d / "theme.css").exists()]
             return sorted({"Anna.g_3", *found})  # Anna.g_3 comes with sk_notes
         raise ApiError("bad-kind")
 

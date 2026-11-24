@@ -343,6 +343,7 @@ export function registerCoreFeatures(app) {
   setIcon(setBtn, 'settings');
   // the desktop shows a small menu first (trash, SKAI, settings: app.settingsWheel)
   setBtn.addEventListener('click', () => (app.settingsWheel ? app.settingsWheel(setBtn) : openSettings(app)));
+  installFileOnlyTabs(app);
   // vault name at the bottom of the left sidebar
   app.on('ready', () => {
     const name = ws.leftSplit.containerEl.createDiv('workspace-sidedock-vault-profile mod-keep');
@@ -482,6 +483,35 @@ async function openDailyNote(app, offset, relative) {
     file = app.vault.getFileByPath(path);
   }
   if (file) app.workspace.openFile(file, false);
+}
+
+/** Backlinks and outgoing links speak of the note on screen: with no note on screen (graph,
+ * file list, Home) their tabs in the sidebars are hidden instead of saying "No file open". */
+function installFileOnlyTabs(app) {
+  const ws = app.workspace;
+  const FILE_ONLY = new Set(['backlink', 'outgoing-link']);
+  const update = () => {
+    const front = ws.activeLeaf && ws.activeLeaf.getRoot() === ws.rootSplit ? ws.activeLeaf : ws.getMostRecentLeaf(ws.rootSplit);
+    const hasFile = !!front?.view?.file;
+    for (const type of FILE_ONLY) {
+      for (const l of ws.getLeavesOfType(type)) {
+        if (l.getRoot() === ws.rootSplit) continue;
+        l.tabHeaderEl?.toggle(hasFile);
+        const tabs = l.parent;
+        if (!hasFile && tabs?.children?.[tabs.currentTab] === l) {
+          const other = tabs.children.find((x) => !FILE_ONLY.has(x.view?.getViewType?.() ?? x._pending?.type));
+          if (other) tabs.selectTab(other);
+        }
+      }
+    }
+  };
+  const later = () => setTimeout(update, 0);
+  app.on('ready', () => {
+    update();
+    ws.on('active-leaf-change', later);
+    ws.on('layout-change', later);
+    ws.on('file-open', later);
+  });
 }
 
 export function applyTemplateVars(app, text, title, date = window.moment()) {

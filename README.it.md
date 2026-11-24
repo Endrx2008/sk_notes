@@ -42,6 +42,8 @@ Licenza: **GPL-3.0-or-later**. sk_notes non è affiliato con Obsidian o Dynalist
 
 Il pacchetto installa anche la memoria Markdown condivisa di SKAI (`/var/lib/skai/SKAI_ Memory`, vedi `skai_memory/README.md`): ogni app e plugin SKAI si identifica tramite la libreria `skai_memory`, tiene le proprie note in `plugins/<app>/` e può leggere tutte le altre. Per permettere alle app di un utente di scrivere: `sudo usermod -aG skai <utente>`.
 
+Sul PC sk_notes apre SKAI_ Memory come una finestra sulla memoria, non come un quaderno: il grafo al centro, i file a sinistra e SKAI a destra, che legge e cambia la memoria quando glielo chiedi a parole (ogni modifica viene mostrata prima; nessuna password di sudo). Niente Home, niente strumenti per prendere appunti, niente riquadri o finestre, niente impostazioni: l'aspetto dell'interfaccia è lo stesso in tutti i vault del computer. Git carica soltanto la memoria; la cronologia delle versioni resta.
+
 ## Android
 
 `android/` contiene sk_notes per Android 8.0 o successivi: lo stesso spazio di lavoro del PC in un APK,
@@ -51,7 +53,7 @@ più recente. Compilazione, firma,
 test e differenze del telefono: [android/README.md](android/README.md) (in inglese).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.0.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.1.apk
 ```
 
 ## Installazione
@@ -59,7 +61,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.0.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_1.2.0_all.deb      # pacchetto creato da tools/build_deb.sh
+sudo apt install ./sk-notes_1.2.1_all.deb      # pacchetto creato da tools/build_deb.sh
 sk-notes
 ```
 
@@ -74,7 +76,7 @@ python3 main.py                 # oppure: python3 main.py --vault ~/Note
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-1.2.0.tar.gz + dist/PKGBUILD (con checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-1.2.1.tar.gz + dist/PKGBUILD (con checksum)
 cd dist && makepkg -si
 ```
 
