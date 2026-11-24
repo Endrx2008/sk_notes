@@ -155,6 +155,24 @@ export function installMobile(app, info) {
   // a phone shows one note at a time: "split" opens a tab instead
   const split = ws.createLeafBySplit.bind(ws);
   ws.createLeafBySplit = (leaf, direction, before) => (isPhone() ? ws.getLeaf('tab') : split(leaf, direction, before));
+  // "Open backlinks / outline / local graph" of a note's "…" menu: beside the note on a tablet;
+  // on a phone (one note at a time) the backlinks and the outline come in the right drawer, for
+  // the note on screen, and the local graph opens as a tab of its own, shown at once
+  const linked = app.openLinkedView.bind(app);
+  app.openLinkedView = async (leaf, type) => {
+    if (!isPhone()) return linked(leaf, type);
+    if (type === 'backlink' || type === 'outline') {
+      const side = ws.getLeavesOfType(type).find((l) => l.getRoot() === ws.rightSplit || l.getRoot() === ws.leftSplit);
+      const target = side || ws.getRightLeaf(false);
+      if (!side) await target.setViewState({ type, state: {} });
+      await ws.revealLeaf(target);
+      return;
+    }
+    const file = leaf?.view?.file;
+    const tab = ws.getLeaf('tab');
+    await tab.setViewState({ type, state: { file: file?.path }, active: true });
+    ws.setActiveLeaf(tab, { focus: false });
+  };
   // there is one window: "open in new window" opens a tab
   ws.openPopoutLeaf = () => ws.getLeaf('tab');
   ws.moveLeafToPopout = async (leaf) => leaf;

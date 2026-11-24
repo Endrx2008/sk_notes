@@ -7,10 +7,13 @@
 import { call } from '../core/api.js';
 import { errorText, t } from '../core/i18n.js';
 import { installCryptUi } from '../ui/crypt-ui.js';
+import { Menu } from '../ui/kit.js';
+import { openTrash } from '../features/trash.js';
 import { installChrome } from './chrome.js';
 import { installGallery } from './gallery.js';
 import { installHome } from './home.js';
 import { installMultiSelect } from './multiselect.js';
+import { installScorpion } from './scorpion.js';
 import { installSync } from './sync.js';
 import { VAULT_BASE, VaultBaseView } from './vault-base.js';
 
@@ -27,6 +30,8 @@ export function installDesktop(app, info) {
   installGallery(app);
   installSync(app);
   installGraphControls();
+  installSettingsWheel(app);
+  installScorpion(app);
 }
 
 /** The database of the vault is a way of looking at notes, not a file to make: the ribbon
@@ -92,4 +97,20 @@ function installGraphControls() {
     const inside = e.target.closest?.('.graph-controls');
     for (const el of document.querySelectorAll('.graph-controls:not(.is-close)')) if (el !== inside) el.addClass('is-close');
   }, true);
+}
+
+/** The settings wheel opens a small menu, like the wheel of the Android app: first the trash
+ * (red: what was deleted in the last three months), then SKAI, then the settings. */
+function installSettingsWheel(app) {
+  app.settingsWheel = (el) => {
+    const m = new Menu();
+    m.addItem((i) => {
+      i.setTitle(t('trash.title')).setIcon('trash').setSection('trash').onClick(() => openTrash(app));
+      i.dom.addClass('sk-menu-trash');
+    });
+    m.addItem((i) => i.setTitle(t('ribbon.skai')).setIcon('sparkles').setSection('do').onClick(() => app.commands.executeCommandById('skai:open')));
+    m.addItem((i) => i.setTitle(t('cmd.settings')).setIcon('settings').setSection('settings').onClick(() => app.commands.executeCommandById('app:open-settings')));
+    const r = el.getBoundingClientRect();
+    m.showAtPosition({ x: r.right + 6, y: r.bottom });
+  };
 }

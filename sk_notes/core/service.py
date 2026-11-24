@@ -43,6 +43,10 @@ class VaultService:
     # ------------------------------------------------------------- lifecycle
     def open(self) -> dict:
         self.recovered_rename = self._recover_rename()
+        try:
+            trash.list_trash(self.vault)  # what was deleted more than three months ago goes for good
+        except OSError as exc:
+            log.warning("trash not tidied: %s", exc)
         stats = self.index.sync()
         log.info("vault %s opened: %s", self.vault.root, stats)
         return stats
@@ -393,6 +397,18 @@ class VaultService:
             self.emit("modify" if known else "create",
                       {"file": st.to_json(), "metadata": meta, "external": True,
                        **self._links_payload([path] if known else None)})
+
+    def external_read(self, paths: list[str]) -> None:
+        """SKAI_ Memory only: notes another program read (an app of SKAI looking something up).
+        The page shows SKAI's scorpion going to them; many at once is a scan of the whole memory."""
+        if not self.vault.protected:
+            return
+        now = time.monotonic()
+        mine = self.vault.own_reads
+        got = [p for p in (normalize_path(x) for x in paths)
+               if p in self.index.files and now - mine.get(p, -1e9) > 2.0 and not self.is_own_echo(p)]
+        if got:
+            self.emit("read", {"paths": got[:200], "scan": len(got) > 6})
 
     def external_rename(self, old: str, new: str) -> None:
         """Another program renamed or moved a file or folder inside the vault: update the

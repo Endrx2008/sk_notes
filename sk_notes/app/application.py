@@ -267,8 +267,9 @@ class SkNotesApp(QObject):
         t0 = time.perf_counter()
         stats = self.service.open()
         log.info("vault ready in %.2fs (%s)", time.perf_counter() - t0, stats)
-        self.watcher = VaultWatcher(self.service.vault.root, self)
+        self.watcher = VaultWatcher(self.service.vault.root, self, reads=self.service.vault.protected)
         self.watcher.changed.connect(self.service.external_change)
+        self.watcher.opened.connect(self.service.external_read)
         self.watcher.moved.connect(self.service.external_rename)
         self.watcher.rescan.connect(self.service.rescan)
         key = record or path

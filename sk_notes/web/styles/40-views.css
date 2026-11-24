@@ -139,3 +139,19 @@
 
 /* graph: the colour swatches of a note's menu */
 .menu-item.graph-color-item .menu-item-icon::before { content: ''; display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--node-color); }
+
+/* graph: the pencil of the chosen dots (right click, or a long press on a phone) */
+.graph-view .graph-pencil { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 5; width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: var(--mobile-bar-background, var(--background-secondary)); color: var(--sk-accent);
+  border: 1px solid var(--sk-border); box-shadow: 0 2px 10px rgba(0, 0, 0, .35); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.graph-view .graph-pencil:hover, .graph-view .graph-pencil:active { background: var(--sk-select, var(--background-modifier-hover)); }
+.graph-pencil-icon { display: flex; }
+.graph-pencil .svg-icon { width: 22px; height: 22px; }
+.graph-pencil-count { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; background: var(--mobile-mark-color, var(--sk-accent)); color: var(--mobile-mark-text, var(--sk-on-accent)); }
+.graph-pencil-count:empty { display: none; }
+.menu-item.graph-trash-item { font-weight: 600; }
+
+/* SKAI's scorpion and its house on the graph (desktop/scorpion.js): drawn above the dots, never in the way of the mouse */
+.graph-view .skai-pet-layer { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.skai-pet-canvas { display: block; }

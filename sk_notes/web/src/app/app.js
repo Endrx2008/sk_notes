@@ -179,7 +179,7 @@ export class App extends Events {
       this.metadataCache._onBackend(name, d, file);
       if (name === 'rename' && file) this.workspace._onFileRenamed(file, d.oldPath);
       if (name === 'delete' && file) this.workspace._onFileDeleted(file);
-      if (name === 'modify' && file instanceof TFile && d.external) this.workspace._onFileModified(file);
+      if (name === 'modify' && file instanceof TFile && (d.external || d.internal)) this.workspace._onFileModified(file, null, { internal: !!d.internal });
       if (name === 'rename') for (const p of d.updated || []) {
         const f = this.vault.getFileByPath(p);
         if (f) this.workspace._onFileModified(f);

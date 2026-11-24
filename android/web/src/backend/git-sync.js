@@ -28,6 +28,7 @@ export const DEFAULT_IGNORE = [
   '.sk_notes/workspace-mobile.json',
   '.sk_notes/workspaces-mobile.json',
   '.sk_notes/rename-journal.json',
+  '.sk_notes/graph-positions.json',
   '.sk_notes/cache.db*',
   '.sk_notes/history.db*',
   '.sk_notes/embeddings.db*',
@@ -38,7 +39,7 @@ export const DEFAULT_IGNORE = [
 ].join('\n');
 
 // never committed from this device and never overwritten on it, whatever .gitignore says
-const DEVICE_FILES = new Set(['.sk_notes/workspace-mobile.json', '.sk_notes/workspaces-mobile.json', '.sk_notes/rename-journal.json']);
+const DEVICE_FILES = new Set(['.sk_notes/workspace-mobile.json', '.sk_notes/graph-positions.json', '.sk_notes/workspaces-mobile.json', '.sk_notes/rename-journal.json']);
 export const isDeviceFile = (p) => DEVICE_FILES.has(p) || p === '.trash' || p.startsWith('.trash/') || /(^|\/)\.skn-tmp-[^/]*$/.test(p);
 
 const MAX_FILE = 50 * 1024 * 1024; // larger files stay on the device (hosting sites refuse big files)

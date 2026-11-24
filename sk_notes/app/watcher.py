@@ -17,7 +17,7 @@ from PyQt6.QtCore import QObject, QSocketNotifier, QTimer, pyqtSignal
 
 log = logging.getLogger(__name__)
 
-IN_MODIFY, IN_ATTRIB, IN_CLOSE_WRITE = 0x2, 0x4, 0x8
+IN_MODIFY, IN_ATTRIB, IN_CLOSE_WRITE, IN_OPEN = 0x2, 0x4, 0x8, 0x20
 IN_MOVED_FROM, IN_MOVED_TO, IN_CREATE, IN_DELETE = 0x40, 0x80, 0x100, 0x200
 IN_DELETE_SELF, IN_MOVE_SELF, IN_Q_OVERFLOW, IN_IGNORED, IN_ISDIR = 0x400, 0x800, 0x4000, 0x8000, 0x40000000
 IN_NONBLOCK, IN_CLOEXEC = 0o4000, 0o2000000
@@ -30,10 +30,13 @@ class VaultWatcher(QObject):
     changed = pyqtSignal(str)  # vault-relative path of a file or folder
     rescan = pyqtSignal()  # too many events / overflow: do a full rescan
     moved = pyqtSignal(str, str)  # a file or folder renamed inside the vault by another program
+    opened = pyqtSignal(list)  # files opened (read) by any program, when reads=True (SKAI_ Memory)
 
-    def __init__(self, root: Path, parent=None):
+    def __init__(self, root: Path, parent=None, reads: bool = False):
         super().__init__(parent)
         self.root = Path(root)
+        self.mask = MASK | (IN_OPEN if reads else 0)
+        self.opened_files: set[str] = set()
         self.wd_to_dir: dict[int, str] = {}
         self.dir_to_wd: dict[str, int] = {}
         self.pending: set[str] = set()
@@ -63,7 +66,7 @@ class VaultWatcher(QObject):
 
     def _add(self, rel: str) -> None:
         path = str(self.root / rel) if rel else str(self.root)
-        wd = self.libc.inotify_add_watch(self.fd, os.fsencode(path), MASK)
+        wd = self.libc.inotify_add_watch(self.fd, os.fsencode(path), self.mask)
         if wd < 0:
             err = ctypes.get_errno()
             if err == 28:  # ENOSPC: max_user_watches reached
@@ -113,6 +116,11 @@ class VaultWatcher(QObject):
             if ".skn-tmp-" in name:
                 continue
             rel = f"{folder}/{name}" if folder else name
+            if mask & IN_OPEN:  # its own event: nothing changed
+                if not mask & IN_ISDIR:
+                    self.opened_files.add(rel)
+                    self.flush_timer.start()
+                continue
             if mask & IN_ISDIR and mask & (IN_CREATE | IN_MOVED_TO):
                 self._add_tree(rel)
             # a move inside the vault arrives as MOVED_FROM + MOVED_TO with one cookie: report
@@ -143,6 +151,11 @@ class VaultWatcher(QObject):
         items, self.pending = sorted(self.pending), set()
         for rel in items:
             self.changed.emit(rel)
+        # opened and not changed: read (a write opens the file too)
+        written = set(items) | {b for _a, b in moves} | {a for a, _b in moves}
+        reads, self.opened_files = sorted(self.opened_files - written), set()
+        if reads:
+            self.opened.emit(reads)
 
     def close(self) -> None:
         if self.notifier is not None:

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { BASE_VIEWS, leaveBase, openBase } from './home.js';
+import { openTrash } from '@desktop/features/trash.js';
 import { setIcon } from '@desktop/core/icons.js';
 import { t } from '@desktop/core/i18n.js';
 import { Menu, Modal } from '@desktop/ui/kit.js';
@@ -175,6 +176,11 @@ export function installNavbar(app) {
   button('settings', t('mobile.more'), (e, el) => {
     const menu = new Menu();
     const item = (section, icon, title, fn) => menu.addItem((i) => i.setTitle(title).setIcon(icon).setSection(section).onClick(fn));
+    // the trash first, above SKAI, in red: what was deleted in the last three months
+    menu.addItem((i) => {
+      i.setTitle(t('trash.title')).setIcon('trash').setSection('trash').onClick(() => openTrash(app));
+      i.dom.addClass('sk-menu-trash');
+    });
     item('do', 'sparkles', t('ribbon.skai'), run('skai:open'));
     item('do', 'calendar-day', t('cmd.daily-note'), run('daily-notes'));
     item('do', 'template', t('mobile.menu.template'), () => {

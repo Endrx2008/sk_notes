@@ -2,15 +2,18 @@
 
 import { memoryEdgeStyle } from '../features/memory.js';
 import { setIcon } from '../core/icons.js';
-import { t } from '../core/i18n.js';
+import { errorText, t } from '../core/i18n.js';
 import { debounce } from '../core/util.js';
 import { Keymap } from '../model/keymap.js';
 import { getAllTags } from '../model/metadata.js';
 import { ItemView } from './base.js';
-import { Menu, Setting } from '../ui/kit.js';
+import { Menu, Setting, confirmDialog } from '../ui/kit.js';
 
 // colours a note's dot can be given by hand (right click, or a long press on a phone); its size stays the graph's own
 const NODE_COLORS = [['red', '#e5484d'], ['orange', '#f08c2e'], ['yellow', '#e3b341'], ['green', '#39d353'], ['cyan', '#3fc1c9'], ['purple', '#b98bf0']];
+// where the dots of the graph were (per device: Git sync leaves it out)
+const POS_FILE = 'graph-positions.json';
+const finite = (v) => Array.isArray(v) && v.length === 2 && Number.isFinite(v[0]) && Number.isFinite(v[1]);
 
 // --------------------------------------------------------------- layout worker
 function workerMain() {
@@ -172,7 +175,7 @@ export class GraphView extends ItemView {
     this.view = { x: 0, y: 0, k: 1 };
     this.autoFit = true; // follow the layout until the user pans or zooms
     this.hover = -1;
-    this.selected = new Set(); // ids of the dots chosen by a long press (coloured together)
+    this.selected = new Set(); // ids of the dots chosen by a right click / long press (a pencil edits them together)
     this.dirty = true;
     this.rebuild = debounce(() => this.build(true), 400, true);
     this._buildControls();
@@ -188,18 +191,32 @@ export class GraphView extends ItemView {
     if (st.options) this.options = { ...DEFAULT_OPTIONS, ...st.options };
     if (st.file) this.file = this.app.vault.getFileByPath(st.file);
     this._buildControls();
-    this.build(false);
+    // the workspace gives the view its state while it opens: that is not a reason to start over
+    this._fromState = true;
+    try { this.build(false); } finally { this._fromState = false; }
   }
 
   async onOpen() {
+    this._opening = true;
+    try { await this._open0(); } finally { this._opening = false; }
+  }
+
+  async _open0() {
+    if (!this.local) {
+      const saved = await this.app.config.read(POS_FILE).catch(() => null);
+      this._savedPos = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : null;
+      this._lastSaved = this._savedPos || {};
+    }
     this.worker = new Worker(workerUrl);
     this.worker.onmessage = (e) => {
       if (e.data.type === 'pos') {
         this.pos = e.data.pos;
         if (this.autoFit) this._fit();
         this.dirty = true;
-      }
+        if (this._holdStill) { this._holdStill = false; this.worker.postMessage({ type: 'stop' }); }
+      } else if (e.data.type === 'idle') this._keepPositions();
     };
+    this.register(() => this._keepPositions()); // closed while still moving
     this.register(() => this.worker.terminate());
     const draw = () => {
       if (!this._loaded) return;
@@ -240,7 +257,49 @@ export class GraphView extends ItemView {
   }
 
   // ------------------------------------------------------------- data
+  /** keep: start the layout from where the dots are. The first layout of an opened graph starts
+   * from where they were last time (graph-positions.json); only new notes are placed by it. */
   build(keep) {
+    const quiet = !keep && this.worker && !this.local && (this._opening || this._fromState);
+    if (quiet && !this._savedPos && this.pos && this.nodes.length) return this._build(true); // already placed: stay
+    if (quiet && this._savedPos) {
+      const saved = this._savedPos;
+      this._savedPos = null;
+      const ids = Object.keys(saved).filter((id) => finite(saved[id]));
+      if (ids.length) {
+        this.nodes = ids.map((id) => ({ id }));
+        this.pos = new Float32Array(ids.length * 2);
+        ids.forEach((id, i) => { this.pos[i * 2] = saved[id][0]; this.pos[i * 2 + 1] = saved[id][1]; });
+        this._build(true);
+        // the dots are now in the order of the new build: their places too, until the layout answers
+        this.pos = new Float32Array(this.nodes.length * 2);
+        this.nodes.forEach((nd, i) => { const p = saved[nd.id]; if (finite(p)) { this.pos[i * 2] = p[0]; this.pos[i * 2 + 1] = p[1]; } });
+        // every dot has its place: none moves until the user drags one (new notes need the layout)
+        this._holdStill = this.nodes.every((nd) => finite(saved[nd.id]));
+        return;
+      }
+    }
+    this._build(keep);
+  }
+
+  /** Where the dots are now, kept for the next opening (after the layout settled, after a drag). */
+  _keepPositions() {
+    if (this.local || !this.pos || this.pos.length < this.nodes.length * 2 || !this.nodes.length) return;
+    const all = { ...(this._lastSaved || {}) };
+    this.nodes.forEach((nd, i) => { all[nd.id] = [Math.round(this.pos[i * 2] * 10) / 10, Math.round(this.pos[i * 2 + 1] * 10) / 10]; });
+    // notes hidden by a filter keep their place; deleted notes lose it
+    for (const id of Object.keys(all)) {
+      if (id.startsWith('#') || id.startsWith('?')) continue;
+      if (!this.app.vault.getAbstractFileByPath(id)) delete all[id];
+    }
+    const text = JSON.stringify(all);
+    if (text === this._lastSavedText) return;
+    this._lastSaved = all;
+    this._lastSavedText = text;
+    this.app.config.write(POS_FILE, all).catch(() => {});
+  }
+
+  _build(keep) {
     if (!this.worker) return;
     const app = this.app;
     const o = this.options;
@@ -548,6 +607,7 @@ export class GraphView extends ItemView {
       if (h !== this.hover) { this.hover = h; this.dirty = true; cv.style.cursor = h >= 0 ? 'pointer' : 'default'; }
     });
     cv.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return; // a right click chooses the dot (contextmenu), it neither drags nor opens it
       const [sx, sy] = local(e);
       drag = { node: this._nodeAt(sx, sy), sx, sy, vx: this.view.x, vy: this.view.y, moved: false, at: Date.now() };
     });
@@ -556,8 +616,12 @@ export class GraphView extends ItemView {
       const d = drag;
       drag = null;
       if (d.node >= 0) this.worker.postMessage({ type: 'drag', i: d.node, x: this.pos[d.node * 2], y: this.pos[d.node * 2 + 1], fix: false });
-      // a long press (a finger held on a dot to colour it) is not a click
-      if (!d.moved && d.node >= 0 && e.target === cv && Date.now() - d.at < 500) this._open(d.node, e);
+      // a long press (a finger held on a dot to choose it) is not a click; while dots are
+      // chosen, a click on another one adds it (or takes it away)
+      if (!d.moved && d.node >= 0 && e.target === cv && Date.now() - d.at < 500) {
+        if (this.selected.size && this.nodes[d.node]?.type !== 'tag') this._toggleChosen(d.node);
+        else this._open(d.node, e);
+      }
       // a tap on the empty canvas ends the choice of dots
       else if (!d.moved && d.node < 0 && e.target === cv) this.clearSelection();
     };
@@ -567,10 +631,11 @@ export class GraphView extends ItemView {
       if (i < 0) return;
       e.preventDefault();
       e.stopPropagation();
-      // a long press chooses the dot; one more on another dot adds it: the colour goes to all
+      // a right click (a long press on a phone) chooses the dot and shows the pencil at the
+      // bottom; the graph stays in sight, more dots can be chosen, the pencil edits them all
       const nd = this.nodes[i];
       if (nd.type !== 'tag') { this.selected.add(nd.id); this.dirty = true; }
-      this._colorMenu(i, e);
+      this._syncPencil();
     });
     cv.addEventListener('wheel', (e) => {
       e.preventDefault();
@@ -592,17 +657,36 @@ export class GraphView extends ItemView {
     if (!this.selected.size) return false;
     this.selected.clear();
     this.dirty = true;
+    this._syncPencil();
     return true;
   }
 
-  /** The colour of the chosen dots (one, or all chosen by long press): a few colours, one of
-   * the user's own, or none. */
-  _colorMenu(i, e) {
-    const nd = this.nodes[i];
-    if (!nd || nd.type === 'tag') return;
+  _toggleChosen(i) {
+    const id = this.nodes[i].id;
+    if (this.selected.has(id)) this.selected.delete(id); else this.selected.add(id);
+    this.dirty = true;
+    this._syncPencil();
+  }
+
+  /** The small pencil at the bottom while dots are chosen (with how many, when more than one). */
+  _syncPencil() {
     const known = new Set(this.nodes.map((n) => n.id));
     for (const id of this.selected) if (!known.has(id)) this.selected.delete(id); // gone since
-    const ids = this.selected.size ? [...this.selected] : [nd.id];
+    if (!this.selected.size) { this._pencil?.remove(); this._pencil = null; return; }
+    if (!this._pencil) {
+      this._pencil = this.contentEl.createDiv({ cls: 'graph-pencil', attr: { role: 'button', 'aria-label': t('graph.edit-chosen'), 'data-no-tooltip': '' } });
+      setIcon(this._pencil.createSpan('graph-pencil-icon'), 'pencil');
+      this._pencilCount = this._pencil.createSpan('graph-pencil-count');
+      this._pencil.addEventListener('click', (e) => { e.stopPropagation(); this._colorMenu(); });
+    }
+    this._pencilCount.setText(this.selected.size > 1 ? String(this.selected.size) : '');
+  }
+
+  /** The editor of the chosen dots: a colour for all of them (a few, one of the user's own, or
+   * none), and at the bottom a red bin that moves their notes to the trash. */
+  _colorMenu() {
+    const ids = [...this.selected];
+    if (!ids.length) return;
     const colors = new Set(ids.map((id) => (this.nodeColors?.[id] || '').toLowerCase()));
     const cur = colors.size === 1 ? [...colors][0] : '';
     const anyColor = ids.some((id) => this.nodeColors?.[id]);
@@ -616,11 +700,12 @@ export class GraphView extends ItemView {
       this.app.workspace.trigger('graph-colors-change');
     };
     const m = new Menu();
-    const title = ids.length > 1 ? t('graph.selected-count', { n: ids.length }) : nd.label || nd.id;
+    const first = this.nodes.find((n) => n.id === ids[0]);
+    const title = ids.length > 1 ? t('graph.selected-count', { n: ids.length }) : first?.label || ids[0];
     m.addItem((it) => it.setTitle(title).setIsLabel(true).setDisabled(true));
     for (const [name, hex] of NODE_COLORS) {
       m.addItem((it) => {
-        it.setTitle(t(`canvas.color-${name}`)).setChecked(cur.toLowerCase() === hex).setSection('color').onClick(() => set(hex));
+        it.setTitle(t(`canvas.color-${name}`)).setChecked(cur === hex).setSection('color').onClick(() => set(hex));
         it.dom.style.setProperty('--node-color', hex);
         it.dom.addClass('graph-color-item');
       });
@@ -635,7 +720,30 @@ export class GraphView extends ItemView {
       input.click();
     }));
     if (anyColor) m.addItem((it) => it.setTitle(t('canvas.color-none')).setIcon('x').setSection('custom').onClick(() => set('')));
-    m.showAtMouseEvent(e);
+    const files = ids.map((id) => this.app.vault.getAbstractFileByPath(id)).filter(Boolean);
+    if (files.length) {
+      m.addItem((it) => {
+        it.setTitle(t('graph.trash')).setIcon('trash').setWarning(true).setSection('danger').onClick(() => this._trashChosen(files));
+        it.dom.addClass('graph-trash-item');
+      });
+    }
+    const r = (this._pencil || this.contentEl).getBoundingClientRect();
+    m.showAtPosition({ x: r.left + r.width / 2, y: r.top - 4 });
+  }
+
+  async _trashChosen(files) {
+    const app = this.app;
+    if (app.settings.get('promptDelete') !== false) {
+      const names = files.slice(0, 6).map((f) => f.name).join('\n') + (files.length > 6 ? '\n…' : '');
+      const ok = await confirmDialog(app, { title: t('graph.trash-title', { n: files.length }), message: names, confirm: t('graph.trash'), warning: true });
+      if (!ok) return;
+    }
+    this.clearSelection();
+    let done = 0;
+    for (const f of files) {
+      try { await app.fileManager.trashFile(f); done += 1; } catch (e) { app.notice(`${f.name}: ${errorText(e)}`); }
+    }
+    app.notice(t('graph.trashed', { n: done }));
   }
 
   async _open(i, e) {

@@ -9,7 +9,7 @@
 import { History } from './history.js';
 import * as links from './links.js';
 import { native } from './native.js';
-import { deleteFile } from './trash.js';
+import { deleteFile, listTrash } from './trash.js';
 import { ApiError, CONFIG_DIR, TEXT_EXT, extOf, normalizePath, sha1 } from './util.js';
 import { Vault, entryJson } from './vault.js';
 import { MetaStore, VaultIndex } from './vindex.js';
@@ -28,6 +28,7 @@ export class VaultService {
   // ------------------------------------------------------------- lifecycle
   async open(progress) {
     this.recoveredRename = this._recoverRename();
+    try { listTrash(this.vault); } catch { /* the trash is tidied next time */ } // gone for good after three months
     return this.index.sync(progress);
   }
 

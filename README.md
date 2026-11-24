@@ -17,14 +17,14 @@ License: **GPL-3.0-or-later**. sk_notes is not affiliated with Obsidian or Dynal
 
 | Area | What you get |
 |---|---|
-| Vault | open/create/switch vaults, file explorer with sorting, drag & drop, several files at once (Ctrl/Shift+click: rename one after the other, move, delete), rename (links are updated automatically), system trash or `.trash`, file recovery and version history |
+| Vault | open/create/switch vaults, file explorer with sorting, drag & drop, several files at once (Ctrl/Shift+click: rename one after the other, move, delete), rename (links are updated automatically), system trash or `.trash`, a trash of the vault (menu of the settings wheel: what was deleted in the last three months, put back or deleted for good; older files go by themselves), file recovery and version history |
 | Editor | Live Preview and Source mode, Reading view, syntax highlighting, tasks, tables, code blocks, math (KaTeX), callouts, footnotes, highlights, comments, multiple cursors, folding, find & replace, slash commands |
 | Links | `[[wikilinks]]` with autocomplete, aliases, heading and block links, embeds of notes, sections, images, audio, video and PDF, backlinks and unlinked mentions, outgoing links, page preview |
 | Search | full-text index with `file:`, `path:`, `tag:`, `line:()`, `section:()`, `task-todo:`, `[property:value]`, `OR`, `-`, regex… |
 | Home | an empty tab is Home, as in sk_notes for Android: the logo with the name of the open vault, recent notes in one row, create (note — with a calendar button for today's note —, canvas, and a smaller bar for a note from a template), view (graph, database of the vault — a view, no file is made; the file list is always in the left sidebar); every tile is a command with a shortcut (Settings → Hotkeys) shown on the tile — note Ctrl+N, canvas Ctrl+C when there is nothing to copy; arrows and Enter work on Home. The left ribbon hides while only Home is on screen. The "+" of the tabs shows two bubbles (note, canvas) to click, or press and pull towards one |
 | Panes | the "new pane on the right" button in every pane's header (or Ctrl+Alt+D) adds a pane at the right edge, all the same width, with the last note used that is not on screen (or Home). Panes move like windows inside the window, never pulled out: drag a tab by its name and let go on the half of a pane where it should go (left, right, top, bottom), in its middle to join its tabs, on a tab bar to sit among those tabs; drag the empty part of a tab bar to move the whole pane; Escape cancels. A file of the list dropped on an edge of a pane opens beside. Closing the last note of a pane closes the pane and the others share its room |
 | Navigation | quick switcher, command palette, nested tags, outline, bookmarks, tabs, split panes, saved layouts, pop-out windows |
-| Graph | global and local graph, filters, color groups, a colour for one note or several (right click — on a phone a long press — on each dot, then pick the colour), forces |
+| Graph | global and local graph, filters, color groups, forces; the dots stay where they were when the graph opens again; right click (on a phone a long press) chooses dots and shows a pencil: colour for all of them, or move their notes to the trash |
 | Canvas | `.canvas` files (open JSON Canvas format): cards, notes, media, groups, connections (colour, label, direction, remove all arrows of a card), rename by the title, picture of the whole board (JPG) |
 | Properties | typed property editor and **Bases** (`.base`): table, cards, list and board views with filters and formulas |
 | Organisation | templates, daily notes, unique notes, note composer (merge/extract), word count |
@@ -32,7 +32,7 @@ License: **GPL-3.0-or-later**. sk_notes is not affiliated with Obsidian or Dynal
 | Sync & publish (optional) | sync with **GitHub, GitLab or any Git server** with a name and a token: commit, pull and push by themselves, merges without conflict markers (the other version is kept beside the note); the same vault opens in sk_notes for Android, Obsidian with its Git plugin, Foam or Tolaria. Git by hand and Syncthing status; static website generated locally |
 | Encryption (optional) | a whole vault as one encrypted file (`.skvault`, AES-256-GCM, password + recovery code), made new or from an existing vault and back; locks by itself after the time chosen; the same file opens in sk_notes for Android |
 | Plugins & themes | native sk_notes API with explicit permissions, and a compatibility layer for community plugins ([compatibility table](docs/compatibility.md)); the public directories of community plugins, themes and note templates browsed and installed in one click; the Anna.g_3 theme included |
-| SKAI | questions about the open note or the whole vault (local embedding index), summaries, tag and link suggestions, proofreading and rewriting — streamed, cancellable, and never applied without your confirmation (diff first) |
+| SKAI | questions about the open note or the whole vault (local embedding index), summaries, tag and link suggestions, proofreading and rewriting — streamed, cancellable, and never applied without your confirmation (diff first). On the PC, SKAI's scorpion lives in a small house on the graph: it walks to the notes SKAI reads (with a beam), edits, creates or links, and sleeps when there is nothing to do — in SKAI_ Memory it shows what every SKAI app does with the memory |
 | Languages | English, Italiano, Español, Français, Deutsch, Português, Русский, 简体中文, 日本語 |
 
 ## SKAI_ Memory
@@ -47,7 +47,7 @@ when chosen, and a notice when a newer release is on GitHub. Build, signing, tes
 does its own way: [android/README.md](android/README.md).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-1.1.1.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.0.apk
 ```
 
 ## Install
@@ -55,7 +55,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-1.1.1.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_1.1.1_all.deb      # package built by tools/build_deb.sh
+sudo apt install ./sk-notes_1.2.0_all.deb      # package built by tools/build_deb.sh
 sk-notes
 ```
 
@@ -70,7 +70,7 @@ python3 main.py                 # or: python3 main.py --vault ~/Notes
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-1.1.1.tar.gz + dist/PKGBUILD (with checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-1.2.0.tar.gz + dist/PKGBUILD (with checksum)
 cd dist && makepkg -si
 ```
 

@@ -437,6 +437,40 @@ def register(app) -> None:
     def history_restore(p, ctx):
         return svc().restore_snapshot(p["path"], int(p["id"]))
 
+    # ------------------------------------------------------------- trash (the user's own choice only)
+    def _trash_user(ctx):
+        if ctx.plugin:
+            raise ApiError("permission-denied")
+
+    @r("trash.list")
+    def trash_list(p, ctx):
+        from ..core import trash
+        _trash_user(ctx)
+        return {"items": trash.list_trash(svc().vault), "keep": trash.KEEP_SECONDS * 1000}
+
+    @r("trash.restore")
+    def trash_restore(p, ctx):
+        from ..core import trash
+        _trash_user(ctx)
+        s = svc()
+        with s.lock:
+            path = trash.restore(s.vault, p.get("name", ""))
+            s._mark_own(path)
+        s.rescan()
+        return {"path": path}
+
+    @r("trash.delete")
+    def trash_delete(p, ctx):
+        from ..core import trash
+        _trash_user(ctx)
+        return trash.purge(svc().vault, p.get("name", ""))
+
+    @r("trash.empty")
+    def trash_empty(p, ctx):
+        from ..core import trash
+        _trash_user(ctx)
+        return trash.purge(svc().vault, None)
+
     # ------------------------------------------------------------- system
     @r("system.openExternal")
     def open_external(p, ctx):

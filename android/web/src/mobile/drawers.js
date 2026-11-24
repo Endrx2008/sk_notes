@@ -29,6 +29,12 @@ export function drawerOpen(app) {
   return !ws.leftSplit.collapsed ? ws.leftSplit : !ws.rightSplit.collapsed ? ws.rightSplit : null;
 }
 
+/** The file list fills the screen (the list view): the left sidebar would show the same list. */
+function listOnScreen(ws) {
+  const leaf = ws.activeLeaf && ws.activeLeaf.getRoot() === ws.rootSplit ? ws.activeLeaf : ws.getMostRecentLeaf(ws.rootSplit);
+  return leaf?.view?.getViewType() === 'file-explorer';
+}
+
 export function installDrawers(app) {
   const ws = app.workspace;
   const docks = [ws.leftSplit, ws.rightSplit];
@@ -63,7 +69,17 @@ export function installDrawers(app) {
   // drawer buttons live in the header of the note on a phone (there is no tab bar)
   const desktopToggles = ws._updateToggles.bind(ws);
   const placeToggles = () => {
-    if (!isPhone()) { desktopToggles(); return; }
+    // in the list view the left sidebar is not offered: its button goes, and on a tablet the
+    // sidebar steps aside until the list is left
+    const inList = listOnScreen(ws);
+    if (!isPhone()) {
+      desktopToggles();
+      if (inList && !ws.leftSplit.collapsed) { ws._leftAsideForList = true; ws.leftSplit.setCollapsed(true); }
+      else if (!inList && ws._leftAsideForList) { ws._leftAsideForList = false; if (ws.leftSplit.collapsed) ws.leftSplit.setCollapsed(false); }
+      ws.leftToggleEl?.toggle(!inList);
+      return;
+    }
+    ws.leftToggleEl?.toggle(!inList);
     const leaf = ws.activeLeaf && ws.activeLeaf.getRoot() === ws.rootSplit ? ws.activeLeaf : ws.getMostRecentLeaf(ws.rootSplit);
     const header = leaf?.view?.headerEl;
     if (!header) return;
@@ -125,6 +141,7 @@ export function installDrawers(app) {
       if ((opened.side === 'left') !== right) opened.collapse();
       return;
     }
+    if (right && listOnScreen(ws)) return; // the list view: the left sidebar would show the same list
     (right ? ws.leftSplit : ws.rightSplit).expand();
   }, { passive: true });
 }

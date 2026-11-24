@@ -186,3 +186,23 @@
 .sk-memory-label { margin-bottom: 4px; color: var(--text-muted); }
 .sk-memory-password { width: 100%; }
 .sk-memory-error { color: var(--text-error, var(--sk-red)); min-height: 1.4em; margin: 6px 0; }
+
+/* the trash (features/trash.js) and its red entry, first in the menu of the settings wheel */
+.menu-item.sk-menu-trash { color: var(--mobile-trash-color, var(--text-error)); font-weight: 600; background: color-mix(in srgb, var(--mobile-trash-color, var(--text-error)) 12%, transparent); }
+.menu-item.sk-menu-trash .menu-item-icon { color: var(--mobile-trash-color, var(--text-error)); }
+.modal.mod-trash .modal-content { display: flex; flex-direction: column; min-height: 0; }
+.trash { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 12px; }
+.trash-intro { color: var(--text-muted); font-size: var(--font-ui-small); line-height: 1.45; margin: 0; }
+.trash-intro.mod-warning { color: var(--text-error); }
+.trash-none { color: var(--text-faint); text-align: center; padding: 28px 0; }
+.trash-list { display: flex; flex-direction: column; gap: 8px; }
+.trash-item { display: flex; align-items: center; gap: 10px; padding: 10px 8px 10px 14px; border: 1px solid var(--sk-border); border-radius: var(--radius-l); background: var(--sk-bg); min-height: 56px; }
+.trash-kind { display: flex; color: var(--text-faint); flex-shrink: 0; }
+.trash-kind .svg-icon { width: 18px; height: 18px; }
+.trash-text { flex: 1; min-width: 0; }
+.trash-name { font-weight: 700; color: var(--text-normal); overflow-wrap: anywhere; }
+.trash-when { color: var(--text-faint); font-size: var(--font-ui-smaller); margin-top: 2px; overflow-wrap: anywhere; }
+.trash-action { flex-shrink: 0; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
+.trash-action.mod-danger { color: var(--mobile-trash-color, var(--text-error)); }
+.trash-empty { display: inline-flex; align-items: center; justify-content: center; gap: 8px; align-self: stretch; margin-top: 6px; min-height: 44px; }
+.trash-empty-icon { display: flex; }

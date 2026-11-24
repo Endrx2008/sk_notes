@@ -1239,10 +1239,10 @@ export class Workspace extends Events {
     });
   }
 
-  _onFileModified(file, except) {
+  _onFileModified(file, except, how = {}) {
     this.iterateAllLeaves((l) => {
       const v = l.view;
-      if (v instanceof TextFileView && v !== except && v.file === file && !v._saving) v.onExternalModify(file);
+      if (v instanceof TextFileView && v !== except && v.file === file && !v._saving) v.onExternalModify(file, how);
     });
   }
 

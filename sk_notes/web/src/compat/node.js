@@ -341,7 +341,7 @@ export function makeElectron(pluginId) {
         return { canceled: !files?.length, filePaths: files || [] };
       },
     },
-    app: { getPath: () => env().home, getVersion: () => '1.1.1' },
+    app: { getPath: () => env().home, getVersion: () => '1.2.0' },
     shell,
   };
   return { shell, clipboard, ipcRenderer, remote, webFrame: { setZoomFactor() {} }, nativeImage: {} };

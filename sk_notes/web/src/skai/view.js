@@ -154,6 +154,11 @@ export class SkaiView extends ItemView {
 
   cancel() { this.current?.cancel(); }
 
+  /** What SKAI does with the notes, for the scorpion on the graph (desktop/scorpion.js). */
+  _pet(kind, path, to) {
+    if (path) this.app.workspace.trigger('skai-activity', { kind, path, to });
+  }
+
   // ---------------------------------------------------------------- chat
   async send() {
     const q = this.textarea.value.trim();
@@ -165,13 +170,14 @@ export class SkaiView extends ItemView {
     let sources = [];
     if (this.mode === 'note') {
       const v = this._activeNote();
-      if (v) context = this.client.noteContext(v.file, v.getViewData());
+      if (v) { context = this.client.noteContext(v.file, v.getViewData()); this._pet('read', v.file.path); }
     } else {
       const info = this._bubble('info', '');
       info.body.setText(t('skai.searching'));
       try {
         const r = await this.client.retrieve(q);
         sources = r.hits;
+        for (const h of sources) this._pet('read', h.path);
         info.body.setText(r.method === 'embeddings' ? t('skai.found-semantic', { n: r.hits.length })
           : t(r.reason === 'no-index' ? 'skai.found-keywords-no-index' : r.reason === 'no-match' ? 'skai.found-keywords-plain' : 'skai.found-keywords', { n: r.hits.length, cmd: t('skai.cmd.index') }));
         context = r.hits.map((h, i) => `[${i + 1}] Note "${h.path.replace(/\.md$/, '')}":\n${h.text}`).join('\n\n');
@@ -215,6 +221,7 @@ export class SkaiView extends ItemView {
     const after = before.slice(0, pos) + text + before.slice(pos);
     if (await confirmDiff(this.app, { title: t('skai.insert-title', { name: v.file.basename }), before, after })) {
       v.editor.replaceRange(text, v.editor.offsetToPos(pos));
+      this._pet('edit', v.file.path);
     }
   }
 
@@ -227,6 +234,7 @@ export class SkaiView extends ItemView {
     const file = v.file;
     const text = v.getViewData();
     const sys = this.client.system();
+    this._pet('read', file.path);
     if (action === 'summarize') {
       this._bubble('user', t('skai.act.summarize') + ': ' + file.basename);
       await this._stream([sys, { role: 'user', content: `Summarize this note in a few bullet points (at most 8), keeping names, numbers and decisions.\n\n${this.client.noteContext(file, text)}` }],
@@ -245,6 +253,7 @@ export class SkaiView extends ItemView {
       try { hits = (await this.client.retrieve(`${file.basename}\n${text.slice(0, 1500)}`)).hits.filter((h) => h.path !== file.path); } catch (e) { info.body.setText(this.client.errorText(e)); return; }
       const linked = new Set(Object.keys(this.app.metadataCache.resolvedLinks[file.path] || {}));
       hits = hits.filter((h) => !linked.has(h.path));
+      for (const h of hits) this._pet('read', h.path);
       if (!hits.length) { info.body.setText(t('skai.no-related')); return; }
       info.body.setText(t('skai.related-found', { n: hits.length }));
       const b = this._bubble('assistant', '');
@@ -277,9 +286,11 @@ export class SkaiView extends ItemView {
       new ButtonComponent(bar).setButtonText(t('skai.review-apply')).setCta().onClick(async () => {
         if (v.getViewData() !== before) { this.app.notice(t('skai.note-changed')); return; }
         if (await confirmDiff(this.app, { title: t('skai.apply-title', { name: file.basename }), before, after })) {
-          await call('vault.write', { path: file.path, text: before, reason: 'skai' }).catch(() => {});
+          // the text before SKAI goes into the history; through the vault, so the editor's next save is not a conflict
+          await this.app.vault.modify(file, before, { reason: 'skai', fromView: v }).catch(() => {});
           v.setViewData(after, false);
           v.requestSave();
+          this._pet('edit', file.path);
           this.app.notice(t('skai.applied'));
         }
       });
@@ -323,6 +334,7 @@ export class SkaiView extends ItemView {
       const after = `---\n${stringifyYaml(fm).trimEnd()}\n---\n${info.exists ? before.slice(info.contentStart) : before}`;
       if (await confirmDiff(this.app, { title: t('skai.add-tags'), before, after })) {
         await this.app.fileManager.processFrontMatter(file, (f) => { f.tags = fm.tags; });
+        this._pet('edit', file.path);
         this.app.notice(t('skai.applied'));
       }
     });
@@ -348,7 +360,10 @@ export class SkaiView extends ItemView {
         const before = view.getViewData();
         const pos = view.editor.posToOffset(view.editor.getCursor());
         const after = before.slice(0, pos) + link + before.slice(pos);
-        if (await confirmDiff(this.app, { title: t('skai.insert-link'), before, after })) view.editor.replaceRange(link, view.editor.offsetToPos(pos));
+        if (await confirmDiff(this.app, { title: t('skai.insert-link'), before, after })) {
+          view.editor.replaceRange(link, view.editor.offsetToPos(pos));
+          this._pet('link', view.file.path, f.path);
+        }
       });
     }
   }

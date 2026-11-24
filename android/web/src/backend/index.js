@@ -17,6 +17,7 @@ import * as migrate from './migrate.js';
 import { registerSpell } from './routes-spell.js';
 import { registerSync } from './routes-sync.js';
 import { registerUpdate } from './routes-update.js';
+import { registerTrash } from './routes-trash.js';
 import { VaultService } from './service.js';
 import * as crypt from './vault-crypt.js';
 import { installAutoLock } from './vault-lock.js';
@@ -167,6 +168,7 @@ async function start() {
     registerSync();
     registerSpell();
     registerUpdate();
+    registerTrash();
     registerMobile();
     registered = true;
   }

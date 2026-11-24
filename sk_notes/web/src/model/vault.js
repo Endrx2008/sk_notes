@@ -120,6 +120,7 @@ export class Vault extends Events {
     this.adapter = new DataAdapter(this);
     this.config = {};
     this._cache = new Map(); // path -> {text, mtime}
+    this._writing = new Map(); // path -> writes of this page still running (their 'modify' is not news)
     this.configDir = '.sk_notes';
   }
 
@@ -274,11 +275,18 @@ export class Vault extends Events {
     // a view's save says which version of the file it started from: if another program
     // changed the file since, Python keeps that version in the history and reports it (B2-11, A2-3)
     const expectedMtime = opts.checkConflict ? this._cache.get(path)?.mtime : undefined;
-    let res = await call('vault.write', { path, text, mtime: opts.mtime, reason: opts.reason, expectedMtime });
+    this._writing.set(path, (this._writing.get(path) || 0) + 1);
+    let res;
     let conflict = false;
-    if (res.conflict) {
-      conflict = true;
-      res = await call('vault.write', { path, text, mtime: opts.mtime, reason: opts.reason });
+    try {
+      res = await call('vault.write', { path, text, mtime: opts.mtime, reason: opts.reason, expectedMtime });
+      if (res.conflict) {
+        conflict = true;
+        res = await call('vault.write', { path, text, mtime: opts.mtime, reason: opts.reason });
+      }
+    } finally {
+      const n = (this._writing.get(path) || 1) - 1;
+      if (n > 0) this._writing.set(path, n); else this._writing.delete(path);
     }
     const info = res.file;
     this._cache.set(path, { text, mtime: info.mtime });
@@ -363,6 +371,13 @@ export class Vault extends Events {
       if (f instanceof TFile) {
         f.stat = { ctime: d.file.ctime, mtime: d.file.mtime, size: d.file.size };
         if (d.external) this._cache.delete(f.path);
+        else if (!this._writing.get(f.path)) {
+          // written by sk_notes itself, but not through this page (a version restored, the title
+          // heading after a rename, SKAI): open editors must take the new text, and the next save
+          // must not take it for a change made by another program
+          const c = this._cache.get(f.path);
+          if (c && d.file.mtime > c.mtime) { this._cache.delete(f.path); d.internal = true; }
+        }
         this.trigger('modify', f);
       } else {
         this._onBackend('create', d);

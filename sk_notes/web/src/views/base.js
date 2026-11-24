@@ -255,11 +255,13 @@ export class TextFileView extends EditableFileView {
   clear() {}
 
   /** External change on disk: reload unless the user has unsaved edits. */
-  async onExternalModify(file) {
+  async onExternalModify(file, how = {}) {
     if (file !== this.file) return;
     const text = await this.app.vault.read(file);
     const current = this.getViewData();
     if (text === current) { this.lastSavedData = current; return; }
+    // what is on disk is what this view saved last (a late echo of its own save): nothing changed
+    if (text === this.lastSavedData) return;
     if (current === this.lastSavedData) {
       this.data = text;
       this.setViewData(text, false);
@@ -267,7 +269,7 @@ export class TextFileView extends EditableFileView {
       const reason = this.app.vault.getReadOnlyReason?.(file) || null;
       if (reason !== this.readOnlyReason) { this.readOnlyReason = reason; this.onReadOnlyChange(); }
     } else {
-      this.app.notice(t('notice.external-change', { name: file.basename }));
+      this.app.notice(t(how.internal ? 'notice.internal-change' : 'notice.external-change', { name: file.basename }));
     }
   }
 }

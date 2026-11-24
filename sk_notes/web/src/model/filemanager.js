@@ -83,6 +83,7 @@ export class FileManager {
     if (newPath === file.path) return;
     const oldPath = file.path;
     const oldName = file instanceof TFile && file.extension === 'md' ? file.basename : null;
+    if (oldName && this.titleHeading()) await this.app.flush?.().catch?.(() => {}); // the heading is changed on what was typed so far
     await call('vault.rename', { path: oldPath, newPath, updateLinks: this.app.settings.get('alwaysUpdateLinks') !== false });
     // the title heading follows the name, as long as it still was the old name
     const newName = /\.md$/i.test(newPath) ? newPath.slice(newPath.lastIndexOf('/') + 1, -3) : null;
@@ -92,7 +93,10 @@ export class FileManager {
         const info = getFrontMatterInfo(r.text);
         const body = r.text.slice(info.contentStart);
         const m = /^(\s*)# (.*?)[ \t]*(\r?\n|$)/.exec(body);
-        if (!r.readOnly && m && m[2] === oldName) await call('vault.write', { path: newPath, text: r.text.slice(0, info.contentStart) + m[1] + '# ' + newName + m[3] + body.slice(m[0].length) });
+        const moved = this.vault.getFileByPath(newPath);
+        const text = r.text.slice(0, info.contentStart) + m?.[1] + '# ' + newName + m?.[3] + body.slice(m?.[0].length);
+        // through the vault: open editors take the new heading, and their next save is not a conflict
+        if (!r.readOnly && m && m[2] === oldName) { if (moved) await this.vault.modify(moved, text); else await call('vault.write', { path: newPath, text }); }
       } catch (e) { console.warn('title heading not updated', e); }
     }
   }

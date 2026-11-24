@@ -20,14 +20,14 @@ Licenza: **GPL-3.0-or-later**. sk_notes non è affiliato con Obsidian o Dynalist
 
 | Area | Cosa offre |
 |---|---|
-| Vault | apri/crea/cambia vault, esplora file con ordinamenti, trascinamento, più file insieme (Ctrl/Maiusc+clic: rinominali uno dopo l'altro, spostali, eliminali), rinomina (i link si aggiornano da soli), cestino di sistema o `.trash`, recupero file e cronologia delle versioni |
+| Vault | apri/crea/cambia vault, esplora file con ordinamenti, trascinamento, più file insieme (Ctrl/Maiusc+clic: rinominali uno dopo l'altro, spostali, eliminali), rinomina (i link si aggiornano da soli), cestino di sistema o `.trash`, un cestino del vault (menu della rotella delle impostazioni: quello che è stato eliminato negli ultimi tre mesi, da ripristinare o eliminare per sempre; i file più vecchi se ne vanno da soli), recupero file e cronologia delle versioni |
 | Editor | Anteprima dal vivo e modalità sorgente, vista di lettura, evidenziazione della sintassi, attività, tabelle, blocchi di codice, formule (KaTeX), callout, note a piè di pagina, evidenziazioni, commenti, cursori multipli, piegatura, trova e sostituisci, comandi slash |
 | Link | `[[wikilink]]` con autocompletamento, alias, link a titoli e blocchi, incorporamento di note, sezioni, immagini, audio, video e PDF, backlink e menzioni non collegate, link in uscita, anteprima al passaggio |
 | Ricerca | indice a testo completo con `file:`, `path:`, `tag:`, `line:()`, `section:()`, `task-todo:`, `[proprietà:valore]`, `OR`, `-`, regex… |
 | Home | una scheda vuota è la Home, come in sk_notes per Android: il logo con il nome del vault aperto, le note recenti in una riga, crea (nota — con un pulsante calendario per la nota di oggi —, canvas e una barra più piccola per una nota da template), visualizza (grafo, database del vault — una vista, nessun file viene creato; l'elenco dei file è sempre nella barra laterale sinistra); ogni riquadro è un comando con una scorciatoia (Impostazioni → Scorciatoie) mostrata sul riquadro — nota Ctrl+N, canvas Ctrl+C quando non c'è nulla da copiare; frecce e Invio funzionano sulla Home. La barra laterale a sinistra si nasconde finché sullo schermo c'è solo la Home. Il "+" delle schede mostra due bolle (nota, canvas) da cliccare, oppure premi e trascina verso una delle due |
 | Riquadri | il pulsante "nuovo riquadro a destra" nell'intestazione di ogni riquadro (o Ctrl+Alt+D) aggiunge un riquadro sul bordo destro, tutti della stessa larghezza, con l'ultima nota usata non visibile (o la Home). I riquadri si spostano come finestre dentro la finestra, senza mai uscirne: trascina una scheda per il nome e lasciala sulla metà del riquadro dove deve andare (sinistra, destra, sopra, sotto), al centro per unirla alle sue schede, su una barra delle schede per metterla tra quelle; trascina la parte vuota di una barra delle schede per spostare tutto il riquadro; Esc annulla. Un file dell'elenco lasciato sul bordo di un riquadro si apre accanto. Chiudendo l'ultima nota di un riquadro si chiude il riquadro e gli altri si dividono il suo spazio |
 | Navigazione | apertura rapida, palette dei comandi, tag annidati, struttura, segnalibri, schede, pannelli divisi, layout salvati, finestre separate |
-| Grafo | grafo globale e locale, filtri, gruppi colorati, un colore per una o più note (clic destro — sul telefono una pressione lunga — su ogni punto, poi il colore), forze |
+| Grafo | grafo globale e locale, filtri, gruppi colorati, forze; i punti restano dove erano quando il grafo si riapre; il clic destro (sul telefono una pressione lunga) sceglie i punti e mostra una matita: un colore per tutti, o le loro note nel cestino |
 | Canvas | file `.canvas` (formato aperto JSON Canvas): schede, note, media, gruppi, collegamenti (colore, etichetta, direzione, rimuovi tutte le frecce di una scheda), rinomina dal titolo, immagine di tutta la lavagna (JPG) |
 | Proprietà | editor delle proprietà con tipi e **Basi** (`.base`): viste tabella, schede, elenco e bacheca con filtri e formule |
 | Organizzazione | template, note giornaliere, note uniche, compositore (unisci/estrai), conteggio parole |
@@ -35,7 +35,7 @@ Licenza: **GPL-3.0-or-later**. sk_notes non è affiliato con Obsidian o Dynalist
 | Sincronizzazione e pubblicazione (facoltative) | sincronizzazione con **GitHub, GitLab o qualsiasi server Git** con un nome e un token: commit, pull e push da soli, unioni senza marcatori di conflitto (l'altra versione resta accanto alla nota); lo stesso vault si apre in sk_notes per Android, in Obsidian con il suo plugin Git, in Foam o in Tolaria. Git a mano e stato di Syncthing; sito statico generato in locale |
 | Cifratura (facoltativa) | un intero vault come un unico file cifrato (`.skvault`, AES-256-GCM, password + codice di recupero), nuovo o da un vault esistente e ritorno; si blocca da solo dopo il tempo scelto; lo stesso file si apre in sk_notes per Android |
 | Plugin e temi | API nativa di sk_notes con permessi espliciti e livello di compatibilità con i plugin della community ([tabella di compatibilità](docs/compatibility.md)); gli elenchi pubblici di plugin, temi e template di note della community, sfogliati e installati con un clic; il tema Anna.g_3 incluso |
-| SKAI | domande sulla nota aperta o su tutto il vault (indice di embedding locale), riassunti, suggerimenti di tag e link, correzione e riscrittura — in streaming, annullabili e mai applicati senza la tua conferma (prima il confronto delle differenze) |
+| SKAI | domande sulla nota aperta o su tutto il vault (indice di embedding locale), riassunti, suggerimenti di tag e link, correzione e riscrittura — in streaming, annullabili e mai applicati senza la tua conferma (prima il confronto delle differenze). Sul PC lo scorpione di SKAI vive in una casetta sul grafo: va verso le note che SKAI legge (con un fascio di luce), modifica, crea o collega, e dorme quando non c'è niente da fare — in SKAI_ Memory mostra cosa fa ogni app di SKAI con la memoria |
 | Lingue | English, Italiano, Español, Français, Deutsch, Português, Русский, 简体中文, 日本語 |
 
 ## SKAI_ Memory
@@ -51,7 +51,7 @@ più recente. Compilazione, firma,
 test e differenze del telefono: [android/README.md](android/README.md) (in inglese).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-1.1.1.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.0.apk
 ```
 
 ## Installazione
@@ -59,7 +59,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-1.1.1.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_1.1.1_all.deb      # pacchetto creato da tools/build_deb.sh
+sudo apt install ./sk-notes_1.2.0_all.deb      # pacchetto creato da tools/build_deb.sh
 sk-notes
 ```
 
@@ -74,7 +74,7 @@ python3 main.py                 # oppure: python3 main.py --vault ~/Note
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-1.1.1.tar.gz + dist/PKGBUILD (con checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-1.2.0.tar.gz + dist/PKGBUILD (con checksum)
 cd dist && makepkg -si
 ```
 

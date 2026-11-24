@@ -105,6 +105,15 @@ class Vault:
         self.protected = (self.root / MEMORY_MARKER).is_file()
         self._sudo_password: str | None = None
         self._unlock_until = 0.0
+        # files sk_notes itself read lately (monotonic time): the watcher of SKAI_ Memory reports
+        # only what other programs read (see VaultService.external_read)
+        self.own_reads: dict[str, float] = {}
+
+    def _read_mark(self, rel: str) -> None:
+        if self.protected:
+            self.own_reads[normalize_path(rel)] = time.monotonic()
+            if len(self.own_reads) > 5000:
+                self.own_reads.clear()
 
     # ------------------------------------------------------------- paths
     @property
@@ -258,6 +267,7 @@ class Vault:
 
     # ------------------------------------------------------------- read / write
     def read_text(self, rel: str) -> str:
+        self._read_mark(rel)
         data = self.abs(rel).read_bytes()
         try:
             return data.decode("utf-8")
@@ -267,6 +277,7 @@ class Vault:
     def text_info(self, rel: str) -> dict:
         """What a text editor must know to save a file back without damaging it."""
         p = self.abs(rel)
+        self._read_mark(rel)
         data = p.read_bytes()
         try:
             data.decode("utf-8")
@@ -278,6 +289,7 @@ class Vault:
     def write_text_keep_eol(self, rel: str, text: str, *, mtime: float | None = None) -> FileEntry:
         """Write text with the line endings the file already has on disk (CRLF/CR vaults)."""
         p = self.abs(rel)
+        self._read_mark(rel)
         eol = "\n"
         if p.is_file():
             try:
@@ -290,6 +302,7 @@ class Vault:
         return self.write_text(rel, text, mtime=mtime)
 
     def read_bytes(self, rel: str) -> bytes:
+        self._read_mark(rel)
         return self.abs(rel).read_bytes()
 
     def write_text(self, rel: str, text: str, *, mtime: float | None = None) -> FileEntry:

@@ -374,7 +374,7 @@ body.is-tablet .mobile-home { max-width: 820px; }
 .mobile-navbar-action.mod-new { touch-action: none; }
 .mobile-navbar-action.mod-new.is-open { background: var(--background-modifier-hover); }
 .mobile-create { position: fixed; z-index: 60; display: flex; align-items: flex-end; gap: 14px; transform: translateX(-50%); pointer-events: auto; }
-.mobile-create-item { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 84px; padding: 12px 6px 10px; border: 1px solid var(--sk-border); border-radius: 18px; background: var(--background-secondary); color: var(--text-normal); box-shadow: 0 6px 22px rgba(0, 0, 0, .5); touch-action: none; animation: sk-create-in 130ms ease-out both; }
+.mobile-create-item { display: flex; flex-direction: column; align-items: center; gap: 6px; justify-content: flex-start; width: 92px; padding: 12px 6px 10px; border: 1px solid var(--sk-border); border-radius: 18px; background: var(--background-secondary); color: var(--text-normal); box-shadow: 0 6px 22px rgba(0, 0, 0, .5); touch-action: none; animation: sk-create-in 130ms ease-out both; }
 .mobile-create-item.mod-center { margin-bottom: 18px; border-color: var(--sk-accent); }
 .mobile-create-item.is-target, .mobile-create-item:active { background: var(--sk-accent); border-color: var(--sk-accent); color: var(--sk-on-accent); transform: scale(1.08); }
 .mobile-create-icon { display: flex; color: var(--sk-accent); }
@@ -474,6 +474,9 @@ body.is-mobile .graph-controls { max-width: calc(100% - 20px); }
   --mobile-mark-text: var(--sk-on-accent);     /* the number written on the tab mark */
   --mobile-bar-background: var(--sk-bg);       /* bottom bar and the bar above the keyboard */
   --mobile-tile-icon-color: var(--sk-accent);  /* icons of the Home tiles */
+  --mobile-update-color: var(--sk-accent);     /* "Update to …" at the bottom of the settings */
+  --mobile-update-text: var(--sk-on-accent);
+  --mobile-trash-color: var(--sk-red, var(--text-error)); /* the trash in the wheel menu, the bin of the graph */
 }
 body.is-mobile.theme-dark { color-scheme: dark; }   /* checkboxes, sliders and scrollbars drawn by the system follow */
 body.is-mobile.theme-light { color-scheme: light; }
@@ -576,7 +579,7 @@ body.is-mobile .canvas-edge-hit { stroke-width: calc(34px / var(--canvas-zoom, 1
 .mobile-home-extra:active { background: var(--sk-accent); color: var(--sk-on-accent); border-color: var(--sk-accent); }
 .mobile-home-extra .svg-icon { width: 22px; height: 22px; }
 /* "+": the two bubbles side by side, at the same height */
-.mobile-create { align-items: flex-end; }
+.mobile-create { align-items: stretch; } /* the two bubbles the same size, whatever their labels */
 .mobile-create-item.mod-level { margin-bottom: 0; }
 
 /* colour sheet (color-wheel.js): Android's WebView has no chooser of its own */
@@ -596,9 +599,10 @@ body.is-mobile .canvas-edge-hit { stroke-width: calc(34px / var(--canvas-zoom, 1
 .mobile-color-wheel .modal-button-container { width: 100%; }
 
 /* ---------------------------------------------------------------- a newer sk_notes (update.js) */
-.mobile-update-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 12px 12px; padding: 14px 16px; border-radius: 10px; background: #e05c00; color: #ffffff; font-weight: 600; font-size: 15px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.mobile-update-bar:active { background: #c75200; }
-.mobile-update-bar .svg-icon, .mobile-update-button .svg-icon { width: 20px; height: 20px; color: #ffffff; }
+.mobile-update-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 12px 12px; padding: 14px 16px; border-radius: 10px; background: var(--mobile-update-color); color: var(--mobile-update-text); font-weight: 600; font-size: 15px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mobile-update-bar:active { background: color-mix(in srgb, var(--mobile-update-color) 82%, #000); }
+.mobile-update-bar .svg-icon, .mobile-update-button .svg-icon { width: 20px; height: 20px; color: var(--mobile-update-text); }
 .mobile-update-icon { display: flex; }
 .mobile-update-notice { display: flex; flex-direction: column; gap: 10px; }
-.mobile-update-button { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; background: #e05c00 !important; color: #ffffff !important; font-weight: 600; }
+.mobile-update-button { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; background: var(--mobile-update-color) !important; color: var(--mobile-update-text) !important; font-weight: 600; }
+

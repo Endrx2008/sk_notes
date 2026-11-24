@@ -341,7 +341,8 @@ export function registerCoreFeatures(app) {
   helpBtn.addEventListener('click', () => openHelp(app));
   const setBtn = ribbon.settingsEl.createDiv({ cls: 'clickable-icon side-dock-ribbon-action', attr: { 'aria-label': t('ribbon.settings'), 'data-tooltip-position': 'right' } });
   setIcon(setBtn, 'settings');
-  setBtn.addEventListener('click', () => openSettings(app));
+  // the desktop shows a small menu first (trash, SKAI, settings: app.settingsWheel)
+  setBtn.addEventListener('click', () => (app.settingsWheel ? app.settingsWheel(setBtn) : openSettings(app)));
   // vault name at the bottom of the left sidebar
   app.on('ready', () => {
     const name = ws.leftSplit.containerEl.createDiv('workspace-sidedock-vault-profile mod-keep');
@@ -355,7 +356,7 @@ export function registerCoreFeatures(app) {
     h.addEventListener('click', () => openHelp(app));
     const s = actions.createDiv({ cls: 'clickable-icon', attr: { 'aria-label': t('ribbon.settings') } });
     setIcon(s, 'settings');
-    s.addEventListener('click', () => openSettings(app));
+    s.addEventListener('click', () => (app.settingsWheel ? app.settingsWheel(s) : openSettings(app)));
   });
 }
 
