@@ -207,3 +207,8 @@
 .trash-empty { display: inline-flex; align-items: center; justify-content: center; gap: 8px; align-self: stretch; margin-top: 6px; min-height: 44px; }
 .trash-empty-icon { display: flex; }
 .modal .modal-content > p { white-space: pre-line; overflow-wrap: anywhere; }
+/* the Search tab: the flag "Whole word" beside the field */
+.search-row { display: flex; align-items: center; gap: 6px; }
+.search-row .search-input-container { flex: 1; min-width: 0; }
+.search-word-flag { flex-shrink: 0; font-size: var(--font-ui-smaller); padding: 4px 9px !important; border: 1px solid var(--sk-border); border-radius: 13px; white-space: nowrap; color: var(--text-muted); }
+.search-word-flag.is-active { background: var(--interactive-accent); border-color: var(--interactive-accent); color: var(--text-on-accent); }

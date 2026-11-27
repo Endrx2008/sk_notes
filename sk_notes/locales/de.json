@@ -1161,8 +1161,6 @@
  "reminders.done": "Erledigt",
  "cmd.add-reminder": "Erinnerung für diese Zeile",
  "cmd.reminders": "Zu erledigen (Erinnerungen)",
- "explorer.search": "Notizen durchsuchen",
- "explorer.search-none": "Keine Notiz enthält es",
  "tree.heading": "Notizen in Ordnern wie ein Baum",
  "tree.setting": "Notizen in die Ordner ihrer Mutter-Notizen legen",
  "tree.setting-desc": "Eine von einer Mutter-Notiz verlinkte Notiz kommt in einen Ordner mit deren Namen daneben; die Notizen, die sie verlinkt, einen Ordner tiefer. Geschieht von selbst, wenn sich Links ändern. Links werden angepasst.",
@@ -1172,5 +1170,16 @@
  "tree.confirm-text": "Jede Notiz kommt in den Ordner der Notiz, die sie verlinkt:",
  "tree.confirm": "Verschieben",
  "tree.moved": "{n} Notizen in Ordner verschoben",
- "tree.no-links": "Noch verlinkt keine Notiz eine andere: schreibe [[Name]] in eine Notiz (die Mutter), um sie mit einer anderen (dem Kind) zu verbinden; dann kommt das Kind in den Ordner der Mutter."
+ "tree.no-links": "Noch verlinkt keine Notiz eine andere: schreibe [[Name]] in eine Notiz (die Mutter), um sie mit einer anderen (dem Kind) zu verbinden; dann kommt das Kind in den Ordner der Mutter.",
+ "drawing.move": "Verschieben",
+ "drawing.text": "Text",
+ "drawing.text-placeholder": "Schreib etwas…",
+ "drawing.shape-circle": "Kreis",
+ "drawing.shape-rect": "Quadrat / Rechteck",
+ "drawing.shape-triangle": "Dreieck",
+ "drawing.shape-heart": "Herz",
+ "drawing.fill": "Gefüllt",
+ "drawing.delete-item": "Gewähltes Element entfernen",
+ "explorer.search-names": "Dateinamen suchen",
+ "explorer.search-names-none": "Keine Datei mit diesem Namen – Wörter in den Notizen sucht die Lupe in der Seitenleiste"
 }

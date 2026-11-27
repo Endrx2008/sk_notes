@@ -1161,8 +1161,6 @@
  "reminders.done": "Feito",
  "cmd.add-reminder": "Lembrete nesta linha",
  "cmd.reminders": "A fazer (lembretes)",
- "explorer.search": "Procurar nas notas",
- "explorer.search-none": "Nenhuma nota o tem",
  "tree.heading": "Notas em pastas como uma árvore",
  "tree.setting": "Pôr as notas nas pastas das notas mãe",
  "tree.setting-desc": "Uma nota ligada a partir de uma nota mãe vai para uma pasta com o nome dela, ao lado; as notas que liga vão uma pasta mais abaixo. Refeito sozinho quando as ligações mudam. As ligações são atualizadas.",
@@ -1172,5 +1170,16 @@
  "tree.confirm-text": "Cada nota vai para a pasta da nota que a liga:",
  "tree.confirm": "Mover",
  "tree.moved": "{n} notas movidas para pastas",
- "tree.no-links": "Nenhuma nota liga ainda a outra: escreve [[Nome]] numa nota (a mãe) para a ligar a outra (a filha); depois a filha vai para a pasta da mãe."
+ "tree.no-links": "Nenhuma nota liga ainda a outra: escreve [[Nome]] numa nota (a mãe) para a ligar a outra (a filha); depois a filha vai para a pasta da mãe.",
+ "drawing.move": "Mover",
+ "drawing.text": "Texto",
+ "drawing.text-placeholder": "Escreve algo…",
+ "drawing.shape-circle": "Círculo",
+ "drawing.shape-rect": "Quadrado / retângulo",
+ "drawing.shape-triangle": "Triângulo",
+ "drawing.shape-heart": "Coração",
+ "drawing.fill": "Preenchido",
+ "drawing.delete-item": "Remover o elemento escolhido",
+ "explorer.search-names": "Procurar nos nomes",
+ "explorer.search-names-none": "Nenhum ficheiro com esse nome: as palavras das notas procuram-se com a lupa da barra lateral"
 }

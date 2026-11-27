@@ -1161,8 +1161,6 @@
  "reminders.done": "完成",
  "cmd.add-reminder": "为此行设置提醒",
  "cmd.reminders": "待办(提醒)",
- "explorer.search": "搜索笔记",
- "explorer.search-none": "没有笔记包含它",
  "tree.heading": "树状文件夹",
  "tree.setting": "把笔记放入父笔记的文件夹",
  "tree.setting-desc": "被父笔记链接的笔记会放进旁边以父笔记命名的文件夹;它链接的笔记再下一层。链接变化时自动重新整理。链接会同步更新。",
@@ -1172,5 +1170,16 @@
  "tree.confirm-text": "每条笔记会移到链接它的笔记的文件夹:",
  "tree.confirm": "移动",
  "tree.moved": "已将 {n} 条笔记移入文件夹",
- "tree.no-links": "还没有笔记链接到其他笔记:在一条笔记(父)中写 [[名称]] 链接到另一条(子),子笔记就会放进父笔记的文件夹。"
+ "tree.no-links": "还没有笔记链接到其他笔记:在一条笔记(父)中写 [[名称]] 链接到另一条(子),子笔记就会放进父笔记的文件夹。",
+ "drawing.move": "移动",
+ "drawing.text": "文字",
+ "drawing.text-placeholder": "写点什么…",
+ "drawing.shape-circle": "圆形",
+ "drawing.shape-rect": "正方形/矩形",
+ "drawing.shape-triangle": "三角形",
+ "drawing.shape-heart": "爱心",
+ "drawing.fill": "填充",
+ "drawing.delete-item": "移除所选元素",
+ "explorer.search-names": "搜索文件名",
+ "explorer.search-names-none": "没有这个名称的文件——笔记中的文字请用侧边栏的放大镜搜索"
 }

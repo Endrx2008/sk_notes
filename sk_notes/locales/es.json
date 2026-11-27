@@ -1161,8 +1161,6 @@
  "reminders.done": "Hecho",
  "cmd.add-reminder": "Recordatorio en esta línea",
  "cmd.reminders": "Por hacer (recordatorios)",
- "explorer.search": "Buscar en las notas",
- "explorer.search-none": "Ninguna nota lo tiene",
  "tree.heading": "Notas en carpetas como un árbol",
  "tree.setting": "Poner las notas en las carpetas de sus notas madre",
  "tree.setting-desc": "Una nota enlazada desde una nota madre va a una carpeta con su nombre, a su lado; las notas que enlaza van una carpeta más abajo. Se rehace solo cuando cambian los enlaces. Los enlaces se actualizan.",
@@ -1172,5 +1170,16 @@
  "tree.confirm-text": "Cada nota va a la carpeta de la nota que la enlaza:",
  "tree.confirm": "Mover",
  "tree.moved": "{n} notas movidas a carpetas",
- "tree.no-links": "Ninguna nota enlaza aún a otra: escribe [[Nombre]] en una nota (la madre) para enlazarla con otra (la hija); luego la hija va a la carpeta de la madre."
+ "tree.no-links": "Ninguna nota enlaza aún a otra: escribe [[Nombre]] en una nota (la madre) para enlazarla con otra (la hija); luego la hija va a la carpeta de la madre.",
+ "drawing.move": "Mover",
+ "drawing.text": "Texto",
+ "drawing.text-placeholder": "Escribe algo…",
+ "drawing.shape-circle": "Círculo",
+ "drawing.shape-rect": "Cuadrado / rectángulo",
+ "drawing.shape-triangle": "Triángulo",
+ "drawing.shape-heart": "Corazón",
+ "drawing.fill": "Relleno",
+ "drawing.delete-item": "Quitar el elemento elegido",
+ "explorer.search-names": "Buscar en los nombres",
+ "explorer.search-names-none": "Ningún archivo con ese nombre: las palabras de las notas se buscan con la lupa de la barra lateral"
 }

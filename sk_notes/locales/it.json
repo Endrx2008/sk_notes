@@ -1161,8 +1161,6 @@
  "reminders.done": "Fatto",
  "cmd.add-reminder": "Promemoria su questa riga",
  "cmd.reminders": "Cose da fare (promemoria)",
- "explorer.search": "Cerca tra le note",
- "explorer.search-none": "Nessuna nota lo contiene",
  "tree.heading": "Note in cartelle ad albero",
  "tree.setting": "Metti le note nelle cartelle delle note madre",
  "tree.setting-desc": "Una nota collegata da una nota madre va in una cartella col nome della madre, accanto a lei; le note che collega vanno una cartella più in giù. Si rifà da solo quando cambiano i collegamenti. I link vengono aggiornati.",
@@ -1172,5 +1170,16 @@
  "tree.confirm-text": "Ogni nota va nella cartella della nota che la collega:",
  "tree.confirm": "Sposta",
  "tree.moved": "{n} note spostate in cartelle",
- "tree.no-links": "Nessuna nota ne collega un'altra: scrivi [[Nome]] in una nota (la madre) per collegarla a un'altra (la figlia), poi la figlia va nella cartella della madre."
+ "tree.no-links": "Nessuna nota ne collega un'altra: scrivi [[Nome]] in una nota (la madre) per collegarla a un'altra (la figlia), poi la figlia va nella cartella della madre.",
+ "drawing.move": "Sposta",
+ "drawing.text": "Testo",
+ "drawing.text-placeholder": "Scrivi qualcosa…",
+ "drawing.shape-circle": "Cerchio",
+ "drawing.shape-rect": "Quadrato / rettangolo",
+ "drawing.shape-triangle": "Triangolo",
+ "drawing.shape-heart": "Cuore",
+ "drawing.fill": "Pieno",
+ "drawing.delete-item": "Togli l'elemento scelto",
+ "explorer.search-names": "Cerca nei nomi dei file",
+ "explorer.search-names-none": "Nessun file con questo nome: le parole dentro le note si cercano con la lente nella barra laterale"
 }

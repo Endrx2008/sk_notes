@@ -8,6 +8,14 @@ import { Keymap } from '../model/keymap.js';
 import { Menu, SearchComponent, setTooltip } from '../ui/kit.js';
 import { ItemView } from './base.js';
 
+/** A query of plain words as whole words; a query with operators (fields, quotes, regex, OR, -) stays as it is. */
+export function wholeWords(q) {
+  if (/["/():\[\]]|(^|\s)(OR|-)/.test(q)) return q;
+  // letters and digits written out (Latin with accents): the same in the PC's Python and the phone's JavaScript
+  const L = '[0-9A-Za-z_\u00C0-\u024F]';
+  return q.split(/\s+/).filter(Boolean).map((w) => `/(?<!${L})${w.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}(?!${L})/`).join(' ');
+}
+
 export class SearchView extends ItemView {
   constructor(leaf) {
     super(leaf);
@@ -42,6 +50,16 @@ export class SearchView extends ItemView {
     const row = this.contentEl.createDiv('search-row');
     this.input = new SearchComponent(row).setPlaceholder(t('search.placeholder'));
     this.input.inputEl.addClass('search-input');
+    // "Whole word": "art" finds "art" but not "party" (each plain word becomes /\bword\b/)
+    this.wholeWord = false;
+    this.wordBtn = row.createDiv({ cls: 'clickable-icon search-word-flag', attr: { role: 'button', 'aria-pressed': 'false', 'aria-label': t('find.whole-word') } });
+    this.wordBtn.setText(t('find.whole-word-short'));
+    this.wordBtn.addEventListener('click', () => {
+      this.wholeWord = !this.wholeWord;
+      this.wordBtn.setAttr('aria-pressed', String(this.wholeWord));
+      this.wordBtn.toggleClass('is-active', this.wholeWord);
+      this.run();
+    });
     this.infoEl = this.contentEl.createDiv('search-result-info');
     this.resultsEl = this.contentEl.createDiv('search-results-children');
     this.input.onChange(debounce(() => this.run(), 250, true));
@@ -75,7 +93,7 @@ export class SearchView extends ItemView {
     if (!q) { this.result = null; this.resultsEl.empty(); this.infoEl.empty(); return; }
     let res;
     try {
-      res = await call('search.query', { query: q, caseSensitive: this.caseSensitive, context: this.moreContext ? 3 : 1, limit: 1000, snippetFiles: SNIPPET_BATCH });
+      res = await call('search.query', { query: this.wholeWord ? wholeWords(q) : q, caseSensitive: this.caseSensitive, context: this.moreContext ? 3 : 1, limit: 1000, snippetFiles: SNIPPET_BATCH });
     } catch (e) {
       if (token !== this._token) return;
       this.infoEl.setText(t('search.bad-query'));

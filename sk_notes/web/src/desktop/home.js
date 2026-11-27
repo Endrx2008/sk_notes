@@ -79,9 +79,9 @@ const TILES = [
   ['create', 'file:new', 'file-plus', 'cmd.new-note', 'mod-cta', ['daily-notes', 'calendar-day', 'cmd.daily-note']],
   ['create', 'canvas:new-file', 'canvas', 'cmd.new-canvas'],
   ['template', 'file:new-from-template', 'template', 'pc.home.from-template', 'mod-slim'],
-  ['template', 'reminders:open', 'alarm-clock', 'cmd.reminders', 'mod-slim'],
   ['view', 'graph:open-here', 'graph', 'pc.home.graph', 'mod-view'],
   ['view', 'bases:vault-view', 'database', 'pc.home.database', 'mod-view'],
+  ['view', 'reminders:open', 'alarm-clock', 'cmd.reminders', 'mod-view'],
 ];
 
 export function renderHome(app, view) {

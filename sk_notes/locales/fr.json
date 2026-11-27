@@ -1161,8 +1161,6 @@
  "reminders.done": "Fait",
  "cmd.add-reminder": "Rappel sur cette ligne",
  "cmd.reminders": "À faire (rappels)",
- "explorer.search": "Chercher dans les notes",
- "explorer.search-none": "Aucune note ne le contient",
  "tree.heading": "Notes en dossiers comme un arbre",
  "tree.setting": "Ranger les notes dans les dossiers de leurs notes mères",
  "tree.setting-desc": "Une note liée depuis une note mère va dans un dossier à son nom, à côté d'elle ; les notes qu'elle lie vont un dossier plus bas. Refait tout seul quand les liens changent. Les liens sont mis à jour.",
@@ -1172,5 +1170,16 @@
  "tree.confirm-text": "Chaque note va dans le dossier de la note qui la lie :",
  "tree.confirm": "Déplacer",
  "tree.moved": "{n} notes rangées dans des dossiers",
- "tree.no-links": "Aucune note n'en lie encore une autre : écris [[Nom]] dans une note (la mère) pour la lier à une autre (l'enfant) ; l'enfant va alors dans le dossier de la mère."
+ "tree.no-links": "Aucune note n'en lie encore une autre : écris [[Nom]] dans une note (la mère) pour la lier à une autre (l'enfant) ; l'enfant va alors dans le dossier de la mère.",
+ "drawing.move": "Déplacer",
+ "drawing.text": "Texte",
+ "drawing.text-placeholder": "Écris quelque chose…",
+ "drawing.shape-circle": "Cercle",
+ "drawing.shape-rect": "Carré / rectangle",
+ "drawing.shape-triangle": "Triangle",
+ "drawing.shape-heart": "Cœur",
+ "drawing.fill": "Plein",
+ "drawing.delete-item": "Retirer l'élément choisi",
+ "explorer.search-names": "Chercher dans les noms",
+ "explorer.search-names-none": "Aucun fichier de ce nom : les mots des notes se cherchent avec la loupe de la barre latérale"
 }

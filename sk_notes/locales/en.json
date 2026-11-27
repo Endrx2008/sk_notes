@@ -1161,8 +1161,6 @@
  "reminders.done": "Done",
  "cmd.add-reminder": "Reminder on this line",
  "cmd.reminders": "Things to do (reminders)",
- "explorer.search": "Search the notes",
- "explorer.search-none": "No note has it",
  "tree.heading": "Notes in folders like a tree",
  "tree.setting": "Put notes in the folders of their mother notes",
  "tree.setting-desc": "A note linked from a mother note goes into a folder named after it, beside it; the notes it links to go one folder deeper. Done again by itself when links change. Links are updated.",
@@ -1172,5 +1170,16 @@
  "tree.confirm-text": "Each note goes into the folder of the note that links to it:",
  "tree.confirm": "Move",
  "tree.moved": "{n} notes moved into folders",
- "tree.no-links": "No note links to another yet: write [[Name]] in a note (the mother) to link it to another (the child), then the child goes into the mother's folder."
+ "tree.no-links": "No note links to another yet: write [[Name]] in a note (the mother) to link it to another (the child), then the child goes into the mother's folder.",
+ "drawing.move": "Move",
+ "drawing.text": "Text",
+ "drawing.text-placeholder": "Write something…",
+ "drawing.shape-circle": "Circle",
+ "drawing.shape-rect": "Square / rectangle",
+ "drawing.shape-triangle": "Triangle",
+ "drawing.shape-heart": "Heart",
+ "drawing.fill": "Filled",
+ "drawing.delete-item": "Remove the chosen item",
+ "explorer.search-names": "Search file names",
+ "explorer.search-names-none": "No file has that name — the words inside the notes are searched with the magnifier in the sidebar"
 }

@@ -608,3 +608,4 @@ body.is-mobile .canvas-edge-hit { stroke-width: calc(34px / var(--canvas-zoom, 1
 .mobile-update-notice { display: flex; flex-direction: column; gap: 10px; }
 .mobile-update-button { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; background: var(--mobile-update-color) !important; color: var(--mobile-update-text) !important; font-weight: 600; }
 
+.mobile-home-grid.mod-views .mobile-home-tile.mod-wide { grid-column: 1 / -1; min-height: 70px; flex-direction: row; align-items: center; justify-content: flex-start; }

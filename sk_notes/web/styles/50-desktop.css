@@ -204,3 +204,4 @@ body.sk-memory-mode .mod-right-split .workspace-tab-header-container,
 body.sk-memory-mode .mod-root .workspace-tab-header-container { display: none !important; }
 .skai-memory-actions { margin: 6px 0 0; padding-left: 20px; font-size: var(--font-ui-small); color: var(--text-muted); }
 .skai-memory-note { font-size: var(--font-ui-smaller); color: var(--text-faint); margin-top: 4px; }
+body.is-desktop .pc-home-grid.mod-view { grid-template-columns: repeat(3, minmax(0, 1fr)); } /* graph, database, to do */

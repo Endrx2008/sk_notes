@@ -1161,8 +1161,6 @@
  "reminders.done": "完了",
  "cmd.add-reminder": "この行にリマインダー",
  "cmd.reminders": "やること(リマインダー)",
- "explorer.search": "ノートを検索",
- "explorer.search-none": "該当するノートはありません",
  "tree.heading": "ツリー状のフォルダー",
  "tree.setting": "ノートを親ノートのフォルダーに入れる",
  "tree.setting-desc": "親ノートからリンクされたノートは、その隣の親ノート名のフォルダーに入り、さらにリンク先は一段下のフォルダーへ。リンクが変わると自動でやり直します。リンクは更新されます。",
@@ -1172,5 +1170,16 @@
  "tree.confirm-text": "各ノートはリンク元ノートのフォルダーへ移動します:",
  "tree.confirm": "移動",
  "tree.moved": "{n} 件のノートをフォルダーへ移動しました",
- "tree.no-links": "まだ他のノートにリンクしているノートがありません。ノート(親)に [[名前]] と書いて別のノート(子)にリンクすると、子は親のフォルダーに入ります。"
+ "tree.no-links": "まだ他のノートにリンクしているノートがありません。ノート(親)に [[名前]] と書いて別のノート(子)にリンクすると、子は親のフォルダーに入ります。",
+ "drawing.move": "移動",
+ "drawing.text": "テキスト",
+ "drawing.text-placeholder": "何か書く…",
+ "drawing.shape-circle": "円",
+ "drawing.shape-rect": "正方形/長方形",
+ "drawing.shape-triangle": "三角形",
+ "drawing.shape-heart": "ハート",
+ "drawing.fill": "塗りつぶし",
+ "drawing.delete-item": "選択した要素を削除",
+ "explorer.search-names": "ファイル名を検索",
+ "explorer.search-names-none": "その名前のファイルはありません。ノート内の語はサイドバーの虫眼鏡で検索します"
 }
