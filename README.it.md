@@ -1,6 +1,6 @@
 # sk_notes
 
-Appunti e base di conoscenza per **Skorpion OS**: una cartella di file Markdown sul tuo
+Appunti e base di conoscenza per [Skorpion OS](https://github.com/Endrx2008/skorpion_os): una cartella di file Markdown sul tuo
 computer, note collegate, grafo, canvas, viste a database, plugin della community e **SKAI**,
 l'IA locale di Skorpion OS — tutto offline. *English: [README.md](README.md).*
 
@@ -14,7 +14,7 @@ l'IA locale di Skorpion OS — tutto offline. *English: [README.md](README.md).*
   di importarne le impostazioni (in sola lettura: i file originali non vengono mai modificati).
 - **Leggero.** Python 3 + Qt; la ricerca risponde in meno di 100 ms su 10.000 note.
 
-Licenza: **GPL-3.0-or-later**. sk_notes non è affiliato con Obsidian o Dynalist Inc.
+sk_notes non è affiliato con Obsidian o Dynalist Inc. Licenza: vedi [sotto](#licenza).
 
 ## Funzioni
 
@@ -143,3 +143,7 @@ entrano mai in conflitto con i3 o Hyprland su Skorpion OS.
 - `python3 qa/plugin_safety.py` — plugin che non finiscono di caricarsi o bloccano l'app (modalità sicura)
 - `python3 qa/startup_time.py` — tempo di avvio; `SK_NOTES_DEBUG=1` aggiunge righe di debug al log
 - Architettura: [docs/architecture.md](docs/architecture.md); API nativa dei plugin: [docs/api.md](docs/api.md); contribuire e tradurre: [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Licenza
+
+GPL-3.0-or-later, vedi [LICENSE](LICENSE) (componenti di terze parti: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)). © 2026 Enrico Miot (EndrX), fondatore e manutentore di Skorpion OS.
