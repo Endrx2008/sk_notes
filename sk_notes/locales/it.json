@@ -1171,5 +1171,6 @@
  "tree.confirm-title": "Spostare {n} note?",
  "tree.confirm-text": "Ogni nota va nella cartella della nota che la collega:",
  "tree.confirm": "Sposta",
- "tree.moved": "{n} note spostate in cartelle"
+ "tree.moved": "{n} note spostate in cartelle",
+ "tree.no-links": "Nessuna nota ne collega un'altra: scrivi [[Nome]] in una nota (la madre) per collegarla a un'altra (la figlia), poi la figlia va nella cartella della madre."
 }

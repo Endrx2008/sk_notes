@@ -30,18 +30,32 @@ export function planTree(app) {
     kids.set(f.path, out);
     for (const p of out) incoming.set(p, incoming.get(p) + 1);
   }
-  const roots = notes.filter((f) => incoming.get(f.path) === 0 && kids.get(f.path).length).map((f) => f.path).sort();
+  // mothers: first the notes no other note links to; then, for notes linked in a loop (a child that
+  // links back to its mother), the one linking to the most notes and linked from the fewest
   const parent = new Map();
-  const depth = new Map(roots.map((r) => [r, 0]));
-  const queue = [...roots];
-  while (queue.length) {
-    const p = queue.shift();
-    for (const c of kids.get(p) || []) {
-      if (depth.has(c)) continue;
-      depth.set(c, depth.get(p) + 1);
-      parent.set(c, p);
-      queue.push(c);
+  const depth = new Map();
+  const roots = [];
+  const grow = (root) => {
+    roots.push(root);
+    depth.set(root, 0);
+    const queue = [root];
+    while (queue.length) {
+      const p = queue.shift();
+      for (const c of kids.get(p) || []) {
+        if (depth.has(c)) continue;
+        depth.set(c, depth.get(p) + 1);
+        parent.set(c, p);
+        queue.push(c);
+      }
     }
+  };
+  for (const f of notes.filter((n) => incoming.get(n.path) === 0 && kids.get(n.path).length).map((n) => n.path).sort()) grow(f);
+  const rest = () => notes.map((f) => f.path).filter((p) => !depth.has(p) && kids.get(p).some((c) => !depth.has(c)));
+  for (let left = rest(); left.length; left = rest()) {
+    // the most "mother-like": links to many notes, is linked from few
+    const score = (p) => kids.get(p).filter((c) => !depth.has(c)).length - incoming.get(p);
+    left.sort((a, b) => score(b) - score(a) || a.localeCompare(b));
+    grow(left[0]);
   }
   // where every note of the tree goes: a mother stays; a child goes into "<mother's folder>/<mother's name>/"
   const place = new Map(roots.map((r) => [r, r]));
@@ -83,7 +97,11 @@ export async function applyTree(app, moves) {
 
 /** Show what would move and ask; true when the user agreed (or nothing had to move). */
 export async function confirmTree(app, moves) {
-  if (!moves.length) { app.notice(t('tree.nothing')); return true; }
+  if (!moves.length) {
+    const linked = app.vault.getMarkdownFiles().some((f) => Object.keys(app.metadataCache.resolvedLinks[f.path] || {}).some((p) => p.endsWith('.md') && p !== f.path));
+    app.notice(t(linked ? 'tree.nothing' : 'tree.no-links'), 8000);
+    return true;
+  }
   const list = moves.slice(0, 8).map((m) => `${m.from}  →  ${m.to}`).join('\n') + (moves.length > 8 ? `\n… (+${moves.length - 8})` : '');
   return confirmDialog(app, { title: t('tree.confirm-title', { n: moves.length }), message: `${t('tree.confirm-text')}\n\n${list}`, confirm: t('tree.confirm') });
 }

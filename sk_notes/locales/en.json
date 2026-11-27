@@ -1171,5 +1171,6 @@
  "tree.confirm-title": "Move {n} notes?",
  "tree.confirm-text": "Each note goes into the folder of the note that links to it:",
  "tree.confirm": "Move",
- "tree.moved": "{n} notes moved into folders"
+ "tree.moved": "{n} notes moved into folders",
+ "tree.no-links": "No note links to another yet: write [[Name]] in a note (the mother) to link it to another (the child), then the child goes into the mother's folder."
 }

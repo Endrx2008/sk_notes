@@ -1171,5 +1171,6 @@
  "tree.confirm-title": "Mover {n} notas?",
  "tree.confirm-text": "Cada nota vai para a pasta da nota que a liga:",
  "tree.confirm": "Mover",
- "tree.moved": "{n} notas movidas para pastas"
+ "tree.moved": "{n} notas movidas para pastas",
+ "tree.no-links": "Nenhuma nota liga ainda a outra: escreve [[Nome]] numa nota (a mãe) para a ligar a outra (a filha); depois a filha vai para a pasta da mãe."
 }

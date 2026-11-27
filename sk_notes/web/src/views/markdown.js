@@ -391,6 +391,7 @@ export class MarkdownView extends TextFileView {
     fmt('editor:toggle-italics', 'italic', 'cmd.toggle-italics');
     fmt('editor:toggle-highlight', 'highlighter', 'cmd.toggle-highlight');
     fmt('editor:text-color', 'text-color', 'cmd.text-color');
+    fmt('editor:add-reminder', 'alarm-clock', 'cmd.add-reminder');
     fmt('editor:insert-wikilink', 'link', 'cmd.insert-wikilink');
     fmt('editor:toggle-checklist-status', 'check-square', 'cmd.toggle-checklist');
     this.app.workspace.trigger('editor-menu', menu, ed, this);
@@ -411,6 +412,9 @@ export class MarkdownView extends TextFileView {
         .onClick(() => this.app.openLinkedView(this.leaf, 'backlink')));
       menu.addItem((i) => i.setTitle(t('view.outline')).setIcon('outline').setSection('linked')
         .onClick(() => this.app.openLinkedView(this.leaf, 'outline')));
+      // a reminder on the line of the caret, a colour for the chosen words (also reachable without a keyboard)
+      menu.addItem((i) => i.setTitle(t('cmd.add-reminder')).setIcon('alarm-clock').setSection('note-tools').onClick(() => { if (this.mode === 'preview') this.setMode('source'); this.app.commands.executeCommandById('editor:add-reminder'); }));
+      menu.addItem((i) => i.setTitle(t('cmd.text-color')).setIcon('text-color').setSection('note-tools').onClick(() => { if (this.mode === 'preview') this.setMode('source'); this.app.commands.executeCommandById('editor:text-color'); }));
       menu.addItem((i) => i.setTitle(t('cmd.find')).setIcon('search').setSection('find').onClick(() => this.showSearch(false)));
       menu.addItem((i) => i.setTitle(t('cmd.replace')).setIcon('replace').setSection('find').onClick(() => this.showSearch(true)));
       menu.addItem((i) => i.setTitle(t('cmd.export-pdf')).setIcon('printer').setSection('export')

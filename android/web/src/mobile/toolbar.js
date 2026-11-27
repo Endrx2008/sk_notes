@@ -56,6 +56,9 @@ export function installToolbar(app) {
   const buttons = [
     ['undo', 'mobile.tb.undo', () => editor()?.undo()],
     ['redo', 'mobile.tb.redo', () => editor()?.redo()],
+    // in sight without scrolling the bar: a reminder on the line, a colour for the chosen words
+    ['alarm-clock', 'mobile.tb.reminder', run('editor:add-reminder')],
+    ['text-color', 'mobile.tb.text-color', run('editor:text-color')],
     ['brackets', 'mobile.tb.wikilink', run('editor:insert-wikilink')],
     ['hash', 'mobile.tb.tag', insert('#')],
     ['heading', 'mobile.tb.heading', cycleHeading],
@@ -68,8 +71,6 @@ export function installToolbar(app) {
     ['arrow-left', 'mobile.tb.unindent', run('editor:unindent-list')],
     ['strikethrough', 'mobile.tb.strike', run('editor:toggle-strikethrough')],
     ['highlighter', 'mobile.tb.highlight', run('editor:toggle-highlight')],
-    ['text-color', 'mobile.tb.text-color', run('editor:text-color')],
-    ['alarm-clock', 'mobile.tb.reminder', run('editor:add-reminder')],
     ['code', 'mobile.tb.code', run('editor:toggle-code')],
     ['quote', 'mobile.tb.quote', run('editor:toggle-blockquote')],
     ['link', 'mobile.tb.link', run('editor:insert-link')],

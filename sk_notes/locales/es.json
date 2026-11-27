@@ -1171,5 +1171,6 @@
  "tree.confirm-title": "¿Mover {n} notas?",
  "tree.confirm-text": "Cada nota va a la carpeta de la nota que la enlaza:",
  "tree.confirm": "Mover",
- "tree.moved": "{n} notas movidas a carpetas"
+ "tree.moved": "{n} notas movidas a carpetas",
+ "tree.no-links": "Ninguna nota enlaza aún a otra: escribe [[Nombre]] en una nota (la madre) para enlazarla con otra (la hija); luego la hija va a la carpeta de la madre."
 }

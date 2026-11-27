@@ -285,7 +285,7 @@ class SettingsModal extends Modal {
       })).addExtraButton((b) => b.setIcon('folder-tree').setTooltip(t('tree.now')).onClick(async () => {
         const moves = a.treeFolders.plan();
         if (moves.length && await a.treeFolders.confirm(moves)) { const n = await a.treeFolders.apply(moves); if (n) a.notice(t('tree.moved', { n })); }
-        else if (!moves.length) a.notice(t('tree.nothing'));
+        else if (!moves.length) await a.treeFolders.confirm(moves);
       }));
     }
     this.heading(el, t('settings.import'));

@@ -1171,5 +1171,6 @@
  "tree.confirm-title": "移动 {n} 条笔记?",
  "tree.confirm-text": "每条笔记会移到链接它的笔记的文件夹:",
  "tree.confirm": "移动",
- "tree.moved": "已将 {n} 条笔记移入文件夹"
+ "tree.moved": "已将 {n} 条笔记移入文件夹",
+ "tree.no-links": "还没有笔记链接到其他笔记:在一条笔记(父)中写 [[名称]] 链接到另一条(子),子笔记就会放进父笔记的文件夹。"
 }

@@ -1171,5 +1171,6 @@
  "tree.confirm-title": "Déplacer {n} notes ?",
  "tree.confirm-text": "Chaque note va dans le dossier de la note qui la lie :",
  "tree.confirm": "Déplacer",
- "tree.moved": "{n} notes rangées dans des dossiers"
+ "tree.moved": "{n} notes rangées dans des dossiers",
+ "tree.no-links": "Aucune note n'en lie encore une autre : écris [[Nom]] dans une note (la mère) pour la lier à une autre (l'enfant) ; l'enfant va alors dans le dossier de la mère."
 }

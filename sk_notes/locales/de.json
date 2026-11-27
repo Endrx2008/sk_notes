@@ -1171,5 +1171,6 @@
  "tree.confirm-title": "{n} Notizen verschieben?",
  "tree.confirm-text": "Jede Notiz kommt in den Ordner der Notiz, die sie verlinkt:",
  "tree.confirm": "Verschieben",
- "tree.moved": "{n} Notizen in Ordner verschoben"
+ "tree.moved": "{n} Notizen in Ordner verschoben",
+ "tree.no-links": "Noch verlinkt keine Notiz eine andere: schreibe [[Name]] in eine Notiz (die Mutter), um sie mit einer anderen (dem Kind) zu verbinden; dann kommt das Kind in den Ordner der Mutter."
 }
