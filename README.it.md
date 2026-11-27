@@ -56,7 +56,7 @@ spesa…), il grafo. Compilazione, firma,
 test e differenze del telefono: [android/README.md](android/README.md) (in inglese).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-1.3.0.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-1.3.1.apk
 ```
 
 ## Installazione
@@ -64,7 +64,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-1.3.0.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_1.3.0_all.deb      # pacchetto creato da tools/build_deb.sh
+sudo apt install ./sk-notes_1.3.1_all.deb      # pacchetto creato da tools/build_deb.sh
 sk-notes
 ```
 
@@ -79,7 +79,7 @@ python3 main.py                 # oppure: python3 main.py --vault ~/Note
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-1.3.0.tar.gz + dist/PKGBUILD (con checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-1.3.1.tar.gz + dist/PKGBUILD (con checksum)
 cd dist && makepkg -si
 ```
 

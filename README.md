@@ -52,7 +52,7 @@ when chosen, and a notice when a newer release is on GitHub. Phones and tablets 
 does its own way: [android/README.md](android/README.md).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-1.3.0.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-1.3.1.apk
 ```
 
 ## Install
@@ -60,7 +60,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-1.3.0.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_1.3.0_all.deb      # package built by tools/build_deb.sh
+sudo apt install ./sk-notes_1.3.1_all.deb      # package built by tools/build_deb.sh
 sk-notes
 ```
 
@@ -75,7 +75,7 @@ python3 main.py                 # or: python3 main.py --vault ~/Notes
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-1.3.0.tar.gz + dist/PKGBUILD (with checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-1.3.1.tar.gz + dist/PKGBUILD (with checksum)
 cd dist && makepkg -si
 ```
 
