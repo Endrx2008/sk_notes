@@ -68,6 +68,8 @@ export function installToolbar(app) {
     ['arrow-left', 'mobile.tb.unindent', run('editor:unindent-list')],
     ['strikethrough', 'mobile.tb.strike', run('editor:toggle-strikethrough')],
     ['highlighter', 'mobile.tb.highlight', run('editor:toggle-highlight')],
+    ['text-color', 'mobile.tb.text-color', run('editor:text-color')],
+    ['alarm-clock', 'mobile.tb.reminder', run('editor:add-reminder')],
     ['code', 'mobile.tb.code', run('editor:toggle-code')],
     ['quote', 'mobile.tb.quote', run('editor:toggle-blockquote')],
     ['link', 'mobile.tb.link', run('editor:insert-link')],

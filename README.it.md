@@ -21,14 +21,15 @@ Licenza: **GPL-3.0-or-later**. sk_notes non è affiliato con Obsidian o Dynalist
 | Area | Cosa offre |
 |---|---|
 | Vault | apri/crea/cambia vault, esplora file con ordinamenti, trascinamento, più file insieme (Ctrl/Maiusc+clic: rinominali uno dopo l'altro, spostali, eliminali), rinomina (i link si aggiornano da soli), cestino di sistema o `.trash`, un cestino del vault (menu della rotella delle impostazioni: quello che è stato eliminato negli ultimi tre mesi, da ripristinare o eliminare per sempre; i file più vecchi se ne vanno da soli), recupero file e cronologia delle versioni |
-| Editor | Anteprima dal vivo e modalità sorgente, vista di lettura, evidenziazione della sintassi, attività, tabelle, blocchi di codice, formule (KaTeX), callout, note a piè di pagina, evidenziazioni, commenti, cursori multipli, piegatura, trova e sostituisci, comandi slash |
+| Editor | Anteprima dal vivo e modalità sorgente, vista di lettura, evidenziazione della sintassi, attività, tabelle, blocchi di codice, formule (KaTeX), callout, note a piè di pagina, evidenziazioni, commenti, cursori multipli, piegatura, trova e sostituisci nella nota (numero di risultati, opzioni *Parola intera* e *Maiuscole/minuscole*), comandi slash, colore del testo (salvato come `<span style="color:…">` nel Markdown, letto da ogni app) |
 | Link | `[[wikilink]]` con autocompletamento, alias, link a titoli e blocchi, incorporamento di note, sezioni, immagini, audio, video e PDF, backlink e menzioni non collegate, link in uscita, anteprima al passaggio |
-| Ricerca | indice a testo completo con `file:`, `path:`, `tag:`, `line:()`, `section:()`, `task-todo:`, `[proprietà:valore]`, `OR`, `-`, regex… |
+| Promemoria | una riga con data e ora — `- [ ] studiare capitolo 3 (@2026-11-28 15:00)`, la forma del plugin *Reminder* di Obsidian — ti chiama a quell'ora (una notifica del desktop finché sk_notes è aperto; su Android una notifica del telefono anche ad app chiusa); il pulsante dell'orologio ne mette uno, *Da fare* nella Home li elenca tutti (in ritardo, oggi, più avanti), spuntare l'attività lo chiude |
+| Ricerca | indice a testo completo con `file:`, `path:`, `tag:`, `line:()`, `section:()`, `task-todo:`, `[proprietà:valore]`, `OR`, `-`, regex…; l'elenco dei file nell'area principale (la vista elenco di Android) ha una sua casella di ricerca, con *Parola intera* |
 | Home | una scheda vuota è la Home, come in sk_notes per Android: il logo con il nome del vault aperto, le note recenti in una riga, crea (nota — con un pulsante calendario per la nota di oggi —, canvas e una barra più piccola per una nota da template), visualizza (grafo, database del vault — una vista, nessun file viene creato; l'elenco dei file è sempre nella barra laterale sinistra); ogni riquadro è un comando con una scorciatoia (Impostazioni → Scorciatoie) mostrata sul riquadro — nota Ctrl+N, canvas Ctrl+C quando non c'è nulla da copiare; frecce e Invio funzionano sulla Home. La barra laterale a sinistra si nasconde finché sullo schermo c'è solo la Home. Il "+" delle schede mostra due bolle (nota, canvas) da cliccare, oppure premi e trascina verso una delle due |
 | Riquadri | il pulsante "nuovo riquadro a destra" nell'intestazione di ogni riquadro (o Ctrl+Alt+D) aggiunge un riquadro sul bordo destro, tutti della stessa larghezza, con l'ultima nota usata non visibile (o la Home). I riquadri si spostano come finestre dentro la finestra, senza mai uscirne: trascina una scheda per il nome e lasciala sulla metà del riquadro dove deve andare (sinistra, destra, sopra, sotto), al centro per unirla alle sue schede, su una barra delle schede per metterla tra quelle; trascina la parte vuota di una barra delle schede per spostare tutto il riquadro; Esc annulla. Un file dell'elenco lasciato sul bordo di un riquadro si apre accanto. Chiudendo l'ultima nota di un riquadro si chiude il riquadro e gli altri si dividono il suo spazio |
 | Navigazione | apertura rapida, palette dei comandi, tag annidati, struttura, segnalibri, schede, pannelli divisi, layout salvati, finestre separate |
-| Grafo | grafo globale e locale, filtri, gruppi colorati, forze; i punti restano dove erano quando il grafo si riapre; il clic destro (sul telefono una pressione lunga) sceglie i punti e mostra una matita: un colore per tutti, o le loro note nel cestino |
-| Canvas | file `.canvas` (formato aperto JSON Canvas): schede, note, media, gruppi, collegamenti (colore, etichetta, direzione, rimuovi tutte le frecce di una scheda), rinomina dal titolo, immagine di tutta la lavagna (JPG) |
+| Grafo | grafo globale e locale, filtri, gruppi colorati, forze; i punti restano dove erano quando il grafo si riapre; il clic destro (sul telefono una pressione lunga) sceglie i punti e mostra una matita: colore e dimensione per tutti (entrambi ricordati; un tema non cambia mai un colore scelto dall'utente), o le loro note nel cestino; una pressione lunga (clic destro) su un punto vuoto crea lì una nuova nota o un canvas; i canvas sono quadrati con una freccia verso ogni nota messa sopra (opzione *Canvas*, attiva di base); a scelta: le note spostate da sole in cartelle ad albero sotto le loro note madre (Impostazioni → File e link) |
+| Canvas | file `.canvas` (formato aperto JSON Canvas): schede, note, media, gruppi, collegamenti (colore, etichetta, direzione, rimuovi tutte le frecce di una scheda), rinomina dal titolo, immagine di tutta la lavagna (JPG), disegni a mano (una scheda che è un file SVG del vault, da ridisegnare con un doppio tocco); i sei colori delle schede sono valori fissi, uguali in ogni tema |
 | Proprietà | editor delle proprietà con tipi e **Basi** (`.base`): viste tabella, schede, elenco e bacheca con filtri e formule |
 | Organizzazione | template, note giornaliere, note uniche, compositore (unisci/estrai), conteggio parole |
 | Esporta e importa | esportazione PDF; importazione da cartelle Markdown, Evernote, Notion, Bear/TextBundle, Logseq, Roam, Google Keep, HTML, CSV |
@@ -49,11 +50,13 @@ Sul PC sk_notes apre SKAI_ Memory come una finestra sulla memoria, non come un q
 `android/` contiene sk_notes per Android 8.0 o successivi: lo stesso spazio di lavoro del PC in un APK,
 con la sincronizzazione Git e i vault cifrati compatibili con quelli del desktop, un correttore
 ortografico con le lingue scaricate solo quando le scegli e un avviso quando su GitHub c'è una release
-più recente. Compilazione, firma,
+più recente. Telefoni e tablet hanno la stessa disposizione (quella del telefono). I promemoria suonano
+come notifiche del telefono; widget per la schermata Home: cose da fare, una nota (la lista della
+spesa…), il grafo. Compilazione, firma,
 test e differenze del telefono: [android/README.md](android/README.md) (in inglese).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.1.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-1.3.0.apk
 ```
 
 ## Installazione
@@ -61,7 +64,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.1.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_1.2.1_all.deb      # pacchetto creato da tools/build_deb.sh
+sudo apt install ./sk-notes_1.3.0_all.deb      # pacchetto creato da tools/build_deb.sh
 sk-notes
 ```
 
@@ -76,7 +79,7 @@ python3 main.py                 # oppure: python3 main.py --vault ~/Note
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-1.2.1.tar.gz + dist/PKGBUILD (con checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-1.3.0.tar.gz + dist/PKGBUILD (con checksum)
 cd dist && makepkg -si
 ```
 
@@ -95,6 +98,8 @@ I pacchetti registrano sk_notes per i link `sknotes://`, per esempio da un launc
 | `sknotes://open?vault=Note&file=Progetti/Piano` | apre una nota (funziona anche `path=/percorso/file.md`; `newpane=true` apre una scheda) |
 | `sknotes://new?vault=Note&name=Idea&content=…` | crea una nota; con `file=…&append=true` (o `prepend`, `overwrite`) aggiunge a una esistente; `silent=true` non la apre |
 | `sknotes://search?vault=Note&query=tag:%23todo` | apre il pannello di ricerca |
+| `sknotes://graph?vault=Note` | apre il grafo (il widget del grafo su Android) |
+| `sknotes://reminders?vault=Note` | apre l'elenco delle cose da fare (promemoria) |
 
 Se il vault è già aperto, il link va alla finestra in esecuzione. Le altre azioni vengono
 passate ai plugin della community che le gestiscono.

@@ -335,6 +335,21 @@ final class Bridge {
             }
             case "secret.delete": return Secrets.delete(act, p.optString("name", ""));
 
+            // ---- reminders of the notes (alarms + notifications) and home-screen widgets
+            case "reminders.set":
+                Reminders.store(act, p.optString("vault", ""), p);
+                return true;
+            case "reminders.permission": return act.requestNotifications();
+            case "widgets.notes":
+                Widgets.storeNotes(act, p);
+                return true;
+            case "widgets.changed":
+                Widgets.noteChanged(act, p.optString("path", ""));
+                return true;
+            case "widgets.graph":
+                Widgets.storeGraph(act, p);
+                return true;
+
             // ---- network
             case "net.policy":
                 act.setAllowRemote(p.optBoolean("allowRemote", false));

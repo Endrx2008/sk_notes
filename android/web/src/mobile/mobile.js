@@ -17,6 +17,7 @@ import { installTemplateGallery, installThemeBrowser } from './gallery.js';
 import { BASE_VIEWS, newNoteFromTemplate, openBase, renderHome } from './home.js';
 import { installMultiSelect } from './multiselect.js';
 import { installNavbar } from './navbar.js';
+import { installNativeReminders } from './widgets.js';
 import { renderPdf } from './pdf.js';
 import { installPluginBrowser } from './plugin-browser.js';
 import { installSheets } from './sheets.js';
@@ -35,6 +36,7 @@ import { CommandPalette } from '@desktop/ui/palette.js';
 import { TFile, TFolder } from '@desktop/model/vault.js';
 
 export function installMobile(app, info) {
+  installNativeReminders(app); // before the app starts: the reminders are handed to the phone from the first scan
   const ws = app.workspace;
   installFolderPicker(app);
   installSheets(app);

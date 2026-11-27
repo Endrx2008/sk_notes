@@ -9,6 +9,12 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+    <!-- reminders of the notes: a notification at the time the user set, also with the app closed
+         (exact alarms; the alarms are set again after a restart of the phone) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <queries>
         <!-- sync apps the sync panel looks for -->
@@ -66,6 +72,36 @@
                 <data android:mimeType="application/pdf" />
             </intent-filter>
         </activity>
+
+        <!-- reminders: the alarm of one, and the alarms set again after a restart or an update -->
+        <receiver android:name=".ReminderReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- home-screen widgets: things to do, one note, the graph -->
+        <receiver android:name=".TodoWidget" android:exported="true" android:label="@string/widget_todo">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_todo_info" />
+        </receiver>
+        <service android:name=".TodoWidgetService" android:exported="false" android:permission="android.permission.BIND_REMOTEVIEWS" />
+        <receiver android:name=".NoteWidget" android:exported="true" android:label="@string/widget_note">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_note_info" />
+        </receiver>
+        <activity android:name=".NoteWidgetConfig" android:exported="true" android:label="@string/widget_note_choose"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" /></intent-filter>
+        </activity>
+        <receiver android:name=".GraphWidget" android:exported="true" android:label="@string/widget_graph">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_graph_info" />
+        </receiver>
 
         <!-- hands single vault files to other apps ("open in default app", "share") -->
         <provider

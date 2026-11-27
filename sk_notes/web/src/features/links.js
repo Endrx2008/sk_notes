@@ -46,7 +46,11 @@ async function searchAction(app, p) {
   leaf.view.setQuery(p.query || '');
 }
 
-const BUILTIN = { open: openAction, new: newAction, search: searchAction };
+// sknotes://graph?vault=… (a widget of the graph), sknotes://reminders?vault=… (the widget of the things to do)
+const graphAction = (app) => app.workspace.onLayoutReady(() => app.commands.executeCommandById('graph:open'));
+const remindersAction = (app) => app.workspace.onLayoutReady(() => app.commands.executeCommandById('reminders:open'));
+
+const BUILTIN = { open: openAction, new: newAction, search: searchAction, graph: graphAction, reminders: remindersAction };
 
 export function installLinkHandler(app) {
   onBackend('open-uri', async ({ action, params }) => {

@@ -2,4 +2,21 @@
 <resources>
     <string name="webview_missing">O sk_notes precisa do componente do sistema «Android System WebView», que falta ou está desativado neste dispositivo.</string>
     <string name="webview_old">O «Android System WebView» deste dispositivo é antigo (versão %1$d; o sk_notes precisa da %2$d ou mais recente). Atualize-o na loja de aplicações, ou o sk_notes pode não iniciar.</string>
+    <string name="reminders_channel">Lembretes</string>
+    <string name="reminders_channel_desc">Os lembretes das tuas notas, na hora escolhida</string>
+    <string name="widget_todo">A fazer</string>
+    <string name="widget_todo_desc">Os lembretes das tuas notas, com as datas</string>
+    <string name="widget_todo_empty">Sem lembretes. Numa nota, define um com o botão do relógio.</string>
+    <string name="widget_today">Hoje %1$s</string>
+    <string name="widget_tomorrow">Amanhã %1$s</string>
+    <string name="widget_note">Nota</string>
+    <string name="widget_note_desc">Uma nota no ecrã inicial (a lista de compras…)</string>
+    <string name="widget_note_none">Escolhe uma nota: remove o widget e coloca-o de novo.</string>
+    <string name="widget_note_missing">A nota já não existe (ou o cofre está fechado).</string>
+    <string name="widget_note_choose">Qual nota?</string>
+    <string name="widget_note_filter">Procurar uma nota</string>
+    <string name="widget_note_empty">Abre o sk_notes uma vez com o teu cofre: as suas notas aparecem aqui.</string>
+    <string name="widget_graph">Grafo</string>
+    <string name="widget_graph_desc">O grafo das tuas notas; toca para abrir</string>
+    <string name="widget_graph_empty">Abre o grafo no sk_notes uma vez: a sua imagem aparece aqui.</string>
 </resources>

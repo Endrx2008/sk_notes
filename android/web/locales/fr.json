@@ -408,5 +408,7 @@
  "settings.templates-folder": "Dossier des modèles",
  "settings.templates-folder-desc": "« Insérer un modèle » propose les notes de ce dossier.",
  "templates.choose": "Choisissez un modèle…",
- "templates.none": "Aucun modèle. Indiquez le dossier des modèles dans Paramètres → Fonctions principales."
+ "templates.none": "Aucun modèle. Indiquez le dossier des modèles dans Paramètres → Fonctions principales.",
+ "mobile.tb.text-color": "Couleur du texte",
+ "mobile.tb.reminder": "Rappel"
 }

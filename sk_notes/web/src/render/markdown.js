@@ -1,6 +1,7 @@
 // Reading-view renderer: markdown-it + sk_notes rules, section-by-section output so
 // post-processors (ours and plugins') receive one element per block with line info.
 
+import { parseReminder, whenText } from '../features/reminders.js';
 import MarkdownIt from 'markdown-it';
 import { resourceUrl } from '../core/api.js';
 import { setIcon } from '../core/icons.js';
@@ -494,6 +495,28 @@ export async function postProcess(app, sections, sourcePath, component, frontmat
 }
 
 async function builtinPostProcess(app, el, sourcePath, component, depth, ctx) {
+  // reminders "(@2026-11-28 15:00)": a small label with the time (the note keeps the plain text)
+  if (el.textContent.includes('(@')) {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const hits = [];
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.nodeValue.includes('(@') && !n.parentElement?.closest('code, pre')) hits.push(n);
+    for (const n of hits) {
+      const re = /\(@\d{4}-\d{2}-\d{2}(?:[ T]\d{1,2}:\d{2})?\)/g;
+      const text = n.nodeValue;
+      let last = 0;
+      const frag = document.createDocumentFragment();
+      for (let m = re.exec(text); m; m = re.exec(text)) {
+        const r = parseReminder(m[0]);
+        if (!r) continue;
+        frag.append(text.slice(last, m.index));
+        frag.append(createSpan({ cls: 'sk-reminder' + (r.at < Date.now() ? ' is-past' : ''), text: `⏰ ${whenText(r.at)}`, attr: { title: m[0] } }));
+        last = m.index + m[0].length;
+      }
+      if (!last) continue;
+      frag.append(text.slice(last));
+      n.replaceWith(frag);
+    }
+  }
   // code block processors (plugins) and copy buttons
   for (const pre of el.findAll('pre[data-lang]')) {
     const lang = pre.getAttr('data-lang');

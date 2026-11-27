@@ -2,4 +2,21 @@
 <resources>
     <string name="webview_missing">sk_notes ha bisogno del componente di sistema «Android System WebView», che su questo dispositivo manca o è disattivato.</string>
     <string name="webview_old">«Android System WebView» di questo dispositivo è vecchio (versione %1$d; sk_notes richiede la %2$d o successiva). Aggiornalo dallo store, altrimenti sk_notes potrebbe non avviarsi.</string>
+    <string name="reminders_channel">Promemoria</string>
+    <string name="reminders_channel_desc">I promemoria delle tue note, all\'ora che hai scelto</string>
+    <string name="widget_todo">Da fare</string>
+    <string name="widget_todo_desc">I promemoria delle tue note, con le loro date</string>
+    <string name="widget_todo_empty">Nessun promemoria. In una nota mettine uno con il pulsante dell\'orologio.</string>
+    <string name="widget_today">Oggi %1$s</string>
+    <string name="widget_tomorrow">Domani %1$s</string>
+    <string name="widget_note">Nota</string>
+    <string name="widget_note_desc">Una nota nella schermata Home (la lista della spesa…)</string>
+    <string name="widget_note_none">Scegli una nota: togli il widget e rimettilo.</string>
+    <string name="widget_note_missing">La nota non c\'è più (o il vault è chiuso).</string>
+    <string name="widget_note_choose">Quale nota?</string>
+    <string name="widget_note_filter">Cerca una nota</string>
+    <string name="widget_note_empty">Apri sk_notes una volta con il tuo vault: le sue note compaiono qui.</string>
+    <string name="widget_graph">Grafo</string>
+    <string name="widget_graph_desc">Il grafo delle tue note; toccalo per aprirlo</string>
+    <string name="widget_graph_empty">Apri il grafo in sk_notes una volta: la sua immagine compare qui.</string>
 </resources>

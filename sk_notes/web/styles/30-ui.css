@@ -206,3 +206,4 @@
 .trash-action.mod-danger { color: var(--mobile-trash-color, var(--text-error)); }
 .trash-empty { display: inline-flex; align-items: center; justify-content: center; gap: 8px; align-self: stretch; margin-top: 6px; min-height: 44px; }
 .trash-empty-icon { display: flex; }
+.modal .modal-content > p { white-space: pre-line; overflow-wrap: anywhere; }

@@ -43,6 +43,7 @@ DEFAULT_IGNORE = "\n".join([
     ".sk_notes/workspaces-mobile.json",
     ".sk_notes/rename-journal.json",
     ".sk_notes/graph-positions.json",
+    ".sk_notes/reminders-shown.json",
     ".sk_notes/cache.db*",
     ".sk_notes/history.db*",
     ".sk_notes/embeddings.db*",
@@ -53,7 +54,7 @@ DEFAULT_IGNORE = "\n".join([
 ])
 # never committed from this computer and never overwritten on it, whatever .gitignore says
 DEVICE_FILES = {".sk_notes/workspace.json", ".sk_notes/workspaces.json", ".sk_notes/rename-journal.json",
-                ".sk_notes/graph-positions.json"}
+                ".sk_notes/graph-positions.json", ".sk_notes/reminders-shown.json"}
 MAX_FILE = 50 * 1024 * 1024
 TEXT_MERGE = (".md", ".markdown", ".txt")
 SAFE = ["-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "protocol.ext.allow=never",

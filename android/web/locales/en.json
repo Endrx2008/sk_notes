@@ -408,5 +408,7 @@
  "settings.templates-folder": "Template folder",
  "settings.templates-folder-desc": "Notes in this folder are offered by \"Insert template\".",
  "templates.choose": "Choose a template…",
- "templates.none": "No templates. Set the template folder in Settings → Core features."
+ "templates.none": "No templates. Set the template folder in Settings → Core features.",
+ "mobile.tb.text-color": "Text colour",
+ "mobile.tb.reminder": "Reminder"
 }

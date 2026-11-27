@@ -7,6 +7,7 @@ import { Decoration, EditorView, ViewPlugin, WidgetType } from '@codemirror/view
 import { setIcon } from '../core/icons.js';
 import { renderEmbed, renderSections, postProcess } from '../render/markdown.js';
 import { Component } from '../model/component.js';
+import { parseReminder, whenText } from '../features/reminders.js';
 
 /** {app, file, editor, view} of the editor (plugins read it as editorInfoField). */
 export const setEditorInfo = StateEffect.define();
@@ -313,8 +314,50 @@ function buildInline(view) {
       },
     });
   }
+  // coloured text: <span style="color:#rrggbb">…</span> shows in its colour; the tags are hidden
+  // while the caret is elsewhere (the file keeps plain HTML, read by any Markdown app)
+  for (const { from, to } of view.visibleRanges) {
+    const text = state.doc.sliceString(from, to);
+    COLOR_SPAN.lastIndex = 0;
+    for (let m = COLOR_SPAN.exec(text); m; m = COLOR_SPAN.exec(text)) {
+      const s = from + m.index;
+      if (fm && s < fm.to) continue;
+      const openEnd = s + m[1].length;
+      const e = s + m[0].length;
+      const closeStart = e - '</span>'.length;
+      if (closeStart <= openEnd) continue;
+      const inner = Decoration.mark({ class: 'cm-sk-colored', attributes: { style: `color: ${m[2]}` } }).range(openEnd, closeStart);
+      if (isActive(s, e)) {
+        b.push(Decoration.mark({ class: 'cm-sk-color-tag' }).range(s, openEnd), inner, Decoration.mark({ class: 'cm-sk-color-tag' }).range(closeStart, e));
+      } else b.push(hide.range(s, openEnd), inner, hide.range(closeStart, e));
+    }
+  }
+  // a reminder "(@2026-11-28 15:00)" shows as a small label with its time, away from the caret
+  for (const { from, to } of view.visibleRanges) {
+    const text = state.doc.sliceString(from, to);
+    const re = /\(@\d{4}-\d{2}-\d{2}(?:[ T]\d{1,2}:\d{2})?\)/g;
+    for (let m = re.exec(text); m; m = re.exec(text)) {
+      const s = from + m.index;
+      const e = s + m[0].length;
+      if ((fm && s < fm.to) || isActive(s, e)) continue;
+      const r = parseReminder(m[0]);
+      if (r) b.push(Decoration.replace({ widget: new ReminderWidget(r.at) }).range(s, e));
+    }
+  }
   return Decoration.set(b, true);
 }
+
+class ReminderWidget extends WidgetType {
+  constructor(at) { super(); this.at = at; }
+  eq(o) { return o.at === this.at; }
+  toDOM() {
+    const el = createSpan({ cls: 'cm-sk-reminder' + (this.at < Date.now() ? ' is-past' : ''), text: `⏰ ${whenText(this.at)}` });
+    return el;
+  }
+  ignoreEvent() { return false; }
+}
+
+export const COLOR_SPAN = /(<span style="color:\s*(#[0-9a-fA-F]{3,8}|[a-zA-Z]{3,20})\s*;?">)([^<\n]*?)<\/span>/g;
 
 export const livePreviewInline = ViewPlugin.fromClass(class {
   constructor(view) { this.decorations = view.state.field(editorLivePreviewField) ? buildInline(view) : Decoration.none; }

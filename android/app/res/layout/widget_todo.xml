@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- widget of the things to do. Copyright (C) 2026 Enrico Miot. SPDX-License-Identifier: GPL-3.0-or-later -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widget_root"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical"
+    android:background="@drawable/widget_bg" android:padding="10dp">
+    <LinearLayout android:id="@+id/widget_header" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:paddingBottom="6dp">
+        <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@drawable/ic_notify" android:tint="#E05C00" android:contentDescription="@null" />
+        <TextView android:id="@+id/widget_title" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:paddingStart="8dp" android:text="@string/widget_todo" android:textColor="#FFFFFF" android:textSize="15sp" android:textStyle="bold"
+            android:fontFamily="monospace" android:maxLines="1" android:ellipsize="end" />
+    </LinearLayout>
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <ListView android:id="@+id/widget_list" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:divider="#22FFFFFF" android:dividerHeight="1dp" />
+        <TextView android:id="@+id/widget_empty" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:gravity="center" android:text="@string/widget_todo_empty" android:textColor="#99FFFFFF" android:textSize="13sp" android:padding="8dp" />
+    </FrameLayout>
+</LinearLayout>

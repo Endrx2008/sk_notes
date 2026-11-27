@@ -6,7 +6,7 @@ import { t, errorText } from '../core/i18n.js';
 import { debounce } from '../core/util.js';
 import { Keymap } from '../model/keymap.js';
 import { TFile, TFolder } from '../model/vault.js';
-import { Menu, setTooltip } from '../ui/kit.js';
+import { Menu, SearchComponent, setTooltip } from '../ui/kit.js';
 import { ItemView } from './base.js';
 
 const SORTS = ['alphabetical', 'alphabeticalReverse', 'byModifiedTime', 'byModifiedTimeReverse', 'byCreatedTime', 'byCreatedTimeReverse'];
@@ -42,9 +42,68 @@ export class FileExplorerView extends ItemView {
     this.collapseBtn = btn('chevrons-down-up', t('explorer.collapse-all'), () => this.toggleCollapseAll());
     this.contentEl.addClass('nav-files-container', 'node-insert-event');
     this.contentEl.setAttr('tabindex', '0');
+    // a search among the notes, at the top of the list (shown when the list fills the main area:
+    // the list view of a phone or tablet; in a sidebar the Search tab is beside it)
+    this.searchEl = this.contentEl.createDiv('nav-search');
+    this.searchInput = new SearchComponent(this.searchEl).setPlaceholder(t('explorer.search'));
+    this.searchInput.inputEl.addClass('nav-search-input');
+    this.wholeWord = false;
+    this.wordBtn = this.searchEl.createDiv({ cls: 'clickable-icon nav-search-word', attr: { 'aria-label': t('find.whole-word'), role: 'button', 'aria-pressed': 'false' } });
+    this.wordBtn.setText(t('find.whole-word-short'));
+    this.wordBtn.addEventListener('click', () => {
+      this.wholeWord = !this.wholeWord;
+      this.wordBtn.setAttr('aria-pressed', String(this.wholeWord));
+      this.wordBtn.toggleClass('is-active', this.wholeWord);
+      this._search();
+    });
+    this.searchInput.onChange(debounce(() => this._search(), 220, true));
     this.treeEl = this.contentEl.createDiv('nav-folder mod-root');
     this.rootChildrenEl = this.treeEl.createDiv('nav-folder-children');
+    this.searchResultsEl = this.contentEl.createDiv('nav-search-results');
+    this.searchResultsEl.hide();
     this.render = debounce(() => this._render(), 50, true);
+  }
+
+  /** The notes whose name or text has what was typed: names first, then the text, each with its first match. */
+  async _search() {
+    const q = this.searchInput.getValue().trim();
+    const token = (this._searchToken = (this._searchToken || 0) + 1);
+    const out = this.searchResultsEl;
+    if (!q) { out.empty(); out.hide(); this.treeEl.show(); return; }
+    const esc = q.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+    const nameRe = new RegExp(this.wholeWord ? `(^|[^\\p{L}\\p{N}_])${esc}($|[^\\p{L}\\p{N}_])` : esc, 'iu');
+    const byName = this.app.vault.getFiles().filter((f) => ['md', 'canvas', 'base', 'pdf'].includes(f.extension) && nameRe.test(f.basename));
+    let byText = [];
+    try {
+      const query = this.wholeWord ? `/\\b${esc}\\b/` : q.split(/\s+/).map((w) => (/[\s"]/.test(w) ? w : `"${w.replace(/"/g, '')}"`)).join(' ');
+      const res = await call('search.query', { query, caseSensitive: false, context: 1, limit: 300, snippetFiles: 60 });
+      byText = res?.results || [];
+    } catch { byText = []; }
+    if (token !== this._searchToken) return;
+    out.empty();
+    this.treeEl.hide();
+    out.show();
+    const seen = new Set();
+    const row = (file, snippet, line) => {
+      const item = out.createDiv({ cls: 'tree-item-self nav-file-title nav-search-result is-clickable', attr: { 'data-path': file.path } });
+      const head = item.createDiv('nav-search-result-head');
+      head.createDiv({ cls: 'tree-item-inner nav-file-title-content', text: file.extension === 'md' ? file.basename : file.name });
+      if (file.parent && file.parent.path !== '/') head.createDiv({ cls: 'nav-search-result-folder', text: file.parent.path });
+      if (snippet) {
+        const sn = item.createDiv('nav-search-result-snippet');
+        for (const [text, hit] of snippet) { if (hit) sn.createSpan({ cls: 'search-result-file-matched-text', text }); else sn.appendText(text); }
+      }
+      item.addEventListener('click', (e) => this.app.workspace.getLeaf(Keymap.isModEvent(e) || false).openFile(file, { eState: line !== null && line !== undefined ? { line } : {} }));
+    };
+    for (const f of byName.slice(0, 100)) { seen.add(f.path); row(f, null, null); }
+    for (const r of byText) {
+      const f = this.app.vault.getFileByPath(r.path);
+      if (!f || seen.has(f.path)) continue;
+      seen.add(f.path);
+      const m = r.matches?.[0];
+      row(f, m?.segments || null, m?.line ?? null);
+    }
+    if (!seen.size) out.createDiv({ cls: 'nav-search-empty', text: t('explorer.search-none') });
   }
 
   /** path → item elements (plugins decorate explorer items through this). */

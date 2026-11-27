@@ -11,8 +11,11 @@ import { Menu, setTooltip, promptDialog } from '../ui/kit.js';
 import { QuickSwitcher } from '../ui/palette.js';
 import { TextFileView } from './base.js';
 import { canvasPicture } from './canvas-image.js';
+import { DrawingModal, emptyDrawing, isDrawing } from './drawing.js';
 
-const PRESET = { 1: 'var(--color-red)', 2: 'var(--color-orange)', 3: 'var(--color-yellow)', 4: 'var(--color-green)', 5: 'var(--color-cyan)', 6: 'var(--color-purple)' };
+// The six colours of a card or an arrow are the user's choice: fixed values, the same in every
+// theme (a theme never turns the orange chosen by the user into its own colour).
+export const PRESET = { 1: '#e5484d', 2: '#f08c2e', 3: '#e3b341', 4: '#39d353', 5: '#3fc1c9', 6: '#b98bf0' };
 const colorOf = (c) => (!c ? null : PRESET[c] || c);
 const SIDES = ['top', 'right', 'bottom', 'left'];
 
@@ -68,6 +71,7 @@ export class CanvasView extends TextFileView {
     });
     // phones and tablets: photos, PDFs and other files straight from the device
     if (this.app.importFromDevice) tool('upload', t('mobile.import-device'), () => this.addFilesFromDevice(this._center()));
+    tool('brush', t('drawing.add'), () => this.addDrawing(this._center()));
     tool('folder', t('canvas.add-group'), () => this.addGroup());
     // right controls
     const ctr = c.createDiv('canvas-controls');
@@ -227,6 +231,47 @@ export class CanvasView extends TextFileView {
     });
   }
 
+  /** A new drawing: an SVG file in the attachment folder, on the board as a picture card. */
+  async addDrawing(pos) {
+    if (this.readOnly) return;
+    const stamp = window.moment ? window.moment().format('YYYY-MM-DD HH.mm') : new Date().toISOString().slice(0, 16).replace(/[T:]/g, (c) => (c === 'T' ? ' ' : '.'));
+    let file;
+    try {
+      const path = await this.app.fileManager.getAvailablePathForAttachment(`${t('drawing.file-name')} ${stamp}.svg`, this.file?.path || '');
+      file = await this.app.vault.create(path, emptyDrawing());
+      file = this.app.vault.getFileByPath(path) || file;
+    } catch (e) { this.app.notice(errorText(e)); return; }
+    const n = this.addNode({ type: 'file', file: file.path, ...pos, width: 400, height: 300 });
+    if (n) this.editDrawing(n);
+  }
+
+  /** Draw again on a drawing card. */
+  async editDrawing(n) {
+    const file = this.app.vault.getFileByPath(n.file);
+    if (!file) return;
+    let text = '';
+    try { text = await this.app.vault.read(file); } catch (e) { this.app.notice(errorText(e)); return; }
+    new DrawingModal(this.app, text, async (svg) => {
+      try { await this.app.vault.modify(file, svg); } catch (e) { this.app.notice(errorText(e)); return; }
+      (this._drawings ??= new Map()).set(file.path, true);
+      setTimeout(() => this.render(), 150); // the picture with its new strokes (a new address: the mtime)
+    }).open();
+  }
+
+  /** Is the file of this card a drawing made here (read once, then remembered)? */
+  _isDrawingCard(n, file) {
+    if (!file || file.extension !== 'svg') return false;
+    this._drawings ??= new Map();
+    if (this._drawings.has(file.path)) return this._drawings.get(file.path);
+    this._drawings.set(file.path, false);
+    this.app.vault.cachedRead(file).then((text) => {
+      const yes = isDrawing(text);
+      this._drawings.set(file.path, yes);
+      if (yes) this.nodeEls.get(n.id)?.addClass('is-drawing');
+    }, () => {});
+    return false;
+  }
+
   addGroup() {
     const sel = this.canvasData.nodes.filter((n) => this.selection.has(n.id));
     let box = { x: this._center().x, y: this._center().y, width: 500, height: 400 };
@@ -292,7 +337,10 @@ export class CanvasView extends TextFileView {
       label.addEventListener('dblclick', (e) => { e.stopPropagation(); if (file) this.app.workspace.openFile(file, 'tab'); });
       const box = content.createDiv('canvas-node-content');
       if (!file) box.createDiv({ cls: 'canvas-missing', text: t('canvas.missing-file', { path: n.file }) });
-      else if (isImage(file.extension)) box.createEl('img', { attr: { src: resourceUrl(file.path, file.stat.mtime), draggable: 'false' } });
+      else if (isImage(file.extension)) {
+        box.createEl('img', { attr: { src: resourceUrl(file.path, file.stat.mtime), draggable: 'false' } });
+        if (this._isDrawingCard(n, file)) el.addClass('is-drawing');
+      }
       else if (isAudio(file.extension)) box.createEl('audio', { attr: { controls: true, src: resourceUrl(file.path) } });
       else if (isVideo(file.extension)) box.createEl('video', { attr: { controls: true, src: resourceUrl(file.path) } });
       else if (file.extension === 'pdf') {
@@ -340,6 +388,7 @@ export class CanvasView extends TextFileView {
     el.addEventListener('mousedown', (e) => this._nodeMouseDown(e, n));
     el.addEventListener('dblclick', (e) => {
       if (n.type === 'text') { e.stopPropagation(); this.editText(n); }
+      if (n.type === 'file' && el.hasClass('is-drawing')) { e.stopPropagation(); this.editDrawing(n); }
       if (n.type === 'group') { e.stopPropagation(); this.editGroupLabel(n); }
     });
     el.addEventListener('contextmenu', (e) => this._nodeMenu(e, n));
@@ -551,6 +600,7 @@ export class CanvasView extends TextFileView {
       const m = new Menu();
       m.addItem((i) => i.setTitle(t('canvas.add-card')).setIcon('file-text').onClick(() => this.addText({ x, y })));
       m.addItem((i) => i.setTitle(t('canvas.add-note')).setIcon('file').onClick(() => this.addFileFromVault({ x, y })));
+      m.addItem((i) => i.setTitle(t('drawing.add')).setIcon('brush').onClick(() => this.addDrawing({ x: Math.round(x), y: Math.round(y) })));
       m.addItem((i) => i.setTitle(t('canvas.add-group')).setIcon('folder').onClick(() => this.addGroup()));
       m.showAtMouseEvent(e);
     });
@@ -681,6 +731,7 @@ export class CanvasView extends TextFileView {
     if (n.type === 'file') {
       const f = this.app.vault.getFileByPath(n.file);
       if (f) m.addItem((i) => i.setTitle(t('file.open-new-tab')).setIcon('file').onClick(() => this.app.workspace.openFile(f, 'tab')));
+      if (f && this.nodeEls.get(n.id)?.hasClass('is-drawing')) m.addItem((i) => i.setTitle(t('drawing.edit')).setIcon('brush').onClick(() => this.editDrawing(n)));
     }
     if (n.type === 'text') {
       m.addItem((i) => i.setTitle(t('canvas.convert-note')).setIcon('file-plus').onClick(async () => {

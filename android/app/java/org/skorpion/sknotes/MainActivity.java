@@ -95,6 +95,7 @@ public final class MainActivity extends Activity {
     private static final int REQ_PICK = 1;
     private static final int REQ_STORAGE = 2;
     private static final int REQ_CHOOSER = 3;
+    private static final int REQ_NOTIFY = 4;
     private static final int MIN_WEBVIEW = 111; // the page is built for Chromium 111 or newer
     private static final Pattern RANGE = Pattern.compile("^bytes=(\\d*)-(\\d*)$");
 
@@ -112,6 +113,7 @@ public final class MainActivity extends Activity {
     private volatile int insetBottom = 0;
     private CompletableFuture<Intent> pickWait;
     private CompletableFuture<Boolean> storageWait;
+    private CompletableFuture<Boolean> notifyWait;
     private ValueCallback<Uri[]> chooserWait;
 
     // the open vault, read from the settings the backend writes
@@ -470,9 +472,35 @@ public final class MainActivity extends Activity {
         return await(f, false);
     }
 
+    /** Android 13+: may sk_notes show notifications (the reminders of the notes)? Asks once; waits for the answer. */
+    boolean requestNotifications() throws NativeError {
+        if (Build.VERSION.SDK_INT < 33 || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) {
+            return Reminders.canNotify(this);
+        }
+        final CompletableFuture<Boolean> f = new CompletableFuture<>();
+        ui.post(() -> {
+            if (notifyWait != null) notifyWait.complete(false);
+            notifyWait = f;
+            try {
+                requestPermissions(new String[] { "android.permission.POST_NOTIFICATIONS" }, REQ_NOTIFY);
+            } catch (RuntimeException e) {
+                Log.w(TAG, "notification permission not asked", e);
+                notifyWait = null;
+                f.complete(false);
+            }
+        });
+        return await(f, false);
+    }
+
     @Override
     public void onRequestPermissionsResult(int code, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(code, permissions, results);
+        if (code == REQ_NOTIFY && notifyWait != null) {
+            CompletableFuture<Boolean> n = notifyWait;
+            notifyWait = null;
+            n.complete(Reminders.canNotify(this));
+            return;
+        }
         if (code != REQ_STORAGE || storageWait == null) return;
         CompletableFuture<Boolean> f = storageWait;
         storageWait = null;

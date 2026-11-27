@@ -3,14 +3,15 @@
 # tools/build_tarball.sh and already contains the built web front-end, so no Node.js
 # is needed here.
 pkgname=sk-notes
-pkgver=1.2.1
+pkgver=1.3.0
 pkgrel=1
 pkgdesc="Markdown notes and knowledge base for Skorpion OS, with local AI (SKAI)"
 arch=('any')
-url="https://sourceforge.net/projects/skos/"
+url="https://skossite.pages.dev"
 license=('GPL-3.0-or-later')
 depends=('python' 'python-pyqt6' 'python-pyqt6-webengine' 'python-yaml' 'python-numpy' 'python-cryptography' 'python-keyring' 'git' 'sudo')
-optdepends=('syncthing: Syncthing status in the sync panel'
+optdepends=('libnotify: reminders of notes as desktop notifications'
+            'syncthing: Syncthing status in the sync panel'
             'pandoc: needed by some community plugins'
             'ollama: SKAI, the local AI')
 install=sk-notes.install

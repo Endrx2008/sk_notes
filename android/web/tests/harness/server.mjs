@@ -54,6 +54,12 @@ Object.assign(native.methods, {
   'sys.openFolder': (p) => { state.log.push(['openFolder', p.path]); return true; },
   'sys.share': (p) => { state.log.push(['share', p.title || p.path || p.text]); return true; },
   'sys.hasApp': () => false,
+  // reminders and home-screen widgets (MainActivity/Reminders/Widgets.java): kept in files to look at
+  'reminders.set': (p) => { fs.writeFileSync(path.join(dirs.private, 'reminders.json'), JSON.stringify(p, null, 1)); state.log.push(['reminders', p.items.length]); return true; },
+  'reminders.permission': () => { state.log.push(['notifyPermission']); return true; },
+  'widgets.notes': (p) => { fs.writeFileSync(path.join(dirs.private, 'widget-notes.json'), JSON.stringify(p, null, 1)); return true; },
+  'widgets.changed': (p) => { state.log.push(['widgetChanged', p.path]); return true; },
+  'widgets.graph': (p) => { fs.writeFileSync(path.join(dirs.private, 'widget-graph.png'), Buffer.from(p.b64, 'base64')); state.log.push(['widgetGraph', p.uri]); return true; },
   'clip.read': () => state.clip || '',
   'clip.write': (p) => { state.clip = String(p.text || ''); return true; },
   'net.policy': (p) => { state.allowRemote = !!p.allowRemote; return true; },

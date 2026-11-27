@@ -101,6 +101,51 @@ function registerMobile() {
     return { granted, shared: roots().shared || null, documents: roots().documents || null };
   });
 
+  // ------------------------------------------------------------- reminders and home-screen widgets
+  // The native side keeps the reminders of every vault (its alarms call the user also when the app
+  // is closed) and draws the widgets. Encrypted vaults are left out: their notes never leave the app.
+  const plainVault = () => (state.service && !state.crypt ? state.service.vault.root : null);
+  const linkTo = (root, rel, line) => `sknotes://open?path=${encodeURIComponent(root + '/' + rel)}${line ? `&line=${line + 1}` : ''}`;
+
+  r('mobile.reminders', (p, ctx) => {
+    appOnly(ctx);
+    const root = plainVault();
+    if (!root) return false;
+    const items = (Array.isArray(p.items) ? p.items : []).slice(0, 500).map((it) => ({
+      at: Number(it.at) || 0, text: String(it.text || '').slice(0, 300), note: String(it.name || '').slice(0, 200),
+      path: root + '/' + String(it.path || ''), uri: linkTo(root, String(it.path || ''), Number(it.line) || 0),
+    })).filter((it) => it.at > 0);
+    native.sync('reminders.set', { vault: root, name: basename(root), items, list: `sknotes://reminders?path=${encodeURIComponent(root)}` });
+    return true;
+  });
+
+  r('mobile.notifyPermission', async (p, ctx) => { appOnly(ctx); return native.async('reminders.permission', {}); });
+
+  /** The notes a note widget can show (chosen on the home screen), and the graph widget's link. */
+  r('mobile.widgetNotes', (p, ctx) => {
+    appOnly(ctx);
+    const root = plainVault();
+    if (!root) return false;
+    const notes = (Array.isArray(p.paths) ? p.paths : []).slice(0, 5000).map((rel) => ({ path: root + '/' + rel, name: String(rel).replace(/\.md$/, ''), uri: linkTo(root, rel, 0) }));
+    native.sync('widgets.notes', { vault: root, name: basename(root), notes, graph: `sknotes://graph?path=${encodeURIComponent(root)}` });
+    return true;
+  });
+
+  r('mobile.widgetChanged', (p, ctx) => {
+    appOnly(ctx);
+    const root = plainVault();
+    if (root) native.sync('widgets.changed', { path: root + '/' + String(p.path || '') });
+    return true;
+  });
+
+  r('mobile.widgetGraph', (p, ctx) => {
+    appOnly(ctx);
+    const root = plainVault();
+    if (!root) return false;
+    native.sync('widgets.graph', { vault: root, name: basename(root), b64: String(p.b64 || ''), uri: `sknotes://graph?path=${encodeURIComponent(root)}` });
+    return true;
+  });
+
   /** Folders of one folder, for the folder browser of the page. */
   r('mobile.browse', (p, ctx) => {
     appOnly(ctx);

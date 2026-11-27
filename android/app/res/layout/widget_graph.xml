@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- widget of the graph. Copyright (C) 2026 Enrico Miot. SPDX-License-Identifier: GPL-3.0-or-later -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widget_root"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical"
+    android:background="@drawable/widget_bg" android:padding="10dp">
+    <TextView android:id="@+id/widget_title" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="@string/widget_graph" android:textColor="#E05C00" android:textSize="14sp" android:textStyle="bold"
+        android:fontFamily="monospace" android:maxLines="1" android:ellipsize="end" android:paddingBottom="4dp" />
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <ImageView android:id="@+id/widget_image" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:scaleType="centerCrop" android:contentDescription="@string/widget_graph" />
+        <TextView android:id="@+id/widget_empty" android:layout_width="match_parent" android:layout_height="match_parent"
+            android:gravity="center" android:text="@string/widget_graph_empty" android:textColor="#99FFFFFF" android:textSize="13sp" android:padding="8dp" />
+    </FrameLayout>
+</LinearLayout>

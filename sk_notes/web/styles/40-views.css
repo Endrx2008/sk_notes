@@ -139,6 +139,8 @@
 
 /* graph: the colour swatches of a note's menu */
 .menu-item.graph-color-item .menu-item-icon::before { content: ''; display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--node-color); }
+.menu-item.graph-size-item .menu-item-icon { display: flex; align-items: center; justify-content: center; }
+.menu-item.graph-size-item .menu-item-icon::before { content: ''; display: block; width: var(--node-size); height: var(--node-size); max-width: 20px; max-height: 20px; border-radius: 50%; background: var(--text-muted); }
 
 /* graph: the pencil of the chosen dots (right click, or a long press on a phone) */
 .graph-view .graph-pencil { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 5; width: 52px; height: 52px; border-radius: 50%;
@@ -155,3 +157,61 @@
 /* SKAI's scorpion and its house on the graph (desktop/scorpion.js): drawn above the dots, never in the way of the mouse */
 .graph-view .skai-pet-layer { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
 .skai-pet-canvas { display: block; }
+
+/* reminders (features/reminders.js): the label in a note, the list of things to do */
+.cm-sk-reminder, .sk-reminder { display: inline-block; font-size: .82em; line-height: 1.5; padding: 0 7px; margin: 0 2px; border-radius: 10px; white-space: nowrap;
+  background: color-mix(in srgb, var(--interactive-accent) 18%, transparent); color: var(--text-normal); border: 1px solid color-mix(in srgb, var(--interactive-accent) 45%, transparent); vertical-align: baseline; }
+.cm-sk-reminder.is-past, .sk-reminder.is-past { opacity: .6; }
+.modal.mod-reminder .reminder-explain { color: var(--text-muted); font-size: var(--font-ui-small); margin: 0 0 10px; line-height: 1.45; }
+.modal.mod-reminder .reminder-input { width: 100%; font-size: 16px; }
+.reminder-quick { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.reminder-chip { height: auto !important; min-height: 32px; padding: 4px 12px !important; border-radius: 16px !important; font-size: var(--font-ui-small); }
+.modal.mod-reminders { width: min(560px, 96vw); }
+.modal.mod-reminders .modal-content { overflow-y: auto; }
+.reminders-list { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; }
+.reminders-group-title { font-size: var(--font-ui-smaller); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-faint); margin: 10px 2px 2px; }
+.reminders-group-title.mod-late { color: var(--text-error, #e5484d); }
+.reminders-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--sk-border); border-radius: var(--radius-l); background: var(--background-secondary); cursor: pointer; }
+.reminders-item:hover { border-color: var(--interactive-accent); }
+.reminders-item.is-done { opacity: .4; text-decoration: line-through; }
+.reminders-check { width: 24px; height: 24px; flex-shrink: 0; border: 2px solid var(--text-faint); border-radius: 7px; display: flex; align-items: center; justify-content: center; color: transparent; }
+.reminders-check .svg-icon { width: 15px; height: 15px; }
+.reminders-check:hover, .reminders-item.is-done .reminders-check { border-color: var(--interactive-accent); color: var(--interactive-accent); }
+.reminders-body { flex: 1; min-width: 0; }
+.reminders-text { font-weight: 600; color: var(--text-normal); overflow-wrap: anywhere; }
+.reminders-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: var(--font-ui-smaller); color: var(--text-muted); margin-top: 2px; }
+.reminders-item.mod-late .reminders-when { color: var(--text-error, #e5484d); }
+.reminders-file { color: var(--text-faint); }
+.reminders-empty { padding: 24px 8px; text-align: center; }
+.reminders-empty-title { font-weight: 700; margin-bottom: 6px; }
+.reminders-empty-text { color: var(--text-muted); font-size: var(--font-ui-small); line-height: 1.45; }
+
+/* drawings on a board (views/drawing.js) */
+.modal.mod-drawing { width: min(1100px, 98vw); max-height: 96vh; }
+.modal.mod-drawing .modal-content { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.drawing-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.drawing-tool { padding: 7px !important; border-radius: var(--radius-m); }
+.drawing-tool.is-active { background: var(--interactive-accent) !important; color: var(--text-on-accent) !important; }
+.drawing-sep { width: 1px; height: 24px; background: var(--sk-border); margin: 0 4px; }
+.drawing-width { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-m); cursor: pointer; }
+.drawing-width.is-active { background: var(--background-modifier-hover); box-shadow: inset 0 0 0 1px var(--interactive-accent); }
+.drawing-width-dot { width: var(--w); height: var(--w); border-radius: 50%; background: var(--text-normal); }
+.drawing-swatch { width: 26px; height: 26px; border-radius: 50%; background: var(--swatch); border: 2px solid var(--sk-border); cursor: pointer; }
+.drawing-swatch.is-active { box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 4px var(--interactive-accent); }
+.drawing-custom { width: 30px; height: 30px; padding: 0 !important; min-height: 0 !important; border: none; background: none; cursor: pointer; }
+.drawing-box { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--background-secondary); border-radius: var(--radius-m); padding: 6px; }
+.drawing-canvas { max-width: 100%; max-height: 66vh; aspect-ratio: 4 / 3; touch-action: none; border-radius: 4px; box-shadow: 0 1px 6px rgba(0, 0, 0, .35); cursor: crosshair; background: #fff; }
+.canvas-node.is-drawing .canvas-node-content img { object-fit: contain; background: #fff; }
+
+/* the file list as the main view (list view): a search among the notes at its top */
+.nav-search { display: none; }
+.workspace-split.mod-root .nav-search { display: flex; align-items: center; gap: 6px; padding: 8px 10px 6px; position: sticky; top: 0; z-index: 2; background: var(--background-primary); }
+.nav-search .search-input-container { flex: 1; min-width: 0; }
+.nav-search-word { flex-shrink: 0; font-size: var(--font-ui-smaller); padding: 6px 10px !important; border: 1px solid var(--sk-border); border-radius: 14px; white-space: nowrap; color: var(--text-muted); }
+.nav-search-word.is-active { background: var(--interactive-accent); border-color: var(--interactive-accent); color: var(--text-on-accent); }
+.nav-search-results { display: flex; flex-direction: column; padding: 2px 6px 40px; }
+.nav-search-result { flex-direction: column; align-items: stretch !important; gap: 2px; padding: 8px 10px !important; }
+.nav-search-result-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.nav-search-result-folder { color: var(--text-faint); font-size: var(--font-ui-smaller); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-search-result-snippet { color: var(--text-muted); font-size: var(--font-ui-smaller); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.nav-search-empty { color: var(--text-faint); padding: 18px 12px; text-align: center; }

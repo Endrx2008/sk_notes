@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- widget of one note. Copyright (C) 2026 Enrico Miot. SPDX-License-Identifier: GPL-3.0-or-later -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widget_root"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical"
+    android:background="@drawable/widget_bg" android:padding="12dp">
+    <TextView android:id="@+id/widget_title" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:textColor="#E05C00" android:textSize="15sp" android:textStyle="bold" android:fontFamily="monospace"
+        android:maxLines="1" android:ellipsize="end" android:paddingBottom="6dp" />
+    <TextView android:id="@+id/widget_text" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:textColor="#EEFFFFFF" android:textSize="14sp" android:lineSpacingExtra="2dp" android:ellipsize="end" />
+</LinearLayout>

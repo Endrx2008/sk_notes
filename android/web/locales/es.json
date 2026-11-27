@@ -408,5 +408,7 @@
  "settings.templates-folder": "Carpeta de plantillas",
  "settings.templates-folder-desc": "\"Insertar plantilla\" ofrece las notas de esta carpeta.",
  "templates.choose": "Elige una plantilla…",
- "templates.none": "No hay plantillas. Indica la carpeta de plantillas en Configuración → Funciones principales."
+ "templates.none": "No hay plantillas. Indica la carpeta de plantillas en Configuración → Funciones principales.",
+ "mobile.tb.text-color": "Color del texto",
+ "mobile.tb.reminder": "Recordatorio"
 }

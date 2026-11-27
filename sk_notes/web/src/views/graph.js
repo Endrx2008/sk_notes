@@ -13,6 +13,9 @@ import { Menu, Setting, confirmDialog } from '../ui/kit.js';
 const NODE_COLORS = [['red', '#e5484d'], ['orange', '#f08c2e'], ['yellow', '#e3b341'], ['green', '#39d353'], ['cyan', '#3fc1c9'], ['purple', '#b98bf0']];
 // where the dots of the graph were (per device: Git sync leaves it out)
 const POS_FILE = 'graph-positions.json';
+// the size a note's dot was given by hand (× the graph's own size), shared by the graph and the local graph
+const SIZE_FILE = 'graph-sizes.json';
+const NODE_SIZES = [['small', 0.6], ['normal', 1], ['large', 1.8], ['huge', 3]];
 const finite = (v) => Array.isArray(v) && v.length === 2 && Number.isFinite(v[0]) && Number.isFinite(v[1]);
 
 // --------------------------------------------------------------- layout worker
@@ -153,7 +156,7 @@ const workerUrl = URL.createObjectURL(new Blob([`(${workerMain.toString()})()`],
 
 const DEFAULT_OPTIONS = {
   search: '', showTags: false, showAttachments: false, hideUnresolved: true, showOrphans: true,
-  colorGroups: [], showArrow: false, textFadeMultiplier: 0, nodeSizeMultiplier: 1, lineSizeMultiplier: 1,
+  colorGroups: [], showArrow: false, showCanvas: true, textFadeMultiplier: 0, nodeSizeMultiplier: 1, lineSizeMultiplier: 1,
   centerStrength: 0.5, repelStrength: 10, linkStrength: 1, linkDistance: 250, scale: 1, depth: 1,
   localJumps: 1, localBacklinks: true, localForelinks: true, localNeighbors: false,
 };
@@ -214,7 +217,11 @@ export class GraphView extends ItemView {
         if (this.autoFit) this._fit();
         this.dirty = true;
         if (this._holdStill) { this._holdStill = false; this.worker.postMessage({ type: 'stop' }); }
-      } else if (e.data.type === 'idle') this._keepPositions();
+      } else if (e.data.type === 'idle') {
+        this._keepPositions();
+        // the dots stopped moving: a picture of the graph can be taken (the graph widget of a phone)
+        if (!this.local) setTimeout(() => this.app.workspace.trigger('graph-settled', this), 300);
+      }
     };
     this.register(() => this._keepPositions()); // closed while still moving
     this.register(() => this.worker.terminate());
@@ -240,6 +247,12 @@ export class GraphView extends ItemView {
     // colours given to single notes by hand: shared by the graph and the local graph
     const own = await this.app.config.read('graph-colors.json').catch(() => null);
     this.nodeColors = own && typeof own === 'object' && !Array.isArray(own) ? own : {};
+    const sizes = await this.app.config.read(SIZE_FILE).catch(() => null);
+    this.nodeSizes = sizes && typeof sizes === 'object' && !Array.isArray(sizes) ? sizes : {};
+    // another graph (the local one, or a second window) changed colours or sizes: this one follows
+    this.registerEvent(this.app.workspace.on('graph-colors-change', (from) => { if (from !== this) this._reloadOwn(); }));
+    // a board changed: the arrows from it to its notes may have changed too
+    this.registerEvent(this.app.vault.on('modify', (f) => { if (f?.extension === 'canvas' && this.options.showCanvas) this.rebuild(); }));
     this.registerDomEvent(window, 'mouseup', this._onMouseUp);
     this.onResize();
     this.build(false);
@@ -324,7 +337,7 @@ export class GraphView extends ItemView {
       return path.toLowerCase().includes(q);
     };
     const links = [];
-    const files = app.vault.getFiles().filter((f) => f.extension === 'md' || (o.showAttachments && f.extension !== 'md'));
+    const files = app.vault.getFiles().filter((f) => f.extension === 'md' || (o.showCanvas && f.extension === 'canvas') || (o.showAttachments && f.extension !== 'md' && f.extension !== 'canvas'));
     let allowed = null;
     if (this.local && this.file) {
       allowed = new Set([this.file.path]);
@@ -341,7 +354,24 @@ export class GraphView extends ItemView {
     for (const f of files) {
       if (allowed && !allowed.has(f.path)) continue;
       if (!matches(f.path)) continue;
-      add(f.path, f.extension === 'md' ? f.basename : f.name, f.extension === 'md' ? 'note' : 'attachment', f);
+      // a board is a square named like the board (no ".canvas" written under it)
+      const type = f.extension === 'md' ? 'note' : f.extension === 'canvas' ? 'canvas' : 'attachment';
+      add(f.path, type === 'attachment' ? f.name : f.basename, type, f);
+    }
+    // a note put on a board: an arrow from the board to the note
+    const arrows = new Set(); // index of the link (in pairs) that is drawn with an arrow whatever the settings
+    if (o.showCanvas) {
+      for (const f of files) {
+        if (f.extension !== 'canvas') continue;
+        const a = index.get(f.path);
+        if (a === undefined) continue;
+        for (const dest of this._canvasRefs(f)) {
+          const b = index.get(dest);
+          if (b === undefined || a === b) continue;
+          arrows.add(links.length);
+          links.push(a, b);
+        }
+      }
     }
     for (const src in mc.resolvedLinks) {
       const a = index.get(src);
@@ -370,13 +400,17 @@ export class GraphView extends ItemView {
     for (let e = 0; e < links.length; e++) nodes[links[e]].degree++;
     let finalNodes = nodes;
     let finalLinks = links;
+    let finalArrows = arrows;
     if (!o.showOrphans) {
       const keepIdx = nodes.map((nd, i) => (nd.degree > 0 || (this.local && nd.id === this.file?.path) ? i : -1)).filter((i) => i >= 0);
       const remap = new Map(keepIdx.map((old, i) => [old, i]));
       finalNodes = keepIdx.map((i) => nodes[i]);
       finalLinks = [];
+      finalArrows = new Set();
       for (let e = 0; e < links.length; e += 2) {
-        if (remap.has(links[e]) && remap.has(links[e + 1])) finalLinks.push(remap.get(links[e]), remap.get(links[e + 1]));
+        if (!remap.has(links[e]) || !remap.has(links[e + 1])) continue;
+        if (arrows.has(e)) finalArrows.add(finalLinks.length);
+        finalLinks.push(remap.get(links[e]), remap.get(links[e + 1]));
       }
     }
     // groups
@@ -401,8 +435,14 @@ export class GraphView extends ItemView {
         if (j !== undefined) keepPos[i] = [this.pos[j * 2], this.pos[j * 2 + 1]];
       });
     }
+    // a note made by a long press on the empty graph starts where the finger was
+    if (this._placeAt) {
+      finalNodes.forEach((nd, i) => { const p = this._placeAt[nd.id]; if (p && !keepPos[i]) keepPos[i] = p; });
+      if (finalNodes.some((nd) => this._placeAt[nd.id])) this._placeAt = null;
+    }
     this.nodes = finalNodes;
     this.links = new Int32Array(finalLinks);
+    this.arrowLinks = finalArrows;
     // SKAI_ Memory: solid = tree, dashed = inside one app's memory, dotted = between apps
     this.linkStyles = null;
     if (this.app.info?.vault?.protected) {
@@ -418,6 +458,38 @@ export class GraphView extends ItemView {
     this.worker.postMessage({ type: 'init', n: finalNodes.length, links: this.links.slice(), keep: keepPos, warm: keep && Object.keys(keepPos).length > 0 });
     this._sendParams();
     if (this.countEl) this.countEl.setText(t('graph.count', { nodes: finalNodes.length, links: this.links.length / 2 }));
+  }
+
+  /** The notes and files put on a board (read once per change of the board; the graph is built again when known). */
+  _canvasRefs(f) {
+    this._canvasCache ??= new Map();
+    const c = this._canvasCache.get(f.path);
+    if (c && c.mtime === f.stat?.mtime) return c.files;
+    if (!c || !c.loading) {
+      const entry = { mtime: f.stat?.mtime, files: c?.files || [], loading: true };
+      this._canvasCache.set(f.path, entry);
+      this.app.vault.cachedRead(f).then((text) => {
+        let data = null;
+        try { data = JSON.parse(text || '{}'); } catch { data = null; }
+        const files = [];
+        for (const n of Array.isArray(data?.nodes) ? data.nodes : []) {
+          if (n && n.type === 'file' && typeof n.file === 'string' && !files.includes(n.file)) files.push(n.file);
+        }
+        const changed = files.join('\n') !== entry.files.join('\n');
+        entry.files = files;
+        entry.loading = false;
+        if (changed) this.rebuild();
+      }, () => { entry.loading = false; });
+    }
+    return c?.files || [];
+  }
+
+  async _reloadOwn() {
+    const own = await this.app.config.read('graph-colors.json').catch(() => null);
+    this.nodeColors = own && typeof own === 'object' && !Array.isArray(own) ? own : {};
+    const sizes = await this.app.config.read(SIZE_FILE).catch(() => null);
+    this.nodeSizes = sizes && typeof sizes === 'object' && !Array.isArray(sizes) ? sizes : {};
+    this.rebuild();
   }
 
   _sendParams() {
@@ -471,7 +543,8 @@ export class GraphView extends ItemView {
 
   radius(i) {
     const nd = this.nodes[i];
-    return (3 + Math.sqrt(nd.degree) * 1.6) * this.options.nodeSizeMultiplier;
+    const own = Number(this.nodeSizes?.[nd.id]);
+    return (3 + Math.sqrt(nd.degree) * 1.6) * this.options.nodeSizeMultiplier * (own > 0 && own <= 6 ? own : 1);
   }
 
   draw() {
@@ -519,15 +592,17 @@ export class GraphView extends ItemView {
       }
       c.stroke();
     }
-    if (this.options.showArrow && k > 0.6) {
+    if ((this.options.showArrow && k > 0.6) || this.arrowLinks?.size) {
       c.fillStyle = col.line;
+      c.globalAlpha = hl ? 0.4 : 0.9;
       for (let e = 0; e < this.links.length; e += 2) {
+        if (!(this.options.showArrow && k > 0.6) && !this.arrowLinks.has(e)) continue;
         const a = this.links[e];
         const b = this.links[e + 1];
         const [x1, y1] = this.toScreen(pos[a * 2], pos[a * 2 + 1]);
         const [x2, y2] = this.toScreen(pos[b * 2], pos[b * 2 + 1]);
         const ang = Math.atan2(y2 - y1, x2 - x1);
-        const r = this.radius(b) * k + 2;
+        const r = Math.max(1.5, this.radius(b) * Math.sqrt(k)) + 2;
         const tx = x2 - Math.cos(ang) * r;
         const ty = y2 - Math.sin(ang) * r;
         c.beginPath();
@@ -545,17 +620,30 @@ export class GraphView extends ItemView {
       if (sx < -20 || sy < -20 || sx > w + 20 || sy > h + 20) continue;
       const r = Math.max(1.5, this.radius(i) * Math.sqrt(k));
       c.globalAlpha = hl && !hl.has(i) ? 0.25 : 1;
-      c.fillStyle = nd.id === activePath ? col.focus : nd.color || (nd.type === 'tag' ? col.tag : nd.type === 'unresolved' ? col.unresolved : nd.type === 'attachment' ? col.attachment : col.node);
-      if (i === hov) c.fillStyle = col.hl;
-      c.beginPath();
-      c.arc(sx, sy, r, 0, Math.PI * 2);
+      // a colour the user gave a dot is never changed by the theme: the open note keeps it and
+      // is marked with a ring in the theme's colour instead
+      const own = nd.color;
+      const active = nd.id === activePath;
+      c.fillStyle = own || (active ? col.focus : nd.type === 'tag' ? col.tag : nd.type === 'unresolved' ? col.unresolved : nd.type === 'attachment' ? col.attachment : col.node);
+      if (i === hov && !own) c.fillStyle = col.hl;
+      const square = nd.type === 'canvas';
+      const shape = (rr) => {
+        c.beginPath();
+        if (square) c.rect(sx - rr, sy - rr, rr * 2, rr * 2); else c.arc(sx, sy, rr, 0, Math.PI * 2);
+      };
+      shape(square ? r * 0.9 : r);
       c.fill();
+      if ((active && own) || (i === hov && own)) {
+        c.strokeStyle = i === hov ? col.hl : col.focus;
+        c.lineWidth = 2;
+        shape((square ? r * 0.9 : r) + 2.5);
+        c.stroke();
+      }
       if (this.selected.has(nd.id)) {
         c.globalAlpha = 1;
         c.strokeStyle = col.hl;
         c.lineWidth = 2.5;
-        c.beginPath();
-        c.arc(sx, sy, r + 4, 0, Math.PI * 2);
+        shape((square ? r * 0.9 : r) + 4);
         c.stroke();
       }
     }
@@ -633,7 +721,14 @@ export class GraphView extends ItemView {
     cv.addEventListener('contextmenu', (e) => {
       const [sx, sy] = local(e);
       const i = this._nodeAt(sx, sy);
-      if (i < 0) return;
+      if (i < 0) {
+        // a long press (a right click) on the empty graph: a new note or board, right there
+        if (this.local || drag?.moved || this.app.memoryMode || this.app.info?.vault?.protected) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this._createMenu(e, this.toWorld(sx, sy));
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
       // a right click (a long press on a phone) chooses the dot and shows the pencil at the
@@ -702,7 +797,18 @@ export class GraphView extends ItemView {
       this.clearSelection();
       await this.app.config.write('graph-colors.json', all).catch(() => {});
       this.rebuild();
-      this.app.workspace.trigger('graph-colors-change');
+      this.app.workspace.trigger('graph-colors-change', this);
+    };
+    // the size of the dots, kept by the app (graph-sizes.json) like the colour
+    const curSize = new Set(ids.map((id) => Number(this.nodeSizes?.[id]) || 1));
+    const setSize = async (k) => {
+      const all = { ...(this.nodeSizes || {}) };
+      for (const id of ids) { if (k === 1) delete all[id]; else all[id] = k; }
+      this.nodeSizes = all;
+      this.clearSelection();
+      await this.app.config.write(SIZE_FILE, all).catch(() => {});
+      this.dirty = true;
+      this.app.workspace.trigger('graph-colors-change', this);
     };
     const m = new Menu();
     const first = this.nodes.find((n) => n.id === ids[0]);
@@ -725,6 +831,13 @@ export class GraphView extends ItemView {
       input.click();
     }));
     if (anyColor) m.addItem((it) => it.setTitle(t('canvas.color-none')).setIcon('x').setSection('custom').onClick(() => set('')));
+    for (const [name, k] of NODE_SIZES) {
+      m.addItem((it) => {
+        it.setTitle(t(`graph.size-${name}`)).setChecked(curSize.size === 1 && curSize.has(k)).setSection('size').onClick(() => setSize(k));
+        it.dom.style.setProperty('--node-size', `${Math.round(6 + k * 4)}px`);
+        it.dom.addClass('graph-size-item');
+      });
+    }
     const files = ids.map((id) => this.app.vault.getAbstractFileByPath(id)).filter(Boolean);
     if (files.length) {
       m.addItem((it) => {
@@ -734,6 +847,29 @@ export class GraphView extends ItemView {
     }
     const r = (this._pencil || this.contentEl).getBoundingClientRect();
     m.showAtPosition({ x: r.left + r.width / 2, y: r.top - 4 });
+  }
+
+  /** Long press / right click on the empty graph: a new note or board where the finger was. */
+  _createMenu(e, at) {
+    const m = new Menu();
+    const make = async (kind) => {
+      const app = this.app;
+      const folder = app.fileManager.getNewFileParent(app.workspace.getActiveFile()?.path || '');
+      let f = null;
+      try {
+        f = kind === 'canvas' ? await app.fileManager.createNewFile(folder, t('file.untitled'), 'canvas', '{\n  "nodes": [],\n  "edges": []\n}')
+          : await app.fileManager.createNewMarkdownFile(folder);
+      } catch (err) { app.notice(errorText(err)); return; }
+      if (!f) return;
+      (this._placeAt ??= {})[f.path] = [at[0], at[1]];
+      this._lastSaved = { ...(this._lastSaved || {}), [f.path]: [Math.round(at[0] * 10) / 10, Math.round(at[1] * 10) / 10] };
+      this.app.config.write(POS_FILE, this._lastSaved).catch(() => {});
+      this.rebuild();
+      await app.workspace.getLeaf(this.leaf.getRoot() === app.workspace.rootSplit && !app.baseViews ? 'tab' : false).openFile(f);
+    };
+    m.addItem((it) => it.setTitle(t('cmd.new-note')).setIcon('file-plus').onClick(() => make('note')));
+    m.addItem((it) => it.setTitle(t('cmd.new-canvas')).setIcon('canvas').onClick(() => make('canvas')));
+    m.showAtMouseEvent(e);
   }
 
   async _trashChosen(files) {
@@ -788,6 +924,7 @@ export class GraphView extends ItemView {
     }
     new Setting(f).setName(t('graph.tags')).addToggle((tg) => tg.setValue(o.showTags).onChange(change('showTags', true)));
     new Setting(f).setName(t('graph.attachments')).addToggle((tg) => tg.setValue(o.showAttachments).onChange(change('showAttachments', true)));
+    new Setting(f).setName(t('graph.canvases')).setDesc(t('graph.canvases-desc')).addToggle((tg) => tg.setValue(o.showCanvas).onChange(change('showCanvas', true)));
     new Setting(f).setName(t('graph.existing-only')).addToggle((tg) => tg.setValue(o.hideUnresolved).onChange(change('hideUnresolved', true)));
     new Setting(f).setName(t('graph.orphans')).addToggle((tg) => tg.setValue(o.showOrphans).onChange(change('showOrphans', true)));
     const g = section(t('graph.groups'));
@@ -816,6 +953,19 @@ export class GraphView extends ItemView {
   _save() {
     this.app.workspace.requestSaveLayout();
     if (!this.local) this.app.config.write('graph.json', this.options).catch(() => {});
+  }
+
+  /** A picture of the graph as it is on screen, on the colour of the page (PNG data URL). */
+  picture(maxSide = 0) {
+    const scale = maxSide ? Math.min(1, maxSide / Math.max(this.canvas.width, this.canvas.height)) : 1;
+    const out = document.createElement('canvas');
+    out.width = Math.max(1, Math.round(this.canvas.width * scale));
+    out.height = Math.max(1, Math.round(this.canvas.height * scale));
+    const ctx = out.getContext('2d');
+    ctx.fillStyle = this._colors().bg || '#ffffff';
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.drawImage(this.canvas, 0, 0, out.width, out.height);
+    return out.toDataURL('image/png');
   }
 
   onPaneMenu(menu, source) {

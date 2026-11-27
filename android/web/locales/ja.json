@@ -408,5 +408,7 @@
  "settings.templates-folder": "テンプレートフォルダ",
  "settings.templates-folder-desc": "「テンプレートを挿入」はこのフォルダのノートを候補にします。",
  "templates.choose": "テンプレートを選択…",
- "templates.none": "テンプレートがありません。設定 → コア機能 でテンプレートフォルダを指定してください。"
+ "templates.none": "テンプレートがありません。設定 → コア機能 でテンプレートフォルダを指定してください。",
+ "mobile.tb.text-color": "文字の色",
+ "mobile.tb.reminder": "リマインダー"
 }

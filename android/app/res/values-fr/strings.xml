@@ -2,4 +2,21 @@
 <resources>
     <string name="webview_missing">sk_notes a besoin du composant système « Android System WebView », absent ou désactivé sur cet appareil.</string>
     <string name="webview_old">« Android System WebView » de cet appareil est ancien (version %1$d ; sk_notes demande la %2$d ou plus récente). Mettez-le à jour depuis la boutique d\'applications, sinon sk_notes pourrait ne pas démarrer.</string>
+    <string name="reminders_channel">Rappels</string>
+    <string name="reminders_channel_desc">Les rappels de tes notes, à l\'heure choisie</string>
+    <string name="widget_todo">À faire</string>
+    <string name="widget_todo_desc">Les rappels de tes notes, avec leurs dates</string>
+    <string name="widget_todo_empty">Aucun rappel. Dans une note, mets-en un avec le bouton de l\'horloge.</string>
+    <string name="widget_today">Aujourd\'hui %1$s</string>
+    <string name="widget_tomorrow">Demain %1$s</string>
+    <string name="widget_note">Note</string>
+    <string name="widget_note_desc">Une note sur l\'écran d\'accueil (une liste de courses…)</string>
+    <string name="widget_note_none">Choisis une note : retire le widget et remets-le.</string>
+    <string name="widget_note_missing">La note n\'existe plus (ou le coffre est fermé).</string>
+    <string name="widget_note_choose">Quelle note ?</string>
+    <string name="widget_note_filter">Chercher une note</string>
+    <string name="widget_note_empty">Ouvre sk_notes une fois avec ton coffre : ses notes apparaissent ici.</string>
+    <string name="widget_graph">Graphe</string>
+    <string name="widget_graph_desc">Le graphe de tes notes ; touche-le pour l\'ouvrir</string>
+    <string name="widget_graph_empty">Ouvre le graphe dans sk_notes une fois : son image apparaît ici.</string>
 </resources>

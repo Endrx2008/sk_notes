@@ -76,9 +76,11 @@ keys), `vault-lock.js` (locking by itself), `web/src/mobile/crypt-ui.js` (screen
 
 - File list: a long press starts a choice of several rows (`web/src/mobile/multiselect.js`):
   rename them one dialog after the other, or delete them together.
-- Graph: a long press on a dot gives that note a colour (its size stays the graph's own); a long
-  press on more dots selects them all (a ring around each) and the colour goes to every one. A tap on
-  the empty graph or back ends the choice.
+- Graph: a long press on a dot chooses it and shows a pencil: a colour and a size for that note
+  (both remembered, `graph-colors.json` / `graph-sizes.json`; a theme never changes a colour the user
+  picked); a long press on more dots selects them all (a ring around each) and the pencil edits every
+  one. A tap on the empty graph or back ends the choice. A long press on an empty spot makes a new
+  note or canvas there.
 - Back: closes what is on top, goes back in the tab, then to Home; only a back from Home leaves the
   app. Of the graph and the file list, only the one opened last is a step of back.
 - File list: a long press then a slide of the finger chooses every note in between; the bar with
@@ -159,6 +161,30 @@ notes with Git, the Git plugin of Obsidian, Foam or Tolaria.
   repository only.
 - Not synced: `.trash/`, the layout of this device (`.sk_notes/workspace-mobile.json`), files over
   50 MB. A `.gitignore` is written when the vault has none.
+
+## Tablets
+
+A tablet has the phone's layout (drawers, bottom bar, one note at a time, dialogs as sheets):
+`body.is-phone` is set on every device, `body.is-tablet` only adds sizes on wide windows
+(`web/src/mobile/device.js`). Reading a note uses the whole width on both.
+
+## Reminders and widgets
+
+- A reminder is a line ending with `(@YYYY-MM-DD HH:MM)` (shared code: `features/reminders.js`).
+  The page hands every reminder of the open vault to the native side (`mobile.reminders` →
+  `Reminders.java`), which keeps them per vault in `files/reminders.json` and sets an exact alarm
+  for each (`USE_EXACT_ALARM`; set again after a restart, an update or a change of the clock by
+  `ReminderReceiver`). The alarm posts a notification (channel "Reminders"; Android 13+ asks the
+  permission the first time a reminder is set); a tap opens the note at the line
+  (`sknotes://open?path=…&line=…`).
+- Home-screen widgets (`Widgets.java`): **To do** (every reminder, late ones in red, a tap opens
+  the note; `TodoWidget`, `TodoWidgetService`), **Note** (one note chosen when the widget is placed,
+  `NoteWidgetConfig`; its text is read from the vault file, so it follows changes made anywhere),
+  **Graph** (a picture the page takes when the graph stops moving, at most every 30 s; a tap opens
+  the graph, `sknotes://graph`).
+- Encrypted vaults are left out of notifications and widgets: their notes never leave the app.
+  While such a vault is open its reminders still show inside the app.
+- Not tested on a real device yet (this VM has no emulator): see "Tests" below.
 
 ## Build
 

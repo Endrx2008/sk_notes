@@ -6,6 +6,7 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { languages } from '@codemirror/language-data';
 import { HighlightStyle, bracketMatching, foldGutter, foldKeymap, foldService, indentOnInput, syntaxHighlighting, foldEffect, unfoldAll, foldAll, foldCode, unfoldCode } from '@codemirror/language';
 import { highlightSelectionMatches, openSearchPanel, search, searchKeymap } from '@codemirror/search';
+import { createFindPanel } from './find-panel.js';
 import { Compartment, EditorSelection, EditorState, Prec } from '@codemirror/state';
 import { EditorView, drawSelection, dropCursor, keymap, placeholder, rectangularSelection, crosshairCursor } from '@codemirror/view';
 import { tags as t } from '@lezer/highlight';
@@ -409,7 +410,7 @@ export function createEditor({ parent, doc, info, livePreview = true, onChange, 
       indentOnInput(),
       bracketMatching(),
       highlightSelectionMatches(),
-      search({ top: true }),
+      search({ top: true, createPanel: createFindPanel }),
       markdown({ base: markdownLanguage, codeLanguages: languages, extensions: skMarkdownExtensions, addKeymap: false }),
       syntaxHighlighting(skHighlight),
       headingFold,

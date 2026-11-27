@@ -2,8 +2,8 @@
    Copyright (C) 2026 Enrico Miot – SPDX-License-Identifier: GPL-3.0-or-later
 
    body.is-mobile  every Android device
-   body.is-phone   narrow windows: drawers, bottom navigation bar, dialogs as sheets
-   body.is-tablet  wide windows: the desktop layout with bigger touch targets
+   body.is-phone   every phone and tablet: drawers, bottom navigation bar, dialogs as sheets
+   body.is-tablet  besides is-phone on wide windows: the same layout, only some sizes change
    body.is-keyboard-open / body.is-editing-note  set by mobile/device.js and mobile/toolbar.js */
 
 body.is-mobile {
@@ -84,7 +84,10 @@ body.is-mobile .sidebar-toggle-button { padding: 10px; }
 body.is-mobile { --file-line-width: 100%; }
 body.is-phone .markdown-source-view { padding: 0 14px 45vh; }
 body.is-phone .markdown-source-view.is-readable-line-width > .inline-title { padding-left: 2px; }
-body.is-phone .markdown-reading-view { padding-left: 14px; padding-right: 14px; }
+/* reading a note: the text as wide as in editing (no second margin making a narrow column in the middle) */
+body.is-phone .markdown-reading-view { padding-left: 0; padding-right: 0; }
+body.is-phone .markdown-preview-view { padding-left: 22px; padding-right: 22px; }
+body.is-phone.is-tablet .markdown-preview-view { padding-left: 36px; padding-right: 36px; }
 body.is-phone .inline-title { font-size: 1.5em; }
 body.is-mobile .cm-tooltip-autocomplete, body.is-mobile .suggestion-container { max-width: calc(100vw - 16px); font-size: 15px; }
 body.is-mobile .suggestion-item { padding: 11px 12px; }
@@ -180,7 +183,7 @@ body.is-phone .modal.prompt { align-self: flex-start; margin-top: 0; max-height:
 body.is-phone .modal-container:has(.modal.prompt) { align-items: flex-start; }
 body.is-phone .prompt-results { max-height: none; flex: 1; }
 body.is-phone .modal.mod-settings, body.is-phone .modal.mod-version-history, body.is-phone .modal.mod-vault-manager,
-body.is-phone .modal.mod-folder-picker, body.is-phone .modal.mod-plugin-browser, body.is-phone .modal.mod-tab-switcher, body.is-phone .modal.mod-skai-diff {
+body.is-phone .modal.mod-folder-picker, body.is-phone .modal.mod-plugin-browser, body.is-phone .modal.mod-tab-switcher, body.is-phone .modal.mod-skai-diff, body.is-phone .modal.mod-drawing {
   width: 100%; height: 100%; max-height: 100%; border-radius: 0; border: none; animation: none;
 }
 
@@ -229,11 +232,10 @@ body.is-phone .empty-state-action { padding: 10px 14px; font-size: 15px; }
 body.is-phone .version-history, body.is-phone .file-recovery { flex-direction: column; }
 body.is-phone .version-history-list, body.is-phone .file-recovery-list { width: 100%; max-height: 34%; border-right: none; border-bottom: 1px solid var(--sk-border); padding: 0 0 8px; }
 
-/* ---------------------------------------------------------------- tablet */
-body.is-tablet .workspace-tab-header { height: calc(var(--header-height) - 9px); }
-body.is-tablet .workspace-tab-header.is-active { height: calc(var(--header-height) - 8px); }
-body.is-tablet .modal.mod-settings { width: 94vw; height: 90vh; }
-body.is-tablet .status-bar-item { padding: 4px 8px; }
+/* ---------------------------------------------------------------- tablet (the phone layout, wider) */
+body.is-tablet .workspace-split.mod-sidedock { width: min(60vw, 420px) !important; }
+body.is-tablet .menu { right: 0; margin: 0 auto; max-width: 640px; }
+body.is-tablet .modal:not(.mod-settings):not(.mod-version-history):not(.mod-vault-manager):not(.mod-folder-picker):not(.mod-plugin-browser):not(.mod-tab-switcher):not(.mod-skai-diff):not(.prompt) { max-width: 680px; border-radius: 18px 18px 0 0; }
 
 /* ---------------------------------------------------------------- tab list */
 .mobile-tab-list { display: flex; flex-direction: column; gap: 6px; }

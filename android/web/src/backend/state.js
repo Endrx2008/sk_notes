@@ -5,7 +5,7 @@
 import { native } from './native.js';
 import { ApiError, sha1 } from './util.js';
 
-export const VERSION = '1.2.1';
+export const VERSION = '1.3.0';
 export const LANGUAGES = [
   { code: 'en', name: 'English' }, { code: 'it', name: 'Italiano' }, { code: 'es', name: 'Español' }, { code: 'fr', name: 'Français' },
   { code: 'de', name: 'Deutsch' }, { code: 'pt', name: 'Português' }, { code: 'ru', name: 'Русский' }, { code: 'zh-CN', name: '简体中文' }, { code: 'ja', name: '日本語' },

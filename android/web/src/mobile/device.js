@@ -2,10 +2,12 @@
 // Copyright (C) 2026 Enrico Miot
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// is-phone / is-tablet follow the width of the window (a foldable or a split screen
-// changes it while the app runs); the styles and the layout code look at these classes.
+// Phones and tablets have the same layout, the phone's (drawers, bottom bar, one note at a time,
+// dialogs as sheets): is-phone is always set. is-tablet is set besides it on a wide window
+// (a tablet, a foldable open, a split screen changing while the app runs): only sizes follow it
+// (more tiles on Home, wider dialogs), never a different layout.
 
-const TABLET_MIN = 700; // CSS pixels: narrower windows get the phone layout
+const TABLET_MIN = 700; // CSS pixels: wider windows are a tablet's
 
 export function isPhone() {
   return document.body.classList.contains('is-phone');
@@ -14,11 +16,11 @@ export function isPhone() {
 export function installDevice() {
   const body = document.body;
   const update = () => {
-    const phone = Math.min(window.innerWidth, screen.width || window.innerWidth) < TABLET_MIN;
-    if (body.classList.contains('is-phone') === phone && body.classList.contains('is-tablet') === !phone) return;
-    body.classList.toggle('is-phone', phone);
-    body.classList.toggle('is-tablet', !phone);
-    window.dispatchEvent(new CustomEvent('skn-device-change', { detail: { phone } }));
+    const wide = Math.min(window.innerWidth, screen.width || window.innerWidth) >= TABLET_MIN;
+    if (body.classList.contains('is-phone') && body.classList.contains('is-tablet') === wide) return;
+    body.classList.add('is-phone');
+    body.classList.toggle('is-tablet', wide);
+    window.dispatchEvent(new CustomEvent('skn-device-change', { detail: { phone: true, wide } }));
   };
   update();
   window.addEventListener('resize', update);

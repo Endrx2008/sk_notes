@@ -408,5 +408,7 @@
  "settings.templates-folder": "Pasta de modelos",
  "settings.templates-folder-desc": "\"Inserir modelo\" oferece as notas desta pasta.",
  "templates.choose": "Escolha um modelo…",
- "templates.none": "Nenhum modelo. Defina a pasta de modelos em Configurações → Funções principais."
+ "templates.none": "Nenhum modelo. Defina a pasta de modelos em Configurações → Funções principais.",
+ "mobile.tb.text-color": "Cor do texto",
+ "mobile.tb.reminder": "Lembrete"
 }

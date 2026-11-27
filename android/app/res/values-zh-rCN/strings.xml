@@ -2,4 +2,21 @@
 <resources>
     <string name="webview_missing">sk_notes 需要系统组件“Android System WebView”,此设备上缺少该组件或已将其停用。</string>
     <string name="webview_old">此设备的“Android System WebView”版本过旧(版本 %1$d;sk_notes 需要 %2$d 或更高版本)。请在应用商店中更新,否则 sk_notes 可能无法启动。</string>
+    <string name="reminders_channel">提醒</string>
+    <string name="reminders_channel_desc">在你设定的时间提醒笔记中的事项</string>
+    <string name="widget_todo">待办</string>
+    <string name="widget_todo_desc">笔记中的提醒及其日期</string>
+    <string name="widget_todo_empty">没有提醒。在笔记中用时钟按钮设置一个。</string>
+    <string name="widget_today">今天 %1$s</string>
+    <string name="widget_tomorrow">明天 %1$s</string>
+    <string name="widget_note">笔记</string>
+    <string name="widget_note_desc">主屏幕上的一条笔记(购物清单……)</string>
+    <string name="widget_note_none">请选择笔记:移除小部件后重新放置。</string>
+    <string name="widget_note_missing">笔记已不存在(或仓库已关闭)。</string>
+    <string name="widget_note_choose">哪条笔记?</string>
+    <string name="widget_note_filter">搜索笔记</string>
+    <string name="widget_note_empty">用你的仓库打开一次 sk_notes,其笔记会出现在这里。</string>
+    <string name="widget_graph">图谱</string>
+    <string name="widget_graph_desc">你的笔记图谱;点击打开</string>
+    <string name="widget_graph_empty">在 sk_notes 中打开一次图谱,其图片会出现在这里。</string>
 </resources>

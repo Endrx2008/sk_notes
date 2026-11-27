@@ -12,6 +12,7 @@ import { postProcess, renderSections } from '../render/markdown.js';
 import { Menu, setTooltip } from '../ui/kit.js';
 import { TextFileView } from './base.js';
 import { createEditor, Editor } from '../editor/editor.js';
+import { showReplaceRow } from '../editor/find-panel.js';
 
 class MarkdownPreviewView extends Component {
   constructor(view, containerEl) {
@@ -317,7 +318,7 @@ export class MarkdownView extends TextFileView {
   showSearch(replace) {
     if (this.mode === 'preview') this.setMode('source');
     this.editor.openSearch();
-    if (replace) setTimeout(() => this.cm.dom.querySelector('.cm-search input[name=replace]')?.focus(), 0);
+    showReplaceRow(this.cm, !!replace);
   }
 
   // ---------------------------------------------------------------- interaction
@@ -389,6 +390,7 @@ export class MarkdownView extends TextFileView {
     fmt('editor:toggle-bold', 'bold', 'cmd.toggle-bold');
     fmt('editor:toggle-italics', 'italic', 'cmd.toggle-italics');
     fmt('editor:toggle-highlight', 'highlighter', 'cmd.toggle-highlight');
+    fmt('editor:text-color', 'text-color', 'cmd.text-color');
     fmt('editor:insert-wikilink', 'link', 'cmd.insert-wikilink');
     fmt('editor:toggle-checklist-status', 'check-square', 'cmd.toggle-checklist');
     this.app.workspace.trigger('editor-menu', menu, ed, this);

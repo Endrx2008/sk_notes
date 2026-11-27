@@ -408,5 +408,7 @@
  "settings.templates-folder": "Папка шаблонов",
  "settings.templates-folder-desc": "«Вставить шаблон» предлагает заметки из этой папки.",
  "templates.choose": "Выберите шаблон…",
- "templates.none": "Шаблонов нет. Укажите папку шаблонов в Настройки → Основные функции."
+ "templates.none": "Шаблонов нет. Укажите папку шаблонов в Настройки → Основные функции.",
+ "mobile.tb.text-color": "Цвет текста",
+ "mobile.tb.reminder": "Напоминание"
 }

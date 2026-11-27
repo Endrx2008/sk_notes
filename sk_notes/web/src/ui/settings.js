@@ -272,6 +272,22 @@ class SettingsModal extends Modal {
       .onChange((v) => a.settings.set('newNoteHeading', v)));
     this.dropdown(el, 'trashOption', t('settings.deleted-files'), t('settings.deleted-files-desc'), { system: t('settings.trash-system'), local: t('settings.trash-local'), none: t('settings.trash-none') });
     this.toggle(el, 'promptDelete', t('settings.confirm-delete'), t('settings.confirm-delete-desc'));
+    // notes in folders like the tree of the graph (features/tree-folders.js)
+    if (a.treeFolders && !a.info?.vault?.protected) {
+      this.heading(el, t('tree.heading'));
+      new Setting(el).setName(t('tree.setting')).setDesc(t('tree.setting-desc')).addToggle((tg) => tg.setValue(!!a.settings.get('treeFolders')).onChange(async (v) => {
+        if (!v) { a.settings.set('treeFolders', false); return; }
+        const moves = a.treeFolders.plan();
+        if (!(await a.treeFolders.confirm(moves))) { tg.setValue(false); return; }
+        a.settings.set('treeFolders', true);
+        const n = await a.treeFolders.apply(moves);
+        if (n) a.notice(t('tree.moved', { n }));
+      })).addExtraButton((b) => b.setIcon('folder-tree').setTooltip(t('tree.now')).onClick(async () => {
+        const moves = a.treeFolders.plan();
+        if (moves.length && await a.treeFolders.confirm(moves)) { const n = await a.treeFolders.apply(moves); if (n) a.notice(t('tree.moved', { n })); }
+        else if (!moves.length) a.notice(t('tree.nothing'));
+      }));
+    }
     this.heading(el, t('settings.import'));
     new Setting(el).setName(t('settings.import-notes')).setDesc(t('settings.import-notes-desc')).addButton((b) => b.setButtonText(t('settings.import-open')).onClick(() => { this.close(); a.commands.executeCommandById('importer:open'); }));
     new Setting(el).setName(t('settings.migrate')).setDesc(t('settings.migrate-desc')).addButton((b) => b.setButtonText(t('settings.migrate-open')).onClick(() => { this.close(); a.commands.executeCommandById('migration:open'); }));

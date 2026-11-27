@@ -11,7 +11,7 @@
     canvases and bases, and ask the local SKAI model about them. No account, no cloud,
     no telemetry.</p>
   </description>
-  <url type="homepage">https://sourceforge.net/projects/skos/</url>
+  <url type="homepage">https://skossite.pages.dev</url>
   <content_rating type="oars-1.1"/>
   <launchable type="desktop-id">skorpion-sk-notes.desktop</launchable>
   <developer id="org.skorpion-os"><name>Enrico Miot (EndrX)</name></developer>

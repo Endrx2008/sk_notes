@@ -408,5 +408,7 @@
  "templates.none": "Nessun modello. Imposta la cartella dei modelli in Impostazioni → Funzioni principali.",
  "mobile.plugins.what": "Cosa sono i plugin?",
  "mobile.plugins.what-text": "I plugin sono estensioni che aggiungono funzioni a sk_notes, per esempio calendari, statistiche o nuovi modi di vedere le note. Quelli della community sono scritti da altre persone, spesso per Obsidian: sono programmi, quindi installa solo quelli di cui ti fidi.",
- "mobile.plugins.what-ok": "Ho capito"
+ "mobile.plugins.what-ok": "Ho capito",
+ "mobile.tb.text-color": "Colore del testo",
+ "mobile.tb.reminder": "Promemoria"
 }

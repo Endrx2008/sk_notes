@@ -95,6 +95,7 @@ export function renderHome(app, view) {
     ['file-plus', t('cmd.new-note'), run('file:new'), 'mod-cta', { icon: 'calendar-day', label: t('cmd.daily-note'), fn: run('daily-notes') }],
     ['canvas', t('cmd.new-canvas'), run('canvas:new-file')],
     ['template', t('mobile.home.template'), () => newNoteFromTemplate(app)],
+    ['alarm-clock', t('cmd.reminders'), run('reminders:open')],
   ]);
   section(t('mobile.home.view'), [
     ['graph', t('mobile.home.graph'), () => openBase(app, 'graph'), 'mod-view'],

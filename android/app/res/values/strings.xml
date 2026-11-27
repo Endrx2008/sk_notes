@@ -3,4 +3,21 @@
     <string name="app_name" translatable="false">sk_notes</string>
     <string name="webview_missing">sk_notes needs the system component “Android System WebView”, which is missing or turned off on this device.</string>
     <string name="webview_old">The “Android System WebView” of this device is old (version %1$d; sk_notes needs %2$d or newer). Update it from the app store, or sk_notes may not start.</string>
+    <string name="reminders_channel">Reminders</string>
+    <string name="reminders_channel_desc">The reminders of your notes, at the time you set</string>
+    <string name="widget_todo">To do</string>
+    <string name="widget_todo_desc">The reminders of your notes, with their dates</string>
+    <string name="widget_todo_empty">No reminders. In a note, set one with the clock button.</string>
+    <string name="widget_today">Today %1$s</string>
+    <string name="widget_tomorrow">Tomorrow %1$s</string>
+    <string name="widget_note">Note</string>
+    <string name="widget_note_desc">One note on the home screen (a shopping list…)</string>
+    <string name="widget_note_none">Choose a note: remove the widget and place it again.</string>
+    <string name="widget_note_missing">The note is not there any more (or the vault is closed).</string>
+    <string name="widget_note_choose">Which note?</string>
+    <string name="widget_note_filter">Search a note</string>
+    <string name="widget_note_empty">Open sk_notes once with your vault: its notes appear here.</string>
+    <string name="widget_graph">Graph</string>
+    <string name="widget_graph_desc">The graph of your notes; tap it to open it</string>
+    <string name="widget_graph_empty">Open the graph in sk_notes once: its picture appears here.</string>
 </resources>

@@ -2,4 +2,21 @@
 <resources>
     <string name="webview_missing">sk_notes にはシステムコンポーネント「Android System WebView」が必要ですが、この端末にはないか、無効になっています。</string>
     <string name="webview_old">この端末の「Android System WebView」は古いバージョンです(バージョン %1$d。sk_notes には %2$d 以降が必要です)。アプリストアで更新してください。更新しないと sk_notes が起動しないことがあります。</string>
+    <string name="reminders_channel">リマインダー</string>
+    <string name="reminders_channel_desc">設定した時刻にノートのリマインダーを通知します</string>
+    <string name="widget_todo">やること</string>
+    <string name="widget_todo_desc">ノートのリマインダーと日付</string>
+    <string name="widget_todo_empty">リマインダーはありません。ノートで時計ボタンから設定できます。</string>
+    <string name="widget_today">今日 %1$s</string>
+    <string name="widget_tomorrow">明日 %1$s</string>
+    <string name="widget_note">ノート</string>
+    <string name="widget_note_desc">ホーム画面に1つのノート(買い物リストなど)</string>
+    <string name="widget_note_none">ノートを選ぶには、ウィジェットを削除して置き直してください。</string>
+    <string name="widget_note_missing">ノートが見つかりません(またはボールトが閉じています)。</string>
+    <string name="widget_note_choose">どのノート?</string>
+    <string name="widget_note_filter">ノートを検索</string>
+    <string name="widget_note_empty">ボールトで sk_notes を一度開くと、ノートがここに表示されます。</string>
+    <string name="widget_graph">グラフ</string>
+    <string name="widget_graph_desc">ノートのグラフ。タップで開きます</string>
+    <string name="widget_graph_empty">sk_notes でグラフを一度開くと、画像がここに表示されます。</string>
 </resources>

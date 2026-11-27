@@ -408,5 +408,7 @@
  "settings.templates-folder": "Vorlagenordner",
  "settings.templates-folder-desc": "„Vorlage einfügen“ bietet die Notizen dieses Ordners an.",
  "templates.choose": "Vorlage wählen…",
- "templates.none": "Keine Vorlagen. Legen Sie den Vorlagenordner unter Einstellungen → Kernfunktionen fest."
+ "templates.none": "Keine Vorlagen. Legen Sie den Vorlagenordner unter Einstellungen → Kernfunktionen fest.",
+ "mobile.tb.text-color": "Textfarbe",
+ "mobile.tb.reminder": "Erinnerung"
 }

@@ -2,4 +2,21 @@
 <resources>
     <string name="webview_missing">Для sk_notes нужен системный компонент «Android System WebView», который на этом устройстве отсутствует или отключён.</string>
     <string name="webview_old">«Android System WebView» на этом устройстве устарел (версия %1$d; для sk_notes нужна %2$d или новее). Обновите его в магазине приложений, иначе sk_notes может не запуститься.</string>
+    <string name="reminders_channel">Напоминания</string>
+    <string name="reminders_channel_desc">Напоминания из ваших заметок в выбранное время</string>
+    <string name="widget_todo">Дела</string>
+    <string name="widget_todo_desc">Напоминания из ваших заметок с датами</string>
+    <string name="widget_todo_empty">Напоминаний нет. Добавьте его в заметке кнопкой с часами.</string>
+    <string name="widget_today">Сегодня %1$s</string>
+    <string name="widget_tomorrow">Завтра %1$s</string>
+    <string name="widget_note">Заметка</string>
+    <string name="widget_note_desc">Одна заметка на главном экране (список покупок…)</string>
+    <string name="widget_note_none">Выберите заметку: удалите виджет и добавьте снова.</string>
+    <string name="widget_note_missing">Заметки больше нет (или хранилище закрыто).</string>
+    <string name="widget_note_choose">Какая заметка?</string>
+    <string name="widget_note_filter">Найти заметку</string>
+    <string name="widget_note_empty">Откройте sk_notes один раз со своим хранилищем: его заметки появятся здесь.</string>
+    <string name="widget_graph">Граф</string>
+    <string name="widget_graph_desc">Граф ваших заметок; нажмите, чтобы открыть</string>
+    <string name="widget_graph_empty">Откройте граф в sk_notes один раз: его изображение появится здесь.</string>
 </resources>

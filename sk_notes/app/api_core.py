@@ -134,6 +134,34 @@ def register(app) -> None:
             log.info("window ready %.2fs after process start (page %.0f ms) %s", secs, float(p.get("pageMs", 0)), p.get("marks") or "")
         return True
 
+    @r("app.notify")
+    def notify(p, ctx):
+        """A reminder of a note is due: a desktop notification (notify-send, else the tray)."""
+        if ctx.plugin:
+            raise ApiError("permission-denied")
+        title = str(p.get("title") or "sk_notes")[:200]
+        body = str(p.get("body") or "")[:1000]
+        import shutil
+        import subprocess
+        exe = shutil.which("notify-send")
+        if exe:
+            try:
+                subprocess.Popen([exe, "--app-name=sk_notes", "--icon=skorpion-sk-notes", "--urgency=normal", title, body],
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+                return "notify-send"
+            except OSError as e:
+                log.warning("notify-send failed: %s", e)
+        from PyQt6.QtWidgets import QSystemTrayIcon
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            return False
+        tray = getattr(app, "_notify_tray", None)
+        if tray is None:
+            tray = QSystemTrayIcon(QApplication.instance().windowIcon(), QApplication.instance())
+            app._notify_tray = tray
+        tray.show()
+        tray.showMessage(title, body, QSystemTrayIcon.MessageIcon.Information, 10000)
+        return "tray"
+
     @r("app.quit")
     def quit_(p, ctx):
         for w in list(app.windows):

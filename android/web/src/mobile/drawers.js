@@ -2,9 +2,9 @@
 // Copyright (C) 2026 Enrico Miot
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// On a phone the left and right sidebars slide over the note (one at a time) and close
-// when a note is chosen, when the dimmed area is tapped, with a swipe, or with the back
-// button. On a tablet they stay beside the note like on a PC.
+// On a phone or a tablet (both have the phone's layout, see device.js) the left and right
+// sidebars slide over the note (one at a time) and close when a note is chosen, when the dimmed
+// area is tapped, with a swipe, or with the back button.
 
 import { isPhone } from './device.js';
 import { WorkspaceLeaf } from '@desktop/ui/workspace.js';

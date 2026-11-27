@@ -2,4 +2,21 @@
 <resources>
     <string name="webview_missing">sk_notes benötigt die Systemkomponente „Android System WebView“, die auf diesem Gerät fehlt oder deaktiviert ist.</string>
     <string name="webview_old">„Android System WebView“ auf diesem Gerät ist veraltet (Version %1$d; sk_notes benötigt %2$d oder neuer). Aktualisiere es im App-Store, sonst startet sk_notes möglicherweise nicht.</string>
+    <string name="reminders_channel">Erinnerungen</string>
+    <string name="reminders_channel_desc">Die Erinnerungen deiner Notizen, zur gewählten Zeit</string>
+    <string name="widget_todo">Zu erledigen</string>
+    <string name="widget_todo_desc">Die Erinnerungen deiner Notizen mit Datum</string>
+    <string name="widget_todo_empty">Keine Erinnerungen. Setze eine in einer Notiz mit der Uhr-Taste.</string>
+    <string name="widget_today">Heute %1$s</string>
+    <string name="widget_tomorrow">Morgen %1$s</string>
+    <string name="widget_note">Notiz</string>
+    <string name="widget_note_desc">Eine Notiz auf dem Startbildschirm (eine Einkaufsliste…)</string>
+    <string name="widget_note_none">Wähle eine Notiz: entferne das Widget und platziere es neu.</string>
+    <string name="widget_note_missing">Die Notiz gibt es nicht mehr (oder der Tresor ist geschlossen).</string>
+    <string name="widget_note_choose">Welche Notiz?</string>
+    <string name="widget_note_filter">Notiz suchen</string>
+    <string name="widget_note_empty">Öffne sk_notes einmal mit deinem Tresor: seine Notizen erscheinen hier.</string>
+    <string name="widget_graph">Graph</string>
+    <string name="widget_graph_desc">Der Graph deiner Notizen; tippen zum Öffnen</string>
+    <string name="widget_graph_empty">Öffne den Graphen einmal in sk_notes: sein Bild erscheint hier.</string>
 </resources>

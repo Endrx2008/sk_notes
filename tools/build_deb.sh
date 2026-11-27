@@ -72,10 +72,10 @@ Priority: optional
 Architecture: all
 Installed-Size: $SIZE
 Depends: python3 (>= 3.11), python3-pyqt6, python3-pyqt6.qtwebengine, python3-yaml, python3-numpy, python3-cryptography, python3-keyring, git, sudo
-Recommends: git
+Recommends: git, libnotify-bin
 Suggests: syncthing, pandoc
 Maintainer: Enrico Miot <$(git config user.email 2>/dev/null || echo maintainer@localhost)>
-Homepage: https://sourceforge.net/projects/skos/
+Homepage: https://skossite.pages.dev
 Description: Markdown notes and knowledge base for Skorpion OS
  sk_notes keeps notes as plain Markdown files in a local folder (a vault):
  internal links and backlinks, graph view, tags, properties, canvas, bases,

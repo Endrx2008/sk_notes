@@ -408,5 +408,7 @@
  "settings.templates-folder": "模板文件夹",
  "settings.templates-folder-desc": "“插入模板”会列出此文件夹中的笔记。",
  "templates.choose": "选择模板…",
- "templates.none": "没有模板。请在 设置 → 核心功能 中设置模板文件夹。"
+ "templates.none": "没有模板。请在 设置 → 核心功能 中设置模板文件夹。",
+ "mobile.tb.text-color": "文字颜色",
+ "mobile.tb.reminder": "提醒"
 }

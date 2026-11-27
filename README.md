@@ -18,14 +18,15 @@ License: **GPL-3.0-or-later**. sk_notes is not affiliated with Obsidian or Dynal
 | Area | What you get |
 |---|---|
 | Vault | open/create/switch vaults, file explorer with sorting, drag & drop, several files at once (Ctrl/Shift+click: rename one after the other, move, delete), rename (links are updated automatically), system trash or `.trash`, a trash of the vault (menu of the settings wheel: what was deleted in the last three months, put back or deleted for good; older files go by themselves), file recovery and version history |
-| Editor | Live Preview and Source mode, Reading view, syntax highlighting, tasks, tables, code blocks, math (KaTeX), callouts, footnotes, highlights, comments, multiple cursors, folding, find & replace, slash commands |
+| Editor | Live Preview and Source mode, Reading view, syntax highlighting, tasks, tables, code blocks, math (KaTeX), callouts, footnotes, highlights, comments, multiple cursors, folding, find & replace in the note (count of matches, flags *Whole word* and *Match case*), slash commands, text colour (kept as `<span style="color:…">` in the Markdown, read by any app) |
 | Links | `[[wikilinks]]` with autocomplete, aliases, heading and block links, embeds of notes, sections, images, audio, video and PDF, backlinks and unlinked mentions, outgoing links, page preview |
-| Search | full-text index with `file:`, `path:`, `tag:`, `line:()`, `section:()`, `task-todo:`, `[property:value]`, `OR`, `-`, regex… |
+| Reminders | a line flagged with a date and a time — `- [ ] study chapter 3 (@2026-11-28 15:00)`, the Obsidian *Reminder* form — calls you at that time (a desktop notification while sk_notes is open; on Android a phone notification also with the app closed); the clock button sets one, *To do* on Home lists them all (late, today, later), ticking the task ends it |
+| Search | full-text index with `file:`, `path:`, `tag:`, `line:()`, `section:()`, `task-todo:`, `[property:value]`, `OR`, `-`, regex…; the file list in the main area (Android's list view) has its own search box, with *Whole word* |
 | Home | an empty tab is Home, as in sk_notes for Android: the logo with the name of the open vault, recent notes in one row, create (note — with a calendar button for today's note —, canvas, and a smaller bar for a note from a template), view (graph, database of the vault — a view, no file is made; the file list is always in the left sidebar); every tile is a command with a shortcut (Settings → Hotkeys) shown on the tile — note Ctrl+N, canvas Ctrl+C when there is nothing to copy; arrows and Enter work on Home. The left ribbon hides while only Home is on screen. The "+" of the tabs shows two bubbles (note, canvas) to click, or press and pull towards one |
 | Panes | the "new pane on the right" button in every pane's header (or Ctrl+Alt+D) adds a pane at the right edge, all the same width, with the last note used that is not on screen (or Home). Panes move like windows inside the window, never pulled out: drag a tab by its name and let go on the half of a pane where it should go (left, right, top, bottom), in its middle to join its tabs, on a tab bar to sit among those tabs; drag the empty part of a tab bar to move the whole pane; Escape cancels. A file of the list dropped on an edge of a pane opens beside. Closing the last note of a pane closes the pane and the others share its room |
 | Navigation | quick switcher, command palette, nested tags, outline, bookmarks, tabs, split panes, saved layouts, pop-out windows |
-| Graph | global and local graph, filters, color groups, forces; the dots stay where they were when the graph opens again; right click (on a phone a long press) chooses dots and shows a pencil: colour for all of them, or move their notes to the trash |
-| Canvas | `.canvas` files (open JSON Canvas format): cards, notes, media, groups, connections (colour, label, direction, remove all arrows of a card), rename by the title, picture of the whole board (JPG) |
+| Graph | global and local graph, filters, color groups, forces; the dots stay where they were when the graph opens again; right click (on a phone a long press) chooses dots and shows a pencil: colour and size for all of them (both remembered; a theme never changes a colour the user picked), or move their notes to the trash; a long press (right click) on an empty spot makes a new note or canvas there; canvases are squares with an arrow to each note put on them (setting *Canvases*, on by default); optional: notes moved by themselves into folders like a tree under their mother notes (Settings → Files and links) |
+| Canvas | `.canvas` files (open JSON Canvas format): cards, notes, media, groups, connections (colour, label, direction, remove all arrows of a card), rename by the title, picture of the whole board (JPG), drawings by hand (a card that is an SVG file of the vault, drawn again with a double tap); the six card colours are fixed values, the same in every theme |
 | Properties | typed property editor and **Bases** (`.base`): table, cards, list and board views with filters and formulas |
 | Organisation | templates, daily notes, unique notes, note composer (merge/extract), word count |
 | Export & import | PDF export; import from Markdown folders, Evernote, Notion, Bear/TextBundle, Logseq, Roam, Google Keep, HTML, CSV |
@@ -45,11 +46,13 @@ On the PC, sk_notes opens SKAI_ Memory as a window on the memory, not as a noteb
 
 `android/` holds sk_notes for Android 8.0 or newer: the same workspace as on the PC in an APK, with
 Git sync and encrypted vaults that open on both, a spell checker whose languages are downloaded only
-when chosen, and a notice when a newer release is on GitHub. Build, signing, tests and what a phone
+when chosen, and a notice when a newer release is on GitHub. Phones and tablets have the same layout
+(the phone's). Reminders ring as phone notifications; home-screen widgets: things to do, one note
+(a shopping list…), the graph. Build, signing, tests and what a phone
 does its own way: [android/README.md](android/README.md).
 
 ```sh
-npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.1.apk
+npm ci && sh android/build.sh   # → android/dist/sk_notes-1.3.0.apk
 ```
 
 ## Install
@@ -57,7 +60,7 @@ npm ci && sh android/build.sh   # → android/dist/sk_notes-1.2.1.apk
 ### Skorpion OS / Debian
 
 ```sh
-sudo apt install ./sk-notes_1.2.1_all.deb      # package built by tools/build_deb.sh
+sudo apt install ./sk-notes_1.3.0_all.deb      # package built by tools/build_deb.sh
 sk-notes
 ```
 
@@ -72,7 +75,7 @@ python3 main.py                 # or: python3 main.py --vault ~/Notes
 ### Arch / Skorpion OS Mantis
 
 ```sh
-sh tools/build_tarball.sh       # dist/sk_notes-1.2.1.tar.gz + dist/PKGBUILD (with checksum)
+sh tools/build_tarball.sh       # dist/sk_notes-1.3.0.tar.gz + dist/PKGBUILD (with checksum)
 cd dist && makepkg -si
 ```
 
@@ -91,6 +94,8 @@ The packages register sk_notes for `sknotes://` links, e.g. from a launcher or a
 | `sknotes://open?vault=Notes&file=Projects/Plan` | opens a note (`path=/abs/file.md` also works; `newpane=true` opens a tab) |
 | `sknotes://new?vault=Notes&name=Idea&content=…` | creates a note; with `file=…&append=true` (or `prepend`, `overwrite`) adds to an existing one; `silent=true` does not open it |
 | `sknotes://search?vault=Notes&query=tag:%23todo` | opens the search pane |
+| `sknotes://graph?vault=Notes` | opens the graph (the graph widget on Android) |
+| `sknotes://reminders?vault=Notes` | opens the list of things to do (reminders) |
 
 If the vault is already open, the running window takes the link. Other actions are passed to
 community plugins that register a handler for them.

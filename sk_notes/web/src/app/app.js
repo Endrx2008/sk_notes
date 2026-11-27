@@ -17,6 +17,8 @@ import { Workspace } from '../ui/workspace.js';
 import { MarkdownView } from '../views/markdown.js';
 import { StatusBar } from '../ui/statusbar.js';
 import { registerCoreFeatures } from '../features/core.js';
+import { registerReminders } from '../features/reminders.js';
+import { registerTreeFolders } from '../features/tree-folders.js';
 import { registerMemory } from '../features/memory.js';
 import { installLinkHandler } from '../features/links.js';
 import { getAllTags, resolveSubpath } from '../model/metadata.js';
@@ -103,6 +105,8 @@ export class App extends Events {
     this.viewRegistry.registerView('markdown', (leaf) => new MarkdownView(leaf));
     this.viewRegistry.registerExtensions(['md'], 'markdown');
     registerCoreFeatures(this);
+    registerReminders(this);
+    registerTreeFolders(this);
 
     const snap = await call('vault.snapshot');
     performance.mark('skn:snapshot');

@@ -2,6 +2,7 @@
 // daily notes, templates, unique notes, note composer, workspaces, page
 // preview, file recovery, PDF export.
 
+import { textColorMenu } from './text-color.js';
 import { call } from '../core/api.js';
 import { diffLines, diffStats, renderDiff } from '../core/diff.js';
 import { setIcon } from '../core/icons.js';
@@ -217,6 +218,7 @@ export function registerCoreFeatures(app) {
   editorCmd('editor:toggle-strikethrough', 'cmd.toggle-strike', fmt.strike);
   editorCmd('editor:toggle-highlight', 'cmd.toggle-highlight', fmt.highlight);
   editorCmd('editor:toggle-code', 'cmd.toggle-code', fmt.code);
+  cmd('editor:text-color', t('cmd.text-color'), { editorCallback: (editor) => textColorMenu(app, editor.cm) });
   editorCmd('editor:toggle-inline-math', 'cmd.toggle-math', fmt.math);
   editorCmd('editor:toggle-comments', 'cmd.toggle-comment', fmt.comment, [{ modifiers: [M], key: '/' }]);
   editorCmd('editor:insert-link', 'cmd.insert-link', fmt.link, [{ modifiers: [M], key: 'K' }]);
@@ -637,7 +639,7 @@ export async function openVaultManager(app) {
 }
 
 function openHelp(app) {
-  app.openExternal('https://sourceforge.net/projects/skos/');
+  app.openExternal('https://skossite.pages.dev');
 }
 
 // ------------------------------------------------------------------- page preview
