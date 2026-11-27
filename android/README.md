@@ -85,7 +85,6 @@ keys), `vault-lock.js` (locking by itself), `web/src/mobile/crypt-ui.js` (screen
   app. Of the graph and the file list, only the one opened last is a step of back.
 - File list: a long press then a slide of the finger chooses every note in between; the bar with
   rename and delete appears at the top of the screen, above the list even when it is a drawer.
-- No new database (.base) files on a phone: existing ones open; on a PC the database is a view.
 - Canvas: a long press on an arrow opens its menu (colour, direction, label, delete); the menu of a
   card can remove all its arrows; a tap on the title of the board renames it; a site typed without
   `https://` gets it; "Save a picture" draws the whole board to a JPG in the vault
@@ -110,8 +109,10 @@ file in a session says that the vault belongs to that app too (`web/src/mobile/f
   has, and there is a third one, the interface font (`interfaceFont` in `.sk_notes/app.json`;
   Obsidian's `interfaceFontFamily` is taken over). The base theme (dark/light) is offered only
   when the community theme in use has both looks.
-- No table views (bases): no command to make one, and `.base` files are not drawn as tables (in
-  the file list they go to another app, embedded they are a plain title, a `base` block stays code).
+- No databases (`.base`) at all: the app leaves them out of every list (file list, search, quick
+  switcher, graph, Home) and never writes, renames or copies one (`backend/vault.js`, `isTableFile`).
+  They stay in the folder untouched, and sync apps and Git carry them as they are. Embedded in a
+  note they are a plain title; a `base` block stays code.
 - The start screen explains what a vault is and what Markdown is (open on the first start, a tap
   away afterwards); the community plugins page says once what a plugin is.
 - Plainer words in `web/locales/*.json` (they override the PC's strings): a short meaning in

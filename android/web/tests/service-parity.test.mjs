@@ -93,6 +93,16 @@ test('vault service parity with the desktop service', async () => {
     let a = plain(got[i]);
     let b = expected[i];
     if (a && b && a.error && b.error) return; // both refuse (messages differ)
+    // the phone leaves databases (.base) out of the vault on purpose (backend/vault.js isTableFile)
+    const isBase = (p) => /\.base$/i.test(String(p || ''));
+    if (b && op.op === 'snapshot') {
+      b = { ...b, files: b.files.filter((f) => !isBase(f.path)) };
+      for (const k of ['metadata', 'resolved', 'unresolved']) if (b[k]) b[k] = Object.fromEntries(Object.entries(b[k]).filter(([p]) => !isBase(p)));
+    }
+    if (b && op.op === 'search' && Array.isArray(b.results)) {
+      const kept = b.results.filter((r) => !isBase(r.path));
+      b = { ...b, results: kept, total: b.total - (b.results.length - kept.length) };
+    }
     if (op.op === 'search') {
       // result order inside the list is by path on both sides already
     }

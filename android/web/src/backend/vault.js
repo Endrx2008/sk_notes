@@ -88,6 +88,7 @@ export class Vault {
     let foreign = false;
     for (const [rel, isDir, size, mtime, ctime] of rows) {
       if (!isWellFormed(rel)) continue; // a broken name cannot be stored or shown
+      if (!isDir && isTableFile(rel)) continue; // .base files are not for the phone: never shown, never touched
       const nfc = rel.normalize('NFC');
       if (nfc !== rel) foreign = true;
       out.push(isDir ? { path: nfc, isDir: true } : { path: nfc, isDir: false, size, mtime, ctime: ctime || mtime });
@@ -117,7 +118,10 @@ export class Vault {
     const files = [];
     const folders = [];
     const rows = fsCall('fs.list', { path: this.abs(rel) }).slice().sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
-    for (const e of rows) (e.type === 'dir' ? folders : files).push((prefix + e.name).normalize('NFC'));
+    for (const e of rows) {
+      if (e.type !== 'dir' && isTableFile(e.name)) continue;
+      (e.type === 'dir' ? folders : files).push((prefix + e.name).normalize('NFC'));
+    }
     return { files, folders };
   }
 
@@ -146,12 +150,14 @@ export class Vault {
   }
 
   writeText(rel, text, mtime) {
+    noTableFile(rel);
     this._checkNames(rel);
     fsCall('fs.writeText', { path: this.abs(rel), text, mtime: mtime || 0 }); // atomic on the native side
     return this.stat(rel);
   }
 
   writeB64(rel, b64, mtime) {
+    noTableFile(rel);
     this._checkNames(rel);
     fsCall('fs.writeB64', { path: this.abs(rel), b64, mtime: mtime || 0 });
     return this.stat(rel);
@@ -166,6 +172,8 @@ export class Vault {
     const src = this.abs(oldRel);
     const dst = this.abs(newRel);
     if (!native.sync('fs.exists', { path: src })) throw new ApiError('not-found');
+    noTableFile(oldRel);
+    noTableFile(newRel);
     this._checkNames(newRel);
     if (dst === src || dst.startsWith(src + '/')) {
       const st = native.sync('fs.stat', { path: src });
@@ -178,6 +186,8 @@ export class Vault {
   copy(oldRel, newRel) {
     const dst = this.abs(newRel);
     if (native.sync('fs.exists', { path: dst })) throw new ApiError('already-exists');
+    noTableFile(oldRel);
+    noTableFile(newRel);
     this._checkNames(newRel);
     fsCall('fs.copy', { from: this.abs(oldRel), to: dst });
   }
@@ -198,6 +208,15 @@ export class Vault {
     }
     return candidate;
   }
+}
+
+// Databases (.base, table views made on a computer) do not exist for sk_notes on Android: they are
+// left out of every list (file list, search, quick switcher, graph, Home) and the app never
+// writes, renames or copies one. They stay in the folder as they are; sync apps and Git carry them.
+export function isTableFile(rel) { return /\.base$/i.test(String(rel)); }
+
+function noTableFile(rel) {
+  if (isTableFile(rel)) throw new ApiError('permission-denied', rel);
 }
 
 function isWellFormed(s) {

@@ -248,9 +248,9 @@ function tidyCommands(app) {
   for (const id of gone) app.commands.removeCommand?.(id);
   // no "random note" on Android: neither the command nor its entry in the menu
   app.commands.removeCommand?.('random-note');
-  // no table views (bases) on a phone: no command to make one, and a .base file is not drawn as
-  // a table (tapped in the file list it goes to another app, like any file the app cannot show;
-  // embedded in a note it is a plain title; a ```base block stays code)
+  // no table views (bases) on a phone at all: the backend leaves .base files out of the vault
+  // (backend/vault.js isTableFile), there is no command to make one, no view to draw one
+  // (an embed of one is a plain title; a ```base block stays code)
   app.commands.removeCommand?.('bases:new-file');
   app.viewRegistry.unregisterExtensions(['base']);
   app.viewRegistry.unregisterView('bases');

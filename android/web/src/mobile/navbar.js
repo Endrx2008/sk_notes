@@ -99,7 +99,7 @@ const CORE_RIBBON = new Set(['switcher', 'graph', 'canvas', 'daily', 'templates'
  * onto one and lift it: that file is made and opened. A plain tap leaves the bubbles up to be
  * tapped; a touch anywhere else puts them away. */
 function installCreate(app, plus) {
-  // a database (.base) is a way of looking at notes made on a computer: a phone opens one, it does not make one
+  // databases (.base) do not exist on the phone (backend/vault.js): only notes and canvases are made here
   const KINDS = [
     ['file-plus', 'file:new', 'cmd.new-note', 'mod-center mod-level'], // both at the same height
     ['canvas', 'canvas:new-file', 'cmd.new-canvas', 'mod-right mod-level'],

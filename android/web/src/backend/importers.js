@@ -220,7 +220,7 @@ const bin = (path, b64) => ({ path, b64 });
 /** Every file under `root` as paths relative to it, sorted. */
 async function walk(root, { hidden = true } = {}) {
   const rows = await native.async('fs.scan', { path: root, ignore: [], skipHidden: !hidden });
-  return rows.filter((r) => !r[1]).map((r) => r[0]).sort();
+  return rows.filter((r) => !r[1] && !/\.base$/i.test(r[0])).map((r) => r[0]).sort(); // no databases on the phone
 }
 
 /** A zip is unpacked into the app's cache; returns the folder (removed by the caller). */
